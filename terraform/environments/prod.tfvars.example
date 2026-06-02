@@ -1,0 +1,9 @@
+# Production Environment Configuration Example
+# Copy this file to prod.tfvars and fill in the values. Do NOT commit the copy!
+
+supabase_access_token    = "sbp_yourprodaccesstokenhere"
+supabase_organization_id  = "org_yourprodorgidhere"
+environment              = "prod"
+region                   = "us-east-1"
+db_password              = "YourSuperStrongProdDbPassword456!"
+site_url                 = "https://anika-app.vercel.app" # Or your custom domain

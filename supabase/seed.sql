@@ -1,0 +1,3 @@
+-- seed.sql
+-- Use this file to insert dummy/initial data for local development testing.
+-- e.g., INSERT INTO public.users (id, name) VALUES ('...', '...');

@@ -1,0 +1,9 @@
+# Development Environment Configuration Example
+# Copy this file to dev.tfvars and fill in the values. Do NOT commit the copy!
+
+supabase_access_token    = "sbp_yourdevaccesstokenhere"
+supabase_organization_id  = "org_yourdevorgidhere"
+environment              = "dev"
+region                   = "us-east-1"
+db_password              = "YourStrongDevDbPassword123!"
+site_url                 = "http://localhost:5173"
