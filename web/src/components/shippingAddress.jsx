@@ -31,6 +31,14 @@ export default function ShippingAddress() {
   const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
 
+  const handleNavClick = (link) => {
+    if (link == "Home"){
+      navigate("/");
+    }else{
+      navigate(`/${link.toLowerCase()}`);
+    }
+  }
+
   // ── fetch addresses from Supabase ──
   const fetchAddresses = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -214,7 +222,7 @@ export default function ShippingAddress() {
 
   return (
     <>
-      <Navbar />
+      <Navbar onLinkClick={handleNavClick}/>
       <div className="page-wrapper">
 
         {/* TOAST */}

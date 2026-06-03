@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import "./CartPage.css";
+import Navbar from "./SiteHeader"
+import Footer from "./SiteFooter"
+import { useNavigate } from "react-router-dom";
 // import WishlistPage from "./WishlistPage";
 
 const initialCartItems = [
@@ -68,9 +71,18 @@ export default function CartPage() {
   const recentGridRef = useRef(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
+  const navigate = useNavigate()
 
   // Easily configure how many cards to scroll on each arrow click
   const cardsToScroll = 1;
+
+  const handleNavClick = (link) =>{
+    if (link == "Home"){
+      navigate("/");
+    }else{
+      navigate(`/${link.toLowerCase()}`);
+    }
+  }
 
   const handleScroll = () => {
     if (recentGridRef.current) {
@@ -191,7 +203,9 @@ export default function CartPage() {
   }
 
   return (
-    <div className="cart-page-wrapper">
+    <>
+      <Navbar onLinkClick={handleNavClick}/>
+      <div className="cart-page-wrapper">
       
       {/* TOAST */}
       {toast && (
@@ -438,8 +452,9 @@ export default function CartPage() {
       </main>
 
       {/* FOOTER */}
-      
+      <Footer/>
 
-    </div>
+      </div>
+    </>
   );
 }
