@@ -1,3 +1,4 @@
+## Version 2 Updates
 - User Login/SignUp
 - Supabase Authentication
 - User Profile Update
