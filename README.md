@@ -1,2 +1,9 @@
-# anika-landing-page
-Take: 1
+## Version:2 Updates
+- User Login/SignUp
+- Supabase Authentication
+- User Profile Update
+- Address Select/Insert/Update/Delete
+- Admin Page integration
+- Admin Login with Supabase
+
+
