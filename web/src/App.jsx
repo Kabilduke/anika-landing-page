@@ -8,8 +8,12 @@ import AnikaProfile from "./profile/AnikaProfile";
 import AnikaOrders from "./profile/AnikaOrders";
 import AnikaAddresses from "./profile/AnikaAddresses";
 import ShippingAddress from "./components/shippingAddress";
+import Payment from "./components/CartPage"
 import HomePage from './components/HomePage';
 import ProductDetails from './components/ProductDetails';
+
+import AdminRoute from "./components/AdminRoute";
+import Dashboard from "./admin/pages/Dashboard"; 
 
 function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -40,9 +44,17 @@ function App() {
         <Route path="/account/signup" element={<Signup />} />
         <Route path="/account/otp-verify" element={<OtpVerify />} />
         <Route path="/shipping" element={<ShippingAddress />} />
+        <Route path="/payment" element={<Payment/>}></Route>
         <Route path="/profile" element={<AnikaProfile />} />
         <Route path="/profile/orders" element={<AnikaOrders />} />
         <Route path="/profile/addresses" element={<AnikaAddresses/>}></Route>
+
+        <Route path='/admin/*' element={
+          <AdminRoute>
+            <Dashboard/>
+          </AdminRoute>
+        }>
+        </Route>
       </Routes>
     </BrowserRouter>
   );
