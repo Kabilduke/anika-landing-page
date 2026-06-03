@@ -486,9 +486,11 @@ const Dashboard = () => {
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </button>
-          <button className="db__avatar-btn" aria-label="Profile">
-            <img src= {profile} alt="Avatar" className="db__avatar-img" />
-          </button>
+          <Link to = "/profile">
+            <button className="db__avatar-btn" aria-label="Profile">
+              <img src= {profile} alt="Avatar" className="db__avatar-img" />
+            </button>
+          </Link>
         </div>
       </nav>
 
