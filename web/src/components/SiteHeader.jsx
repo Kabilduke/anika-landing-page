@@ -140,9 +140,13 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
             </button>
 
             {/* Cart — PNG icon */}
-            <button className="icon-btn" aria-label="Cart">
-              <img src={CartIcon} alt="Cart" className="header-icon" />
-            </button>
+            <button
+             className="icon-btn"
+              aria-label="Cart"
+               onClick={() => navigate("/cart")}
+>
+               <img src={CartIcon} alt="Cart" className="header-icon" />
+             </button>
 
             {/* Account — PNG icon */}
             <LoginDropdown />

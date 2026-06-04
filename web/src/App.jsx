@@ -12,7 +12,7 @@ import Payment from "./components/CartPage";
 import HomePage from './components/HomePage';
 import ProductDetails from './components/ProductDetails';
 import WishlistPage from './components/wishlistPage'; // ← added
-
+import Cartpage from './components/Cartpage';
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
 
@@ -49,6 +49,7 @@ function App() {
         <Route path="/profile" element={<AnikaProfile />} />
         <Route path="/profile/orders" element={<AnikaOrders />} />
         <Route path="/profile/addresses" element={<AnikaAddresses />} />
+        <Route path="/cart" element={<Cartpage />} />
         <Route path="/wishlist" element={<WishlistPage />} /> {/* ← added */}
 
         <Route path='/admin/*' element={
