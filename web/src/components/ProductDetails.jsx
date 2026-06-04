@@ -11,7 +11,7 @@ const CategorySection = lazy(() => import('./CategorySection'));
 import MainBangle from '../assets/Product1.webp';
 
 import PayPalIcon from '../assets/PaymentPal.webp';
-import GPayIcon from '../assets/PaymentGpay.webp';
+import GPayIcon from '../assets/PaymentGPay.webp';
 import RazorIcon from '../assets/PaymentRazor.webp';
 
 // ── Loading Skeleton (Placeholder for better perceived speed) ─────────────────
