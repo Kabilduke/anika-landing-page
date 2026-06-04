@@ -12,7 +12,7 @@ import Payment from "./components/CartPage";
 import HomePage from './components/HomePage';
 import ProductDetails from './components/ProductDetails';
 import WishlistPage from './components/wishlistPage'; // ← added
-import Cartpage from './components/Cartpage';
+import Cartpage from './components/CartPage';
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
 
