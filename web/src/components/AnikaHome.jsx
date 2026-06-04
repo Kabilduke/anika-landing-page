@@ -36,7 +36,7 @@ export default function AnikaHome() {
       <SiteHeader activeLink="Home" onLinkClick={scrollToSection} />
 
 
-      {/* ── Mobile Category Row (Above Hero) ── */}
+      {/* ── Mobile Category Row  ── */}
       <div className="mobile-top-categories mobile-only">
         <CategorySection onCategoryClick={(name) => scrollToSection(name)} />
       </div>
