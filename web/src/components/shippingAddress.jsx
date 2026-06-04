@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import "./shippingAddress.css";
 import Navbar from "./SiteHeader";
 import Footer from "./SiteFooter";
+import Toast from "./Toast";
 
 const indianStates = [
   "Tamil Nadu", "Assam", "Bihar", "Chhattisgarh",
@@ -25,8 +26,7 @@ export default function ShippingAddress() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [editingId, setEditingId] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [toast, setToast] = useState({ message: "", type: "" });
   const [userId, setUserId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
@@ -80,10 +80,9 @@ export default function ShippingAddress() {
     return e;
   };
 
-  const toast = (msg) => {
-    setSuccessMsg(msg);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  const showToast = (message, type = "success") => {
+    setToast({ message: "", type: "" });
+    setTimeout(() => setToast({ message, type }), 10);
   };
 
   const handleChange = (e) => {
@@ -131,7 +130,7 @@ export default function ShippingAddress() {
         )
       );
       setEditingId(null);
-      toast("Address updated!");
+      showToast("Address updated!", "success");
     } else {
       // ── ADD — save to Supabase ──
       const { data: { session } } = await supabase.auth.getSession();
@@ -145,7 +144,7 @@ export default function ShippingAddress() {
           a.postal_code === form.pinCode &&
           a.phone_number === form.mobile
       );
-      if (isDuplicate) { alert("This address already exists."); return; }
+      if (isDuplicate) { showToast("This address already exists.", "error"); return; }
 
       const { data, error } = await supabase
         .from("addresses")
@@ -165,9 +164,9 @@ export default function ShippingAddress() {
 
       if (error) { alert(error.message); return; }
 
-      setAddresses((prev) => [...prev, data[0]]);
-      setSelectedId(data[0].address_id);
-      toast("Address added!");
+      setAddresses((prev) => [...prev, data]);
+      setSelectedId(data.address_id);
+      showToast("Address added!", "success");
     }
 
     setForm(emptyForm);
@@ -226,14 +225,12 @@ export default function ShippingAddress() {
       <div className="page-wrapper">
 
         {/* TOAST */}
-        {showSuccess && (
-          <div className="toast">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {successMsg}
-          </div>
-        )}
+        {/* TOAST */}
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: "", type: "" })}
+        />
 
         <main className="main-content">
           <h1 className="page-title">Shipping Address</h1>
