@@ -1,5 +1,9 @@
 # main.tf - Infrastructure Orchestration
 
+locals {
+  repo_name = "anika-landing-page"
+}
+
 # 1. Provision Supabase Platform Infrastructure via Reusable Module
 module "supabase" {
   count  = var.environment == "prod" ? 1 : 0
@@ -21,7 +25,7 @@ module "web_storefront" {
     aws.us_east_1 = aws.us_east_1
   }
 
-  bucket_name        = "anika-jewelry-storefront-${var.environment}"
+  bucket_name        = "${local.repo_name}-storefront-${var.environment}"
   domain_name        = var.domain_name
   route53_zone_name  = var.route53_zone_name
   subdomain          = var.environment == "prod" ? "www" : "dev"
@@ -40,7 +44,7 @@ module "web_admin" {
     aws.us_east_1 = aws.us_east_1
   }
 
-  bucket_name        = "anika-jewelry-admin-${var.environment}"
+  bucket_name        = "${local.repo_name}-admin-${var.environment}"
   domain_name        = var.domain_name
   route53_zone_name  = var.route53_zone_name
   subdomain          = var.environment == "prod" ? "admin" : "admin.dev"
