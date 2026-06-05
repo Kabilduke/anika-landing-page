@@ -30,6 +30,13 @@ resource "supabase_branch" "main" {
   parent_project_ref = var.supabase_project_ref
   git_branch         = var.environment
   region             = var.region
+
+  lifecycle {
+    precondition {
+      condition     = var.supabase_project_ref != "" && var.supabase_project_ref != null
+      error_message = "The variable 'supabase_project_ref' must be provided to create a development branch. Please ensure you have set the SUPABASE_PROJECT_REF secret in GitHub Actions or supabase_project_ref in your tfvars file."
+    }
+  }
 }
 
 resource "supabase_settings" "main" {
