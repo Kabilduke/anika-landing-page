@@ -6,7 +6,6 @@ locals {
 
 # 1. Provision Supabase Platform Infrastructure via Reusable Module
 module "supabase" {
-  count  = var.environment == "prod" ? 1 : 0
   source = "./modules/supabase"
 
   supabase_organization_id = var.supabase_organization_id

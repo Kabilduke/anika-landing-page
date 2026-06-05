@@ -89,33 +89,34 @@ jobs:
         id: supabase_outputs
         working-directory: terraform
         run: |
-          if [ "${{ github.ref_name == 'main' }}" = "true" ]; then
-            echo "supabase_url=$(terraform output -raw project_url)" >> "$GITHUB_OUTPUT"
-            echo "supabase_anon_key=$(terraform output -raw anon_key)" >> "$GITHUB_OUTPUT"
-            echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
-          else
-            echo "supabase_url=${{ secrets.PROD_SUPABASE_URL }}" >> "$GITHUB_OUTPUT"
-            echo "supabase_anon_key=${{ secrets.PROD_SUPABASE_ANON_KEY }}" >> "$GITHUB_OUTPUT"
-            echo "supabase_ref=" >> "$GITHUB_OUTPUT"
-          fi
+          echo "supabase_url=$(terraform output -raw project_url)" >> "$GITHUB_OUTPUT"
+          echo "supabase_anon_key=$(terraform output -raw anon_key)" >> "$GITHUB_OUTPUT"
+          echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
 
   db_migration:
     name: Database Migrations
     needs: terraform
-    if: needs.terraform.outputs.is_prod == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Set DB Password
+        run: |
+          if [ "${{ needs.terraform.outputs.is_prod }}" = "true" ]; then
+            echo "DB_PASS=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "DB_PASS=LocalOnlyDummyPass123!" >> $GITHUB_ENV
+          fi
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v2
         with:
           version: latest
 
-      - name: Deploy Migrations to Remote Production DB
+      - name: Deploy Migrations to Remote DB
         run: |
-          supabase db push --db-url "postgresql://postgres:${{ secrets.PROD_DB_PASSWORD }}@db.${{ needs.terraform.outputs.supabase_ref }}.supabase.co:5432/postgres"
+          supabase db push --db-url "postgresql://postgres:${{ env.DB_PASS }}@db.${{ needs.terraform.outputs.supabase_ref }}.supabase.co:5432/postgres"
 
   # deploy_storefront:
   #   name: Deploy Storefront Portal

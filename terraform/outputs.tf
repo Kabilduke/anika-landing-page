@@ -3,23 +3,23 @@
 # 1. Supabase Platform Outputs
 output "project_id" {
   description = "The unique reference ID (project_ref) of the Supabase project."
-  value       = var.environment == "prod" ? module.supabase[0].project_id : null
+  value       = module.supabase.project_id
 }
 
 output "project_url" {
   description = "The API Gateway URL of the Supabase project."
-  value       = var.environment == "prod" ? module.supabase[0].project_url : null
+  value       = module.supabase.project_url
 }
 
 output "anon_key" {
   description = "The publishable anonymous key for client authentication."
-  value       = var.environment == "prod" ? module.supabase[0].anon_key : null
+  value       = module.supabase.anon_key
   sensitive   = true
 }
 
 output "service_role_key" {
   description = "The private service role key. Keep secure and do not share!"
-  value       = var.environment == "prod" ? module.supabase[0].service_role_key : null
+  value       = module.supabase.service_role_key
   sensitive   = true
 }
 
