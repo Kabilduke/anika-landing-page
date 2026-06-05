@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is_prod: ${{ steps.vars.outputs.is_prod }}
-      storefront_s3_bucket: ${{ steps.aws_outputs.outputs.storefront_s3_bucket }}
-      storefront_cf_dist: ${{ steps.aws_outputs.outputs.storefront_cf_dist }}
-      admin_s3_bucket: ${{ steps.aws_outputs.outputs.admin_s3_bucket }}
-      admin_cf_dist: ${{ steps.aws_outputs.outputs.admin_cf_dist }}
-      admin_url: ${{ steps.aws_outputs.outputs.admin_url }}
+#      storefront_s3_bucket: ${{ steps.aws_outputs.outputs.storefront_s3_bucket }}
+#      storefront_cf_dist: ${{ steps.aws_outputs.outputs.storefront_cf_dist }}
+#      admin_s3_bucket: ${{ steps.aws_outputs.outputs.admin_s3_bucket }}
+#      admin_cf_dist: ${{ steps.aws_outputs.outputs.admin_cf_dist }}
+#      admin_url: ${{ steps.aws_outputs.outputs.admin_url }}
       supabase_url: ${{ steps.supabase_outputs.outputs.supabase_url }}
       supabase_anon_key: ${{ steps.supabase_outputs.outputs.supabase_anon_key }}
       supabase_ref: ${{ steps.supabase_outputs.outputs.supabase_ref }}
@@ -75,15 +75,15 @@ jobs:
             -var="environment=${{ env.ENV_NAME }}" \
             -var="site_url=${{ env.SITE_URL }}"
 
-      - name: Export AWS Deployment Outputs
-        id: aws_outputs
-        working-directory: terraform
-        run: |
-          echo "storefront_s3_bucket=$(terraform output -raw storefront_s3_bucket)" >> "$GITHUB_OUTPUT"
-          echo "storefront_cf_dist=$(terraform output -raw storefront_cloudfront_id)" >> "$GITHUB_OUTPUT"
-          echo "admin_s3_bucket=$(terraform output -raw admin_s3_bucket)" >> "$GITHUB_OUTPUT"
-          echo "admin_cf_dist=$(terraform output -raw admin_cloudfront_id)" >> "$GITHUB_OUTPUT"
-          echo "admin_url=$(terraform output -raw admin_url)" >> "$GITHUB_OUTPUT"
+#      - name: Export AWS Deployment Outputs
+#        id: aws_outputs
+#        working-directory: terraform
+#        run: |
+#          echo "storefront_s3_bucket=$(terraform output -raw storefront_s3_bucket)" >> "$GITHUB_OUTPUT"
+#          echo "storefront_cf_dist=$(terraform output -raw storefront_cloudfront_id)" >> "$GITHUB_OUTPUT"
+#          echo "admin_s3_bucket=$(terraform output -raw admin_s3_bucket)" >> "$GITHUB_OUTPUT"
+#          echo "admin_cf_dist=$(terraform output -raw admin_cloudfront_id)" >> "$GITHUB_OUTPUT"
+#          echo "admin_url=$(terraform output -raw admin_url)" >> "$GITHUB_OUTPUT"
 
       - name: Resolve Supabase API Credentials
         id: supabase_outputs
@@ -117,87 +117,87 @@ jobs:
         run: |
           supabase db push --db-url "postgresql://postgres:${{ secrets.PROD_DB_PASSWORD }}@db.${{ needs.terraform.outputs.supabase_ref }}.supabase.co:5432/postgres"
 
-  deploy_storefront:
-    name: Deploy Storefront Portal
-    needs: [terraform, db_migration]
-    if: |
-      always() &&
-      needs.terraform.result == 'success' &&
-      (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  # deploy_storefront:
+  #   name: Deploy Storefront Portal
+  #   needs: [terraform, db_migration]
+  #   if: |
+  #     always() &&
+  #     needs.terraform.result == 'success' &&
+  #     (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-cache: npm
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-cache: npm
 
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
-          aws-region: ap-south-1
+  #     - name: Configure AWS Credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+  #         aws-region: ap-south-1
 
-      - name: Install Dependencies
-        working-directory: web
-        run: npm ci
+  #     - name: Install Dependencies
+  #       working-directory: web
+  #       run: npm ci
 
-      - name: Build Application
-        working-directory: web
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ needs.terraform.outputs.supabase_url }}
-          VITE_SUPABASE_ANON_KEY: ${{ needs.terraform.outputs.supabase_anon_key }}
-          VITE_ADMIN_CONSOLE_URL: ${{ needs.terraform.outputs.admin_url }}
+  #     - name: Build Application
+  #       working-directory: web
+  #       run: npm run build
+  #       env:
+  #         VITE_SUPABASE_URL: ${{ needs.terraform.outputs.supabase_url }}
+  #         VITE_SUPABASE_ANON_KEY: ${{ needs.terraform.outputs.supabase_anon_key }}
+  #         VITE_ADMIN_CONSOLE_URL: ${{ needs.terraform.outputs.admin_url }}
 
-      - name: Sync to AWS S3
-        run: |
-          aws s3 sync web/dist/ s3://${{ needs.terraform.outputs.storefront_s3_bucket }} --delete
+  #     - name: Sync to AWS S3
+  #       run: |
+  #         aws s3 sync web/dist/ s3://${{ needs.terraform.outputs.storefront_s3_bucket }} --delete
 
-      - name: Invalidate CloudFront Cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.storefront_cf_dist }} --paths "/*"
+  #     - name: Invalidate CloudFront Cache
+  #       run: |
+  #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.storefront_cf_dist }} --paths "/*"
 
-  deploy_admin:
-    name: Deploy Admin Portal
-    needs: [terraform, db_migration]
-    if: |
-      always() &&
-      needs.terraform.result == 'success' &&
-      (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  # deploy_admin:
+  #   name: Deploy Admin Portal
+  #   needs: [terraform, db_migration]
+  #   if: |
+  #     always() &&
+  #     needs.terraform.result == 'success' &&
+  #     (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-cache: npm
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-cache: npm
 
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
-          aws-region: ap-south-1
+  #     - name: Configure AWS Credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+  #         aws-region: ap-south-1
 
-      - name: Install Dependencies
-        working-directory: web_admin
-        run: npm ci
+  #     - name: Install Dependencies
+  #       working-directory: web_admin
+  #       run: npm ci
 
-      - name: Build Application
-        working-directory: web_admin
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ needs.terraform.outputs.supabase_url }}
-          VITE_SUPABASE_ANON_KEY: ${{ needs.terraform.outputs.supabase_anon_key }}
+  #     - name: Build Application
+  #       working-directory: web_admin
+  #       run: npm run build
+  #       env:
+  #         VITE_SUPABASE_URL: ${{ needs.terraform.outputs.supabase_url }}
+  #         VITE_SUPABASE_ANON_KEY: ${{ needs.terraform.outputs.supabase_anon_key }}
 
-      - name: Sync to AWS S3
-        run: |
-          aws s3 sync web_admin/dist/ s3://${{ needs.terraform.outputs.admin_s3_bucket }} --delete
+  #     - name: Sync to AWS S3
+  #       run: |
+  #         aws s3 sync web_admin/dist/ s3://${{ needs.terraform.outputs.admin_s3_bucket }} --delete
 
-      - name: Invalidate CloudFront Cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.admin_cf_dist }} --paths "/*"
+  #     - name: Invalidate CloudFront Cache
+  #       run: |
+  #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.admin_cf_dist }} --paths "/*"

@@ -23,34 +23,34 @@ output "service_role_key" {
   sensitive   = true
 }
 
-# 2. Storefront Deployment Outputs
-output "storefront_s3_bucket" {
-  description = "The name of the S3 bucket hosting the storefront application."
-  value       = module.web_storefront.s3_bucket_name
-}
+# # 2. Storefront Deployment Outputs
+# output "storefront_s3_bucket" {
+#   description = "The name of the S3 bucket hosting the storefront application."
+#   value       = module.web_storefront.s3_bucket_name
+# }
 
-output "storefront_cloudfront_id" {
-  description = "The CloudFront distribution ID for the storefront site."
-  value       = module.web_storefront.cloudfront_distribution_id
-}
+# output "storefront_cloudfront_id" {
+#   description = "The CloudFront distribution ID for the storefront site."
+#   value       = module.web_storefront.cloudfront_distribution_id
+# }
 
-output "storefront_url" {
-  description = "The final HTTPS URL of the storefront application."
-  value       = module.web_storefront.custom_domain_url
-}
+# output "storefront_url" {
+#   description = "The final HTTPS URL of the storefront application."
+#   value       = module.web_storefront.custom_domain_url
+# }
 
-# 3. Admin Deployment Outputs
-output "admin_s3_bucket" {
-  description = "The name of the S3 bucket hosting the admin portal application."
-  value       = module.web_admin.s3_bucket_name
-}
+# # 3. Admin Deployment Outputs
+# output "admin_s3_bucket" {
+#   description = "The name of the S3 bucket hosting the admin portal application."
+#   value       = module.web_admin.s3_bucket_name
+# }
 
-output "admin_cloudfront_id" {
-  description = "The CloudFront distribution ID for the admin site."
-  value       = module.web_admin.cloudfront_distribution_id
-}
+# output "admin_cloudfront_id" {
+#   description = "The CloudFront distribution ID for the admin site."
+#   value       = module.web_admin.cloudfront_distribution_id
+# }
 
-output "admin_url" {
-  description = "The final HTTPS URL of the admin portal application."
-  value       = module.web_admin.custom_domain_url
-}
+# output "admin_url" {
+#   description = "The final HTTPS URL of the admin portal application."
+#   value       = module.web_admin.custom_domain_url
+# }

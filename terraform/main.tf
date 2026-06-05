@@ -17,38 +17,38 @@ module "supabase" {
 }
 
 # 2. Deploy Customer Portal Static Site (web/) via Reusable AWS S3 + CloudFront Module
-module "web_storefront" {
-  source = "./modules/static_site"
+# module "web_storefront" {
+#   source = "./modules/static_site"
 
-  providers = {
-    aws           = aws
-    aws.us_east_1 = aws.us_east_1
-  }
+#   providers = {
+#     aws           = aws
+#     aws.us_east_1 = aws.us_east_1
+#   }
 
-  bucket_name        = "${local.repo_name}-storefront-${var.environment}"
-  domain_name        = var.domain_name
-  route53_zone_name  = var.route53_zone_name
-  subdomain          = var.environment == "prod" ? "www" : "dev"
-  additional_aliases = var.environment == "prod" ? [var.domain_name] : []
-  use_custom_domain  = var.use_custom_domain
-  create_dns_records = var.create_dns_records
-  environment        = var.environment
-}
+#   bucket_name        = "${local.repo_name}-storefront-${var.environment}"
+#   domain_name        = var.domain_name
+#   route53_zone_name  = var.route53_zone_name
+#   subdomain          = var.environment == "prod" ? "www" : "dev"
+#   additional_aliases = var.environment == "prod" ? [var.domain_name] : []
+#   use_custom_domain  = var.use_custom_domain
+#   create_dns_records = var.create_dns_records
+#   environment        = var.environment
+# }
 
-# 3. Deploy Admin Portal Static Site (web_admin/) via Reusable AWS S3 + CloudFront Module
-module "web_admin" {
-  source = "./modules/static_site"
+# # 3. Deploy Admin Portal Static Site (web_admin/) via Reusable AWS S3 + CloudFront Module
+# module "web_admin" {
+#   source = "./modules/static_site"
 
-  providers = {
-    aws           = aws
-    aws.us_east_1 = aws.us_east_1
-  }
+#   providers = {
+#     aws           = aws
+#     aws.us_east_1 = aws.us_east_1
+#   }
 
-  bucket_name        = "${local.repo_name}-admin-${var.environment}"
-  domain_name        = var.domain_name
-  route53_zone_name  = var.route53_zone_name
-  subdomain          = var.environment == "prod" ? "admin" : "admin.dev"
-  use_custom_domain  = var.use_custom_domain
-  create_dns_records = var.create_dns_records
-  environment        = var.environment
-}
+#   bucket_name        = "${local.repo_name}-admin-${var.environment}"
+#   domain_name        = var.domain_name
+#   route53_zone_name  = var.route53_zone_name
+#   subdomain          = var.environment == "prod" ? "admin" : "admin.dev"
+#   use_custom_domain  = var.use_custom_domain
+#   create_dns_records = var.create_dns_records
+#   environment        = var.environment
+# }
