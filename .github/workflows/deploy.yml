@@ -44,9 +44,9 @@ jobs:
           else
             echo "ENV_NAME=dev" >> $GITHUB_ENV
             echo "TF_WORKSPACE=anika-landing-page-dev" >> $GITHUB_ENV
-            echo "DB_PASS=LocalOnlyDummyPass123!" >> $GITHUB_ENV
+            echo "DB_PASS=AnikaDevSecureDbPass2026" >> $GITHUB_ENV
             echo "SITE_URL=https://dev.anikajewelry.gideonjacob.in" >> $GITHUB_ENV
-            echo "db_pass=LocalOnlyDummyPass123!" >> "$GITHUB_OUTPUT"
+            echo "db_pass=AnikaDevSecureDbPass2026" >> "$GITHUB_OUTPUT"
             echo "env_name=dev" >> "$GITHUB_OUTPUT"
           fi
 
