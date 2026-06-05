@@ -15,22 +15,26 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 }
 .page > * { width: 100%; }
 
-/* ── Header ── */
-.header {
+/* ── AP Header (renamed to avoid clash with SiteHeader.css .header) ── */
+.ap-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 4px;
+  background: #f5f5f5;
+  padding: 12px 0 8px;
+  width: 100%;
 }
-.back-btn {
+
+.ap-header .back-btn {
   width: 44px; height: 44px;
   border-radius: 12px; border: 1px solid #e0e0e0; background: #fff;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; padding: 10px; transition: background 0.15s;
 }
-.back-btn:hover { background: #f5f5f5; }
-.back-btn img { width: 20px; height: 20px; object-fit: contain; }
-.header h1 {
+.ap-header .back-btn:hover { background: #f5f5f5; }
+.ap-header .back-btn img { width: 20px; height: 20px; object-fit: contain; }
+.ap-header h1 {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 40px;
@@ -58,11 +62,10 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
   margin-bottom: 14px;
 }
 
-/* ── Field ─────────────────────────────────────────────────────────
-   min-width:0 is CRITICAL — without it grid items don't shrink     */
+/* ── Field ── */
 .field {
   margin-bottom: 12px;
-  min-width: 0;        /* allow grid cell to shrink */
+  min-width: 0;
   width: 100%;
 }
 .field label {
@@ -71,18 +74,16 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
   color: #555;
   margin-bottom: 4px;
   line-height: 20px;
-  /* allow wrapping so label never pushes cell wider */
   white-space: normal;
   word-break: break-word;
 }
 
-/* ALL inputs / textareas / selects — no inline style needed */
 .field input,
 .field textarea,
 .field select {
   display: block;
   width: 100%;
-  min-width: 0;        /* shrink inside grid */
+  min-width: 0;
   height: 44px;
   padding: 0 14px;
   border: 1px solid #e0e0e0;
@@ -114,7 +115,6 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
   gap: 16px;
 }
 
-/* KEY FIX: minmax(0, 1fr) instead of 1fr prevents cell overflow */
 .grid3-wrap {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -122,7 +122,6 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
   margin-bottom: 12px;
 }
 
-/* Hide empty spacer divs */
 .grid3-wrap > div:empty { display: none; }
 
 /* ── Drop zone ── */
@@ -212,14 +211,17 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 .toggle input:checked + .slider { background: #4cd964; }
 .toggle input:checked + .slider:before { transform: translateX(20px); }
 
-/* ── Footer ── */
-.footer {
+/* ── AP Footer (renamed to avoid clash with parent .footer) ── */
+.ap-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 0 24px;
   flex-wrap: wrap;
+  background: #f5f5f5;
+  width: 100%;
 }
+
 .btn-draft {
   background: #fff; border: 1px solid #d0d0d0; border-radius: 7px;
   padding: 9px 18px; font-size: 13px; font-weight: 500;
@@ -278,24 +280,22 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 ═══════════════════════════════════════════ */
 
 @media (max-width: 1024px) {
-  .header h1 { font-size: 32px; line-height: 40px; }
+  .ap-header h1 { font-size: 32px; line-height: 40px; }
   .card { padding: 20px 22px; }
 }
 
-/* Tablets: 3-col → 2-col */
 @media (max-width: 768px) {
   .page { padding: 12px 16px 20px; }
-  .header h1 { font-size: 26px; line-height: 34px; }
+  .ap-header h1 { font-size: 26px; line-height: 34px; }
   .card { padding: 18px 18px; margin-bottom: 14px; }
   .card-title { font-size: 17px; line-height: 26px; }
   .grid3-wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* Large phones: all grids → 1-col */
 @media (max-width: 600px) {
   .page { padding: 10px 12px 18px; }
-  .header { gap: 8px; margin-bottom: 12px; }
-  .header h1 { font-size: 22px; line-height: 30px; }
+  .ap-header { gap: 8px; margin-bottom: 12px; }
+  .ap-header h1 { font-size: 22px; line-height: 30px; }
   .card { padding: 16px 14px; border-radius: 10px; }
   .card-title { font-size: 16px; margin-bottom: 12px; }
 
@@ -304,7 +304,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 
   .drop-zone { min-height: 120px; }
   .thumb, .thumb-wrapper, .thumb-placeholder, .add-thumb { width: 60px; height: 60px; }
-  .footer { flex-direction: column-reverse; gap: 8px; padding: 12px 0 20px; }
+  .ap-footer { flex-direction: column-reverse; gap: 8px; padding: 12px 0 20px; }
   .btn-draft, .btn-publish { width: 100%; text-align: center; padding: 11px 16px; font-size: 14px; }
 
   .popup-overlay { padding: 12px; align-items: flex-end; }
@@ -316,8 +316,8 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 }
 
 @media (max-width: 480px) {
-  .header h1 { font-size: 19px; line-height: 26px; }
-  .back-btn { width: 38px; height: 38px; }
+  .ap-header h1 { font-size: 19px; line-height: 26px; }
+  .ap-header .back-btn { width: 38px; height: 38px; }
   .card { padding: 14px 12px; margin-bottom: 12px; }
   .card-title { font-size: 15px; margin-bottom: 10px; }
   .field input, .field textarea, .field select { height: 42px; padding: 0 12px; font-size: 13px; }
@@ -330,7 +330,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 
 @media (max-width: 360px) {
   .page { padding: 8px 10px 16px; }
-  .header h1 { font-size: 17px; line-height: 24px; }
+  .ap-header h1 { font-size: 17px; line-height: 24px; }
   .card { padding: 12px 10px; border-radius: 8px; }
   .card-title { font-size: 14px; }
   .field input, .field textarea, .field select { height: 40px; padding: 0 10px; font-size: 12px; border-radius: 8px; }

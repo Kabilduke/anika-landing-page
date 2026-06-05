@@ -2,30 +2,30 @@ import React, { useState, useRef, useEffect } from "react";
 import back from "../../assets/admin/back.png";
 import "./addproduct.css";
 
-/* ─── Filter Attributes CSS — injected once into <head> ─── */
+/* ─── All styles scoped under .ap-page to prevent conflicts with global CSS ─── */
 const FA_CSS = `
-.fa-top-card {
+.ap-fa-top-card {
   background: #fff;
   border: 1px solid #ebebeb;
   border-radius: 12px;
   padding: 14px 16px;
 }
-.fa-section-label {
+.ap-fa-section-label {
   font-size: 12px;
   color: #888;
   margin-bottom: 10px;
 }
-.fa-empty-hint {
+.ap-fa-empty-hint {
   font-size: 13px;
   color: #bbb;
   padding: 4px 0;
 }
-.fa-tag-row {
+.ap-fa-tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.fa-tag {
+.ap-fa-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -36,8 +36,8 @@ const FA_CSS = `
   font-size: 13px;
   color: #333;
 }
-.fa-tag--group { background: #f9f9f9; }
-.fa-tag-remove {
+.ap-fa-tag--group { background: #f9f9f9; }
+.ap-fa-tag-remove {
   background: none;
   border: none;
   padding: 0;
@@ -48,46 +48,46 @@ const FA_CSS = `
   display: flex;
   align-items: center;
 }
-.fa-tag-remove:hover { color: #e55; }
-.fa-groups-header {
+.ap-fa-tag-remove:hover { color: #e55; }
+.ap-fa-groups-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
   gap: 12px;
 }
-.fa-groups-sub {
+.ap-fa-groups-sub {
   font-size: 12px;
   color: #999;
   margin-top: 2px;
   line-height: 1.4;
 }
-.fa-groups-count {
+.ap-fa-groups-count {
   font-size: 12px;
   color: #888;
   white-space: nowrap;
   padding-top: 2px;
 }
-.fa-empty-groups {
+.ap-fa-empty-groups {
   font-size: 13px;
   color: #bbb;
   text-align: center;
   padding: 20px 0 8px;
 }
-.fa-group-card {
+.ap-fa-group-card {
   border: 1px solid #ebebeb;
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
   background: #fff;
 }
-.fa-group-title-row {
+.ap-fa-group-title-row {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
-.fa-group-title-input {
+.ap-fa-group-title-input {
   flex: 1;
   height: 38px;
   padding: 0 14px;
@@ -99,9 +99,9 @@ const FA_CSS = `
   background: #fafafa;
   outline: none;
 }
-.fa-group-title-input:focus { border-color: #aaa; }
-.fa-group-title-input::placeholder { font-weight: 400; color: #bbb; }
-.fa-delete-btn {
+.ap-fa-group-title-input:focus { border-color: #aaa; }
+.ap-fa-group-title-input::placeholder { font-weight: 400; color: #bbb; }
+.ap-fa-delete-btn {
   width: 36px;
   height: 36px;
   border: 1.5px solid #fcc;
@@ -115,12 +115,12 @@ const FA_CSS = `
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.fa-delete-btn:hover { background: #ffe0e0; }
-.fa-input-row {
+.ap-fa-delete-btn:hover { background: #ffe0e0; }
+.ap-fa-input-row {
   display: flex;
   gap: 8px;
 }
-.fa-option-input {
+.ap-fa-option-input {
   flex: 1;
   height: 42px;
   padding: 0 14px;
@@ -131,8 +131,8 @@ const FA_CSS = `
   background: #fafafa;
   outline: none;
 }
-.fa-option-input:focus { border-color: #aaa; }
-.fa-confirm-btn {
+.ap-fa-option-input:focus { border-color: #aaa; }
+.ap-fa-confirm-btn {
   height: 42px;
   padding: 0 18px;
   background: #111;
@@ -145,8 +145,8 @@ const FA_CSS = `
   white-space: nowrap;
   transition: background 0.15s;
 }
-.fa-confirm-btn:hover { background: #333; }
-.fa-add-group-btn {
+.ap-fa-confirm-btn:hover { background: #333; }
+.ap-fa-add-group-btn {
   display: block;
   width: 100%;
   margin-top: 4px;
@@ -159,16 +159,16 @@ const FA_CSS = `
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.fa-add-group-btn:hover { border-color: #888; color: #111; }
+.ap-fa-add-group-btn:hover { border-color: #888; color: #111; }
 
-/* ─── Category Images section ─── */
-.ci-preview-row {
+/* ─── Category Images ─── */
+.ap-ci-preview-row {
   display: flex;
   align-items: flex-start;
   gap: 16px;
   padding: 4px 0 2px;
 }
-.ci-preview-thumb {
+.ap-ci-preview-thumb {
   width: 220px;
   height: 160px;
   border-radius: 10px;
@@ -177,36 +177,36 @@ const FA_CSS = `
   flex-shrink: 0;
   background: #f5f5f5;
 }
-.ci-preview-thumb img {
+.ap-ci-preview-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.ci-preview-meta {
+.ap-ci-preview-meta {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 6px;
   padding-top: 6px;
 }
-.ci-preview-filename {
+.ap-ci-preview-filename {
   font-size: 13.5px;
   font-weight: 600;
   color: #1c1c1e;
   word-break: break-all;
 }
-.ci-preview-info {
+.ap-ci-preview-info {
   font-size: 12px;
   color: #888;
   line-height: 1.5;
 }
-.ci-preview-actions {
+.ap-ci-preview-actions {
   display: flex;
   gap: 8px;
   margin-top: 4px;
 }
-.ci-preview-edit {
+.ap-ci-preview-edit {
   padding: 5px 18px;
   background: #eff6ff;
   color: #3b82f6;
@@ -218,8 +218,8 @@ const FA_CSS = `
   font-family: inherit;
   transition: background 0.15s;
 }
-.ci-preview-edit:hover { background: #dbeafe; }
-.ci-preview-delete {
+.ap-ci-preview-edit:hover { background: #dbeafe; }
+.ap-ci-preview-delete {
   padding: 5px 18px;
   background: #fff0f0;
   color: #ef4444;
@@ -231,31 +231,31 @@ const FA_CSS = `
   font-family: inherit;
   transition: background 0.15s;
 }
-.ci-preview-delete:hover { background: #fee2e2; }
-.ci-hint {
+.ap-ci-preview-delete:hover { background: #fee2e2; }
+.ap-ci-hint {
   font-size: 12px;
   color: #888;
   margin-top: 8px;
 }
-.ci-storefront-title {
+.ap-ci-storefront-title {
   font-size: 15px;
   font-weight: 600;
   color: #111;
   margin-top: 24px;
   margin-bottom: 14px;
 }
-.ci-storefront-grid {
+.ap-ci-storefront-grid {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
-.ci-storefront-item {
+.ap-ci-storefront-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
-.ci-storefront-thumb {
+.ap-ci-storefront-thumb {
   width: 80px;
   height: 80px;
   border-radius: 14px;
@@ -269,15 +269,13 @@ const FA_CSS = `
   border: 1.5px dashed transparent;
   transition: border-color 0.15s;
 }
-.ci-storefront-thumb:hover {
-  border-color: #bbb;
-}
-.ci-storefront-thumb img {
+.ap-ci-storefront-thumb:hover { border-color: #bbb; }
+.ap-ci-storefront-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.ci-storefront-add {
+.ap-ci-storefront-add {
   width: 80px;
   height: 80px;
   border-radius: 14px;
@@ -291,11 +289,8 @@ const FA_CSS = `
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.ci-storefront-add:hover {
-  border-color: #888;
-  color: #555;
-}
-.ci-storefront-label {
+.ap-ci-storefront-add:hover { border-color: #888; color: #555; }
+.ap-ci-storefront-label {
   font-size: 12px;
   color: #555;
   text-align: center;
@@ -304,12 +299,12 @@ const FA_CSS = `
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ci-storefront-hint {
+.ap-ci-storefront-hint {
   font-size: 12px;
   color: #888;
   margin-top: 10px;
 }
-.ci-storefront-del {
+.ap-ci-storefront-del {
   position: absolute;
   top: 4px;
   right: 4px;
@@ -328,20 +323,260 @@ const FA_CSS = `
   opacity: 0;
   transition: opacity 0.15s;
 }
-.ci-storefront-thumb:hover .ci-storefront-del {
-  opacity: 1;
+.ap-ci-storefront-thumb:hover .ap-ci-storefront-del { opacity: 1; }
+
+/* ─── Page layout ─── */
+.ap-page {
+  padding: 0 24px 40px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
 }
+.ap-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 16px;
+  background: transparent;
+  color: inherit;
+}
+.ap-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+.ap-back-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ap-back-btn img { width: 16px; height: 16px; }
+.ap-card {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 16px;
+  padding: 20px 20px 16px;
+  margin-bottom: 16px;
+}
+.ap-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 16px;
+}
+.ap-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ap-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #555;
+}
+.ap-field input,
+.ap-field select,
+.ap-field textarea {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #333;
+  background: #fafafa;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.ap-field input:focus,
+.ap-field select:focus,
+.ap-field textarea:focus { border-color: #aaa; }
+.ap-field textarea {
+  height: 90px;
+  padding: 10px 14px;
+  resize: vertical;
+}
+.ap-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.ap-grid3-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ap-auto-hint {
+  font-size: 11.5px;
+  color: #aaa;
+  margin-top: 4px;
+}
+.ap-drop-zone {
+  border: 1.5px dashed #d0d0d0;
+  border-radius: 12px;
+  padding: 28px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  background: #fafafa;
+}
+.ap-drop-zone:hover { border-color: #999; }
+.ap-drop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+  pointer-events: none;
+}
+.ap-drop-hint {
+  font-size: 12px;
+  color: #aaa;
+}
+.ap-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ap-thumb-wrapper {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+.ap-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e8e8e8;
+}
+.ap-thumb-del {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #333;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ap-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.ap-toggle-row:last-child { border-bottom: none; }
+.ap-toggle-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111;
+}
+.ap-toggle-sub {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+.ap-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.ap-toggle input { opacity: 0; width: 0; height: 0; }
+.ap-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #ddd;
+  border-radius: 24px;
+  transition: background 0.2s;
+}
+.ap-slider:before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.ap-toggle input:checked + .ap-slider { background: #111; }
+.ap-toggle input:checked + .ap-slider:before { transform: translateX(20px); }
+.ap-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 0 8px;
+  margin-top: 8px;
+  border-top: 1px solid #ebebeb;
+  background: transparent;
+}
+.ap-btn-draft {
+  padding: 10px 22px;
+  border: 1.5px solid #d0d0d0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ap-btn-draft:hover { background: #f5f5f5; }
+.ap-btn-publish {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  background: #111;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ap-btn-publish:hover { background: #333; }
 `;
 
-/* inject FA styles once into <head> */
-if (typeof document !== "undefined" && !document.getElementById("fa-styles")) {
+/* inject scoped styles once */
+if (typeof document !== "undefined" && !document.getElementById("ap-styles")) {
   const tag = document.createElement("style");
-  tag.id = "fa-styles";
+  tag.id = "ap-styles";
   tag.textContent = FA_CSS;
   document.head.appendChild(tag);
 }
 
-/* ─── inputBase still used for fields inside grid3-wrap ─── */
 const inputBase = {
   display: "block",
   width: "100%",
@@ -364,9 +599,9 @@ const EMPTY_FORM = {
   material: "", weight: "", size: "", care: "",
 };
 
-// ─── Filter Attributes helpers ───────────────────────────────────────────────
-
 const EMPTY_GROUP = (id) => ({ id, title: "", options: [], inputVal: "" });
+
+// ─── Filter Attributes Section ────────────────────────────────────────────────
 
 function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
   const [filterInput, setFilterInput] = useState("");
@@ -378,11 +613,8 @@ function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
   };
   const removeFilter = (tag) => setFilters((f) => f.filter((t) => t !== tag));
 
-  const addGroup = () =>
-    setGroups((g) => [...g, EMPTY_GROUP(Date.now())]);
-
+  const addGroup = () => setGroups((g) => [...g, EMPTY_GROUP(Date.now())]);
   const removeGroup = (id) => setGroups((g) => g.filter((grp) => grp.id !== id));
-
   const updateGroup = (id, patch) =>
     setGroups((g) => g.map((grp) => (grp.id === id ? { ...grp, ...patch } : grp)));
 
@@ -406,26 +638,19 @@ function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
 
   return (
     <>
-      {/* ── Top Filters card ── */}
-      <div className="card">
-        <div className="card-title">Filter attributes</div>
-
-        <div className="fa-top-card">
-          <div className="fa-section-label">Filters</div>
+      {/* Top Filters card */}
+      <div className="ap-card">
+        <div className="ap-card-title">Filter attributes</div>
+        <div className="ap-fa-top-card">
+          <div className="ap-fa-section-label">Filters</div>
           {filters.length === 0 ? (
-            <div className="fa-empty-hint">No filters added yet</div>
+            <div className="ap-fa-empty-hint">No filters added yet</div>
           ) : (
-            <div className="fa-tag-row">
+            <div className="ap-fa-tag-row">
               {filters.map((tag) => (
-                <span key={tag} className="fa-tag">
+                <span key={tag} className="ap-fa-tag">
                   {tag}
-                  <button
-                    className="fa-tag-remove"
-                    onClick={() => removeFilter(tag)}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
+                  <button className="ap-fa-tag-remove" onClick={() => removeFilter(tag)} title="Remove">×</button>
                 </span>
               ))}
             </div>
@@ -433,40 +658,36 @@ function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
         </div>
       </div>
 
-      {/* ── Custom filter groups card ── */}
-      <div className="card">
-        <div className="fa-groups-header">
+      {/* Custom filter groups card */}
+      <div className="ap-card">
+        <div className="ap-fa-groups-header">
           <div>
-            <div className="card-title" style={{ marginBottom: 2 }}>Custom filter groups</div>
-            <div className="fa-groups-sub">
+            <div className="ap-card-title" style={{ marginBottom: 2 }}>Custom filter groups</div>
+            <div className="ap-fa-groups-sub">
               Create your own filter groups and add options inside each one. Shoppers will see these as filters on the category page.
             </div>
           </div>
           {groups.length > 0 && (
-            <div className="fa-groups-count">
+            <div className="ap-fa-groups-count">
               {groups.length} {groups.length === 1 ? "group" : "groups"} · {totalOptions} options
             </div>
           )}
         </div>
 
         {groups.length === 0 && (
-          <div className="fa-empty-groups">No custom filter groups yet. Click "Add new filter group" to create one.</div>
+          <div className="ap-fa-empty-groups">No custom filter groups yet. Click "Add new filter group" to create one.</div>
         )}
 
         {groups.map((grp) => (
-          <div key={grp.id} className="fa-group-card">
-            <div className="fa-group-title-row">
+          <div key={grp.id} className="ap-fa-group-card">
+            <div className="ap-fa-group-title-row">
               <input
-                className="fa-group-title-input"
+                className="ap-fa-group-title-input"
                 placeholder="Group name e.g. Stone type"
                 value={grp.title}
                 onChange={(e) => updateGroup(grp.id, { title: e.target.value })}
               />
-              <button
-                className="fa-delete-btn"
-                onClick={() => removeGroup(grp.id)}
-                title="Delete group"
-              >
+              <button className="ap-fa-delete-btn" onClick={() => removeGroup(grp.id)} title="Delete group">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6" />
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -477,46 +698,31 @@ function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
             </div>
 
             {grp.options.length > 0 && (
-              <div className="fa-tag-row" style={{ marginBottom: 10 }}>
+              <div className="ap-fa-tag-row" style={{ marginBottom: 10 }}>
                 {grp.options.map((opt) => (
-                  <span key={opt} className="fa-tag fa-tag--group">
+                  <span key={opt} className="ap-fa-tag ap-fa-tag--group">
                     {opt}
-                    <button
-                      className="fa-tag-remove"
-                      onClick={() => removeOption(grp.id, opt)}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
+                    <button className="ap-fa-tag-remove" onClick={() => removeOption(grp.id, opt)} title="Remove">×</button>
                   </span>
                 ))}
               </div>
             )}
 
-            <div className="fa-section-label" style={{ marginBottom: 6 }}>
-              Select one after adding option
-            </div>
-            <div className="fa-input-row">
+            <div className="ap-fa-section-label" style={{ marginBottom: 6 }}>Select one after adding option</div>
+            <div className="ap-fa-input-row">
               <input
-                className="fa-option-input"
+                className="ap-fa-option-input"
                 placeholder="Add an option e.g. Gold"
                 value={grp.inputVal}
                 onChange={(e) => updateGroup(grp.id, { inputVal: e.target.value })}
                 onKeyDown={(e) => e.key === "Enter" && confirmOption(grp)}
               />
-              <button
-                className="fa-confirm-btn"
-                onClick={() => confirmOption(grp)}
-              >
-                Confirm
-              </button>
+              <button className="ap-fa-confirm-btn" onClick={() => confirmOption(grp)}>Confirm</button>
             </div>
           </div>
         ))}
 
-        <button className="fa-add-group-btn" onClick={addGroup}>
-          + Add new filter group
-        </button>
+        <button className="ap-fa-add-group-btn" onClick={addGroup}>+ Add new filter group</button>
       </div>
     </>
   );
@@ -524,7 +730,12 @@ function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
 
 // ─── Category Images Section ──────────────────────────────────────────────────
 
-function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageMeta, setCategoryImageMeta, storefrontImages, setStorefrontImages, categoryName, isEditing }) {
+function CategoryImagesSection({
+  categoryImage, setCategoryImage,
+  categoryImageMeta, setCategoryImageMeta,
+  storefrontImages, setStorefrontImages,
+  categoryName, isEditing,
+}) {
   const mainDropRef = useRef();
   const storefrontInputRef = useRef();
 
@@ -532,7 +743,6 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
     if (!file) return;
     const url = URL.createObjectURL(file);
     setCategoryImage(url);
-    // Read image dimensions
     const img = new Image();
     img.onload = () => {
       setCategoryImageMeta({
@@ -546,14 +756,8 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
     img.src = url;
   };
 
-  const handleMainDrop = (e) => {
-    e.preventDefault();
-    processFile(e.dataTransfer.files[0]);
-  };
-
-  const handleMainFileChange = (e) => {
-    processFile(e.target.files[0]);
-  };
+  const handleMainDrop = (e) => { e.preventDefault(); processFile(e.dataTransfer.files[0]); };
+  const handleMainFileChange = (e) => processFile(e.target.files[0]);
 
   const formatSize = (bytes) => {
     if (!bytes) return "";
@@ -582,42 +786,39 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
   const removeStorefrontImage = (idx) =>
     setStorefrontImages((prev) => prev.filter((_, i) => i !== idx));
 
-  // Build preview items: existing images + add button placeholder (up to 6 slots)
   const previewLabel = categoryName?.trim() || "Category";
 
   return (
-    <div className="card">
-      <div className="card-title">Category Images</div>
+    <div className="ap-card">
+      <div className="ap-card-title">Category Images</div>
 
       {isEditing && categoryImage ? (
-        /* ── Rich preview: only in edit mode when image already exists ── */
-        <div className="ci-preview-row">
-          <div className="ci-preview-thumb">
+        <div className="ap-ci-preview-row">
+          <div className="ap-ci-preview-thumb">
             <img src={categoryImage} alt="Category" />
           </div>
-          <div className="ci-preview-meta">
-            <div className="ci-preview-filename">{categoryImageMeta?.name || "category-image"}</div>
+          <div className="ap-ci-preview-meta">
+            <div className="ap-ci-preview-filename">{categoryImageMeta?.name || "category-image"}</div>
             {categoryImageMeta && (
-              <div className="ci-preview-info">
+              <div className="ap-ci-preview-info">
                 Uploaded {timeAgo(categoryImageMeta.uploadedAt)} · {categoryImageMeta.width}×{categoryImageMeta.height}px · {formatSize(categoryImageMeta.size)}
               </div>
             )}
-            <div className="ci-preview-actions">
-              <button className="ci-preview-edit" onClick={() => mainDropRef.current.click()}>Edit</button>
-              <button className="ci-preview-delete" onClick={() => { setCategoryImage(null); setCategoryImageMeta(null); }}>Delete</button>
+            <div className="ap-ci-preview-actions">
+              <button className="ap-ci-preview-edit" onClick={() => mainDropRef.current.click()}>Edit</button>
+              <button className="ap-ci-preview-delete" onClick={() => { setCategoryImage(null); setCategoryImageMeta(null); }}>Delete</button>
             </div>
           </div>
         </div>
       ) : (
-        /* ── Drop zone: always shown when adding, or when editing with no image ── */
         <>
           <div
-            className="drop-zone"
+            className="ap-drop-zone"
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleMainDrop}
             onClick={() => mainDropRef.current.click()}
           >
-            <div className="drop-btn">
+            <div className="ap-drop-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
@@ -625,14 +826,14 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
               </svg>
               Click or drop image
             </div>
-            <div className="drop-hint">JPG, PNG or WEBP • Max 2 MB each</div>
+            <div className="ap-drop-hint">JPG, PNG or WEBP • Max 2 MB each</div>
           </div>
           {categoryImage && (
-            <div className="thumbs" style={{ marginTop: 10 }}>
-              <div className="thumb-wrapper">
-                <img src={categoryImage} className="thumb" alt="Category" />
+            <div className="ap-thumbs" style={{ marginTop: 10 }}>
+              <div className="ap-thumb-wrapper">
+                <img src={categoryImage} className="ap-thumb" alt="Category" />
                 <button
-                  className="thumb-del"
+                  className="ap-thumb-del"
                   onClick={(e) => { e.stopPropagation(); setCategoryImage(null); setCategoryImageMeta(null); }}
                   title="Remove image"
                 >×</button>
@@ -642,20 +843,13 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
         </>
       )}
 
-      <input
-        ref={mainDropRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={handleMainFileChange}
-      />
+      <input ref={mainDropRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleMainFileChange} />
 
-      <div className="ci-hint">
+      <div className="ap-ci-hint">
         This image appears in the category strip on the home page and on the category listing page.
       </div>
 
-      {/* ── Storefront Preview ── */}
-      <div className="ci-storefront-title">Storefront Preview</div>
+      <div className="ap-ci-storefront-title">Storefront Preview</div>
       <input
         ref={storefrontInputRef}
         type="file"
@@ -664,43 +858,35 @@ function CategoryImagesSection({ categoryImage, setCategoryImage, categoryImageM
         style={{ display: "none" }}
         onChange={(e) => handleStorefrontFiles(e.target.files)}
       />
-      <div className="ci-storefront-grid">
+      <div className="ap-ci-storefront-grid">
         {storefrontImages.map((src, i) => (
-          <div key={i} className="ci-storefront-item">
-            <div className="ci-storefront-thumb">
+          <div key={i} className="ap-ci-storefront-item">
+            <div className="ap-ci-storefront-thumb">
               <img src={src} alt={`storefront-${i}`} />
               <button
-                className="ci-storefront-del"
+                className="ap-ci-storefront-del"
                 onClick={(e) => { e.stopPropagation(); removeStorefrontImage(i); }}
                 title="Remove"
-              >
-                ×
-              </button>
+              >×</button>
             </div>
-            <span className="ci-storefront-label">{previewLabel}</span>
+            <span className="ap-ci-storefront-label">{previewLabel}</span>
           </div>
         ))}
         {storefrontImages.length < 6 && (
-          <div className="ci-storefront-item">
-            <div
-              className="ci-storefront-add"
-              onClick={() => storefrontInputRef.current.click()}
-              title="Add storefront image"
-            >
-              +
-            </div>
-            <span className="ci-storefront-label">{previewLabel}</span>
+          <div className="ap-ci-storefront-item">
+            <div className="ap-ci-storefront-add" onClick={() => storefrontInputRef.current.click()} title="Add storefront image">+</div>
+            <span className="ap-ci-storefront-label">{previewLabel}</span>
           </div>
         )}
       </div>
-      <div className="ci-storefront-hint">
+      <div className="ap-ci-storefront-hint">
         Preview of how this category will appear in the home page category strip.
       </div>
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData }) {
   const isEditing = !!initialData;
@@ -727,15 +913,13 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
 
   const [categoryImage, setCategoryImage]         = useState(initialData?.categoryImage || null);
   const [categoryImageMeta, setCategoryImageMeta] = useState(initialData?.categoryImageMeta || null);
-  const [storefrontImages, setStorefrontImages] = useState(initialData?.storefrontImages || []);
-  const [visibility, setVisibility]             = useState([
+  const [storefrontImages, setStorefrontImages]   = useState(initialData?.storefrontImages || []);
+  const [visibility, setVisibility]               = useState([
     initialData?.visible  ?? false,
     initialData?.featured ?? false,
   ]);
-
   const [filters, setFilters]           = useState(initialData?.filters || []);
   const [filterGroups, setFilterGroups] = useState(initialData?.filterGroups || []);
-
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -782,9 +966,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
     price: form.price, comparePrice: form.comparePrice, discountPrice: form.discountPrice,
     stock: form.stock, stockQty: form.stockQty,
     material: form.material, weight: form.weight, size: form.size, care: form.care,
-    categoryImage,
-    categoryImageMeta,
-    storefrontImages,
+    categoryImage, categoryImageMeta, storefrontImages,
     visible: visibility[0], featured: visibility[1], status,
     filters, filterGroups,
   });
@@ -793,34 +975,34 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   const handleDraft   = () => { if (onSaveDraft) onSaveDraft(buildProductData("Draft")); };
 
   return (
-    <div className="page">
+    <div className="ap-page">
 
       {/* ── Header ── */}
-      <div className="header">
-        <button className="back-btn" onClick={onBack}>
+      <div className="ap-header">
+        <button className="ap-back-btn" onClick={onBack}>
           <img src={back} alt="Back" />
         </button>
         <h1>{isEditing ? "Edit Category" : "Add Category"}</h1>
       </div>
 
       {/* ── Name & Description ── */}
-      <div className="card">
-        <div className="card-title">Name &amp; description</div>
-        <div className="field">
+      <div className="ap-card">
+        <div className="ap-card-title">Name &amp; description</div>
+        <div className="ap-field">
           <label>Product Name</label>
           <input placeholder="Input your text" value={form.name} onChange={set("name")} />
         </div>
-        <div className="field">
+        <div className="ap-field">
           <label>Description</label>
           <textarea placeholder="" value={form.description} onChange={set("description")} />
         </div>
-        <div className="row-2">
-          <div className="field">
+        <div className="ap-row-2">
+          <div className="ap-field">
             <label>Sku</label>
             <input placeholder="Product Type" value={form.sku} onChange={set("sku")} />
-            <div className="auto-hint">Auto Generated Or Enter Manually</div>
+            <div className="ap-auto-hint">Auto Generated Or Enter Manually</div>
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Category</label>
             <select value={form.category} onChange={set("category")}>
               <option value="">Product Type</option>
@@ -838,58 +1020,58 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       </div>
 
       {/* ── Price & Stock ── */}
-      <div className="card">
-        <div className="card-title">Price &amp; Stock</div>
-        <div className="grid3-wrap">
-          <div className="field">
+      <div className="ap-card">
+        <div className="ap-card-title">Price &amp; Stock</div>
+        <div className="ap-grid3-wrap">
+          <div className="ap-field">
             <label>Price (₹)</label>
             <input style={inputBase} placeholder="Eg: 2000" value={form.price} onChange={set("price")} />
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Compare-at Price (₹)</label>
             <input style={inputBase} placeholder="Eg: 2000" value={form.comparePrice} onChange={set("comparePrice")} />
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Discount Price (₹)</label>
             <input style={inputBase} placeholder="Eg: 2000" value={form.discountPrice} onChange={set("discountPrice")} />
           </div>
         </div>
-        <div className="grid3-wrap">
-          <div className="field">
+        <div className="ap-grid3-wrap">
+          <div className="ap-field">
             <label>Stock Quantity</label>
             <input style={inputBase} placeholder="Eg: 3" value={form.stock} onChange={set("stock")} />
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Minimum Stock Alert</label>
             <input style={inputBase} placeholder="Eg: 3" value={form.stockQty} onChange={set("stockQty")} />
           </div>
           <div />
         </div>
-        <div className="auto-hint">Auto Generated Or Enter Manually</div>
+        <div className="ap-auto-hint">Auto Generated Or Enter Manually</div>
       </div>
 
       {/* ── Product Details ── */}
-      <div className="card">
-        <div className="card-title">Product Details</div>
-        <div className="grid3-wrap">
-          <div className="field">
+      <div className="ap-card">
+        <div className="ap-card-title">Product Details</div>
+        <div className="ap-grid3-wrap">
+          <div className="ap-field">
             <label>Material</label>
             <input style={inputBase} placeholder="Eg: Cotton" value={form.material} onChange={set("material")} />
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Weight</label>
             <input style={inputBase} placeholder="Eg: 200g" value={form.weight} onChange={set("weight")} />
           </div>
-          <div className="field">
+          <div className="ap-field">
             <label>Size / Dimensions</label>
             <input style={inputBase} placeholder="Eg: 30x20cm" value={form.size} onChange={set("size")} />
           </div>
         </div>
-        <div className="grid3-wrap">
-          <div className="field">
+        <div className="ap-grid3-wrap">
+          <div className="ap-field">
             <label>Care Instructions</label>
             <input style={inputBase} placeholder="Eg: Avoid water" value={form.care} onChange={set("care")} />
-            <div className="auto-hint">Auto Generated Or Enter Manually</div>
+            <div className="ap-auto-hint">Auto Generated Or Enter Manually</div>
           </div>
           <div /><div />
         </div>
@@ -908,7 +1090,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       />
 
       {/* ── Filter Attributes ── */}
-      <div style={{ width: "75%" }}>
+      <div>
         <FilterAttributesSection
           filters={filters}
           setFilters={setFilters}
@@ -918,36 +1100,36 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       </div>
 
       {/* ── Visibility Options ── */}
-      <div className="card">
-        <div className="card-title">Visibility Options</div>
-        <div className="toggle-row">
+      <div className="ap-card">
+        <div className="ap-card-title">Visibility Options</div>
+        <div className="ap-toggle-row">
           <div>
-            <div className="toggle-label">Show On Store</div>
-            <div className="toggle-sub">Product will be visible to customers</div>
+            <div className="ap-toggle-label">Show On Store</div>
+            <div className="ap-toggle-sub">Product will be visible to customers</div>
           </div>
-          <label className="toggle">
+          <label className="ap-toggle">
             <input type="checkbox" checked={visibility[0]} onChange={() => toggleVis(0)} />
-            <span className="slider" />
+            <span className="ap-slider" />
           </label>
         </div>
-        <div className="toggle-row">
+        <div className="ap-toggle-row">
           <div>
-            <div className="toggle-label">Featured product</div>
-            <div className="toggle-sub">Show in featured collections on home page</div>
+            <div className="ap-toggle-label">Featured product</div>
+            <div className="ap-toggle-sub">Show in featured collections on home page</div>
           </div>
-          <label className="toggle">
+          <label className="ap-toggle">
             <input type="checkbox" checked={visibility[1]} onChange={() => toggleVis(1)} />
-            <span className="slider" />
+            <span className="ap-slider" />
           </label>
         </div>
       </div>
 
       {/* ── Footer ── */}
-      <div className="footer">
-        <button type="button" className="btn-draft" onClick={handleDraft}>
+      <div className="ap-footer">
+        <button type="button" className="ap-btn-draft" onClick={handleDraft}>
           {isEditing ? "Save Changes as Draft" : "Save Draft"}
         </button>
-        <button type="button" className="btn-publish" onClick={handlePublish}>
+        <button type="button" className="ap-btn-publish" onClick={handlePublish}>
           {isEditing ? "Update Product" : "Publish now"}
         </button>
       </div>

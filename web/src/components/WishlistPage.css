@@ -303,18 +303,21 @@ input, select { font-family: inherit; }
   margin-bottom: 28px;
 }
 
+/* FIX: no wrapping on desktop, vertically centered */
 .freq-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 40px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
+/* FIX: keep products + plus signs in a single row, don't shrink */
 .freq-products {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .freq-item-wrapper { display: flex; align-items: center; gap: 12px; }
@@ -334,7 +337,14 @@ input, select { font-family: inherit; }
 .freq-price-old { font-size: 13px; color: var(--text-muted); text-decoration: line-through; }
 .freq-name { font-size: 13px; color: var(--text-secondary); max-width: 180px; }
 
-.freq-action { display: flex; flex-direction: column; gap: 14px; min-width: 180px; }
+/* FIX: action panel won't shrink below its content */
+.freq-action {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 200px;
+  flex-shrink: 0;
+}
 
 .freq-total-label { font-size: 16px; color: var(--text-primary); }
 .freq-total-label strong { font-size: 18px; }
@@ -361,15 +371,20 @@ input, select { font-family: inherit; }
 .freq-note svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
 
 /* ─── RECENTLY VIEWED ────────────────────────────────────────── */
-.recent-section { margin-top: 60px; }
+.recent-section {
+  margin-top: 60px;
+  width: 100%;
+  overflow: hidden;
+}
 
+/* FIX: left-aligned on desktop to match other section headings */
 .recent-title {
   font-family: 'Agraham', Georgia, serif;
   font-size: 36px;
   font-weight: 400;
   color: var(--charcoal);
   margin-bottom: 28px;
-  text-align: center;
+  text-align: left;
 }
 
 .recent-grid {
@@ -377,6 +392,7 @@ input, select { font-family: inherit; }
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .recent-item { display: flex; flex-direction: column; gap: 6px; }
@@ -405,7 +421,13 @@ input, select { font-family: inherit; }
 .recent-price-old { font-size: 12px; color: var(--text-muted); text-decoration: line-through; }
 .recent-name { font-size: 12px; color: var(--text-secondary); }
 
-.recent-nav { display: flex; justify-content: center; gap: 12px; margin-top: 8px; }
+.recent-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  width: 100%;
+}
 
 .recent-nav-btn {
   width: 40px; height: 40px;
@@ -547,7 +569,7 @@ input, select { font-family: inherit; }
   /* Main */
   .wishlist-main { padding: 24px 16px 56px; }
 
-  /* Header row — stack on narrow */
+  /* Header row */
   .wishlist-header-row { margin-bottom: 20px; }
   .wishlist-title { font-size: 32px; }
 
@@ -560,19 +582,19 @@ input, select { font-family: inherit; }
   .wishlist-item-original { font-size: 12px; }
   .wishlist-remove-btn { top: 18px; }
 
-  /* Frequently bought */
+  /* Frequently bought — restore wrap on mobile */
   .freq-section { margin-top: 40px; }
   .freq-title { font-size: 26px; margin-bottom: 20px; }
-  .freq-content { flex-direction: column; gap: 24px; }
-  .freq-products { gap: 10px; }
+  .freq-content { flex-direction: column; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .freq-products { flex-wrap: wrap; flex-shrink: 1; gap: 10px; }
   .freq-img { width: 110px; height: 110px; border-radius: 10px; }
   .freq-plus { font-size: 20px; }
-  .freq-action { min-width: unset; width: 100%; }
+  .freq-action { min-width: unset; width: 100%; flex-shrink: 1; }
   .freq-add-btn { width: 100%; text-align: center; }
 
-  /* Recently viewed — 3 columns */
+  /* Recently viewed — 3 columns, restore center title */
   .recent-section { margin-top: 40px; }
-  .recent-title { font-size: 26px; margin-bottom: 20px; }
+  .recent-title { font-size: 26px; margin-bottom: 20px; text-align: center; }
   .recent-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
   /* Footer */

@@ -99,7 +99,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
     <div className="page">
 
       {/* ── Header ── */}
-      <div className="header">
+      <div className="ap-header">
         <button className="back-btn" onClick={onBack}>
           <img src={back} alt="Back" />
         </button>
@@ -168,7 +168,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
             <label>Minimum Stock Alert</label>
             <input placeholder="Eg: 3" value={form.stockQty} onChange={set("stockQty")} />
           </div>
-          {/* empty third cell — hidden by CSS */}
           <div />
         </div>
 
@@ -200,7 +199,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
             <input placeholder="Eg: Avoid water" value={form.care} onChange={set("care")} />
             <div className="auto-hint">Auto Generated Or Enter Manually</div>
           </div>
-          {/* empty cells hidden by CSS */}
           <div />
           <div />
         </div>
@@ -281,7 +279,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       </div>
 
       {/* ── Footer ── */}
-      <div className="footer">
+      <div className="ap-footer">
         <button type="button" className="btn-draft" onClick={handleDraft}>
           {isEditing ? "Save Changes as Draft" : "cancel"}
         </button>
