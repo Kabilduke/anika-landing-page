@@ -13,7 +13,9 @@ module "supabase" {
   region                   = var.region
   db_password              = var.db_password
   site_url                 = var.site_url
+  supabase_project_ref     = var.supabase_project_ref
 }
+
 
 # 2. Deploy Customer Portal Static Site (web/) via Reusable AWS S3 + CloudFront Module
 # module "web_storefront" {

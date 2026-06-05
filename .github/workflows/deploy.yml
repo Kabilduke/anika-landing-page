@@ -25,6 +25,7 @@ jobs:
       supabase_anon_key: ${{ steps.supabase_outputs.outputs.supabase_anon_key }}
       supabase_ref: ${{ steps.supabase_outputs.outputs.supabase_ref }}
       supabase_region: ${{ steps.supabase_outputs.outputs.supabase_region }}
+      supabase_db_url: ${{ steps.supabase_outputs.outputs.supabase_db_url }}
       
     steps:
       - name: Checkout Repository
@@ -72,6 +73,7 @@ jobs:
           terraform apply -auto-approve \
             -var="supabase_access_token=${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
             -var="supabase_organization_id=${{ secrets.SUPABASE_ORGANIZATION_ID }}" \
+            -var="supabase_project_ref=${{ secrets.SUPABASE_PROJECT_REF }}" \
             -var="db_password=${{ env.DB_PASS }}" \
             -var="environment=${{ env.ENV_NAME }}" \
             -var="site_url=${{ env.SITE_URL }}"
@@ -94,6 +96,7 @@ jobs:
           echo "supabase_anon_key=$(terraform output -raw anon_key)" >> "$GITHUB_OUTPUT"
           echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
           echo "supabase_region=$(terraform output -raw supabase_region)" >> "$GITHUB_OUTPUT"
+          echo "supabase_db_url=$(terraform output -raw db_url)" >> "$GITHUB_OUTPUT"
 
   db_migration:
     name: Database Migrations
@@ -103,14 +106,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set DB Password
-        run: |
-          if [ "${{ needs.terraform.outputs.is_prod }}" = "true" ]; then
-            echo "DB_PASS=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "DB_PASS=LocalOnlyDummyPass123!" >> $GITHUB_ENV
-          fi
-
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v2
         with:
@@ -118,7 +113,7 @@ jobs:
 
       - name: Deploy Migrations to Remote DB
         run: |
-          supabase db push --db-url "postgresql://postgres.${{ needs.terraform.outputs.supabase_ref }}:${{ env.DB_PASS }}@aws-0-${{ needs.terraform.outputs.supabase_region }}.pooler.supabase.com:5432/postgres"
+          supabase db push --db-url "${{ needs.terraform.outputs.supabase_db_url }}"
 
   # deploy_storefront:
   #   name: Deploy Storefront Portal

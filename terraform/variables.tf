@@ -63,3 +63,10 @@ variable "create_dns_records" {
   type        = bool
   default     = true
 }
+
+variable "supabase_project_ref" {
+  description = "The Project Ref ID of the parent/production Supabase project. Required for development environment to branch from it."
+  type        = string
+  default     = ""
+}
+

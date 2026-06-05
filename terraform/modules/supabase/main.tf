@@ -7,7 +7,13 @@ terraform {
   }
 }
 
+locals {
+  is_prod     = var.environment == "prod"
+  project_ref = local.is_prod ? supabase_project.main[0].id : supabase_branch.main[0].id
+}
+
 resource "supabase_project" "main" {
+  count             = local.is_prod ? 1 : 0
   organization_id   = var.supabase_organization_id
   name              = "anika-${var.environment}"
   database_password = var.db_password
@@ -19,8 +25,15 @@ resource "supabase_project" "main" {
   }
 }
 
+resource "supabase_branch" "main" {
+  count              = local.is_prod ? 0 : 1
+  parent_project_ref = var.supabase_project_ref
+  git_branch         = var.environment
+  region             = var.region
+}
+
 resource "supabase_settings" "main" {
-  project_ref = supabase_project.main.id
+  project_ref = local.project_ref
 
   # Configure authentication settings (e.g. redirect URL)
   auth = jsonencode({
@@ -36,3 +49,4 @@ resource "supabase_settings" "main" {
     max_rows             = 1000
   })
 }
+

@@ -28,6 +28,13 @@ output "supabase_region" {
   value       = module.supabase.region
 }
 
+output "db_url" {
+  description = "The connection string for database migrations."
+  value       = module.supabase.db_url
+  sensitive   = true
+}
+
+
 # # 2. Storefront Deployment Outputs
 # output "storefront_s3_bucket" {
 #   description = "The name of the S3 bucket hosting the storefront application."

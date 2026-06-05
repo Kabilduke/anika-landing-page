@@ -3,10 +3,12 @@
 
 supabase_access_token    = "sbp_yourdevaccesstokenhere"
 supabase_organization_id = "org_yourdevorgidhere"
+supabase_project_ref     = "yourprodprojectrefhere"
 environment              = "dev"
 region                   = "us-east-1"
 db_password              = "YourStrongDevDbPassword123!"
 site_url                 = "https://dev.anikajewelry.gideonjacob.in"
+
 
 # AWS Deployment and Custom Domains
 aws_region               = "ap-south-1"

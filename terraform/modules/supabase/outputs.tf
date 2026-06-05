@@ -1,15 +1,15 @@
 data "supabase_apikeys" "main" {
-  project_ref = supabase_project.main.id
+  project_ref = local.project_ref
 }
 
 output "project_id" {
   description = "The unique reference ID (project_ref) of the Supabase project."
-  value       = supabase_project.main.id
+  value       = local.project_ref
 }
 
 output "project_url" {
   description = "The API Gateway URL of the Supabase project."
-  value       = "https://${supabase_project.main.id}.supabase.co"
+  value       = "https://${local.project_ref}.supabase.co"
 }
 
 output "anon_key" {
@@ -28,3 +28,10 @@ output "region" {
   description = "The region where the project is deployed."
   value       = var.region
 }
+
+output "db_url" {
+  description = "The connection string for database migrations."
+  value       = local.is_prod ? "postgresql://postgres.${supabase_project.main[0].id}:${var.db_password}@aws-0-${var.region}.pooler.supabase.com:5432/postgres" : "postgresql://${supabase_branch.main[0].database.user}:${supabase_branch.main[0].database.password}@${supabase_branch.main[0].database.host}:${supabase_branch.main[0].database.port}/postgres"
+  sensitive   = true
+}
+

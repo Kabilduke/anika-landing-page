@@ -23,3 +23,10 @@ variable "site_url" {
   description = "The Site URL for Auth redirection."
   type        = string
 }
+
+variable "supabase_project_ref" {
+  description = "The Project Ref ID of the parent/production Supabase project. Required for development environment to branch from it."
+  type        = string
+  default     = ""
+}
+
