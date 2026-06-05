@@ -51,14 +51,14 @@ jobs:
           echo "is_prod=${{ github.ref_name == 'main' }}" >> "$GITHUB_OUTPUT"
           if [ "${{ github.ref_name == 'main' }}" = "true" ]; then
             echo "ENV_NAME=prod" >> $GITHUB_ENV
-            echo "TF_WORKSPACE=prod" >> $GITHUB_ENV
+            echo "TF_WORKSPACE=anika-landing-page-prod" >> $GITHUB_ENV
             echo "DB_PASS=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
             echo "SITE_URL=https://www.anikajewelry.gideonjacob.in" >> $GITHUB_ENV
             echo "db_pass=${{ secrets.PROD_DB_PASSWORD }}" >> "$GITHUB_OUTPUT"
             echo "env_name=prod" >> "$GITHUB_OUTPUT"
           else
             echo "ENV_NAME=dev" >> $GITHUB_ENV
-            echo "TF_WORKSPACE=dev" >> $GITHUB_ENV
+            echo "TF_WORKSPACE=anika-landing-page-dev" >> $GITHUB_ENV
             echo "DB_PASS=LocalOnlyDummyPass123!" >> $GITHUB_ENV
             echo "SITE_URL=https://dev.anikajewelry.gideonjacob.in" >> $GITHUB_ENV
             echo "db_pass=LocalOnlyDummyPass123!" >> "$GITHUB_OUTPUT"
