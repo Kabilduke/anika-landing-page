@@ -23,3 +23,8 @@ output "service_role_key" {
   value       = data.supabase_apikeys.main.service_role_key
   sensitive   = true
 }
+
+output "region" {
+  description = "The region where the project is deployed."
+  value       = var.region
+}

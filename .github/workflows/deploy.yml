@@ -24,6 +24,7 @@ jobs:
       supabase_url: ${{ steps.supabase_outputs.outputs.supabase_url }}
       supabase_anon_key: ${{ steps.supabase_outputs.outputs.supabase_anon_key }}
       supabase_ref: ${{ steps.supabase_outputs.outputs.supabase_ref }}
+      supabase_region: ${{ steps.supabase_outputs.outputs.supabase_region }}
       
     steps:
       - name: Checkout Repository
@@ -92,6 +93,7 @@ jobs:
           echo "supabase_url=$(terraform output -raw project_url)" >> "$GITHUB_OUTPUT"
           echo "supabase_anon_key=$(terraform output -raw anon_key)" >> "$GITHUB_OUTPUT"
           echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
+          echo "supabase_region=$(terraform output -raw supabase_region)" >> "$GITHUB_OUTPUT"
 
   db_migration:
     name: Database Migrations
@@ -116,7 +118,7 @@ jobs:
 
       - name: Deploy Migrations to Remote DB
         run: |
-          supabase db push --db-url "postgresql://postgres:${{ env.DB_PASS }}@db.${{ needs.terraform.outputs.supabase_ref }}.supabase.co:5432/postgres"
+          supabase db push --db-url "postgresql://postgres.${{ needs.terraform.outputs.supabase_ref }}:${{ env.DB_PASS }}@aws-0-${{ needs.terraform.outputs.supabase_region }}.pooler.supabase.com:5432/postgres"
 
   # deploy_storefront:
   #   name: Deploy Storefront Portal

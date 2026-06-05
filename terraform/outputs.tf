@@ -23,6 +23,11 @@ output "service_role_key" {
   sensitive   = true
 }
 
+output "supabase_region" {
+  description = "The region where the Supabase project is deployed."
+  value       = module.supabase.region
+}
+
 # # 2. Storefront Deployment Outputs
 # output "storefront_s3_bucket" {
 #   description = "The name of the S3 bucket hosting the storefront application."
