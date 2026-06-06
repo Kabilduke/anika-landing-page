@@ -92,11 +92,15 @@ jobs:
         id: supabase_outputs
         working-directory: terraform
         run: |
+          db_url=$(terraform output -json db_url | jq -r)
+          anon_key=$(terraform output -json anon_key | jq -r)
+          echo "::add-mask::$db_url"
+          echo "::add-mask::$anon_key"
           echo "supabase_url=$(terraform output -raw project_url)" >> "$GITHUB_OUTPUT"
-          echo "supabase_anon_key=$(terraform output -raw anon_key)" >> "$GITHUB_OUTPUT"
+          echo "supabase_anon_key=$anon_key" >> "$GITHUB_OUTPUT"
           echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
           echo "supabase_region=$(terraform output -raw supabase_region)" >> "$GITHUB_OUTPUT"
-          echo "supabase_db_url=$(terraform output -raw db_url)" >> "$GITHUB_OUTPUT"
+          echo "supabase_db_url=$db_url" >> "$GITHUB_OUTPUT"
 
   db_migration:
     name: Database Migrations
