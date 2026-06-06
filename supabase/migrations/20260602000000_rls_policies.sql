@@ -1,3 +1,17 @@
+-- ── 6. ADMIN REGISTRY TABLE ──
+create table if not exists public.admin_users (
+  id uuid references auth.users on delete cascade primary key,
+  email text not null unique,
+  role text not null default 'admin',
+  created_at timestamp with time zone default now()
+);
+
+alter table public.admin_users enable row level security;
+
+create policy "Users can check if they are admin" 
+  on public.admin_users for select 
+  using (auth.uid() = id);
+
 -- ── 1. USER PROFILES TABLE ──
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
@@ -152,19 +166,6 @@ create policy "Admins can view and update all customer orders"
     )
   );
 
--- ── 6. ADMIN REGISTRY TABLE ──
-create table if not exists public.admin_users (
-  id uuid references auth.users on delete cascade primary key,
-  email text not null unique,
-  role text not null default 'admin',
-  created_at timestamp with time zone default now()
-);
-
-alter table public.admin_users enable row level security;
-
-create policy "Users can check if they are admin" 
-  on public.admin_users for select 
-  using (auth.uid() = id);
 
 -- ── 7. POSTGRES TRIGGERS (Automated Profile Creation) ──
 
