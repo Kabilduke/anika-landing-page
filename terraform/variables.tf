@@ -32,6 +32,12 @@ variable "site_url" {
   default     = "http://localhost:5173"
 }
 
+variable "use_branching" {
+  description = "Set to true to use Supabase database branching (requires Pro/Enterprise plan). Set to false to use separate projects (Free tier)."
+  type        = bool
+  default     = false
+}
+
 # AWS Deployment and Custom Domains Variables
 
 variable "aws_region" {
@@ -68,5 +74,10 @@ variable "supabase_project_ref" {
   description = "The Project Ref ID of the parent/production Supabase project. Required for development environment to branch from it."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.supabase_project_ref == "" || can(regex("^[a-z0-9]{20}$", var.supabase_project_ref))
+    error_message = "The supabase_project_ref must be a valid 20-character lowercase alphanumeric slug (e.g. 'jdgubohcwzgmaadjrhrm')."
+  }
 }
 

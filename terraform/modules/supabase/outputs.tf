@@ -31,7 +31,7 @@ output "region" {
 
 output "db_url" {
   description = "The connection string for database migrations."
-  value       = local.is_prod ? "postgresql://postgres.${supabase_project.main[0].id}:${var.db_password}@aws-0-${var.region}.pooler.supabase.com:5432/postgres" : "postgresql://${supabase_branch.main[0].database.user}:${supabase_branch.main[0].database.password}@${supabase_branch.main[0].database.host}:${supabase_branch.main[0].database.port}/postgres"
+  value       = local.use_branch ? "postgresql://postgres:${var.db_password}@${supabase_branch.main[0].database.host}:${supabase_branch.main[0].database.port}/postgres" : "postgresql://postgres.${supabase_project.main[0].id}:${var.db_password}@aws-0-${var.region}.pooler.supabase.com:5432/postgres"
   sensitive   = true
 }
 

@@ -14,6 +14,8 @@ module "supabase" {
   db_password              = var.db_password
   site_url                 = var.site_url
   supabase_project_ref     = var.supabase_project_ref
+  domain_name              = var.domain_name
+  use_branching            = var.use_branching
 }
 
 
