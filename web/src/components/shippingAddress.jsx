@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./shippingAddress.css";
-import Navbar from "./SiteHeader";
-import Footer from "./SiteFooter";
+import Navbar from "../components/SiteHeader";
+import Footer from "../components/SiteFooter";
 
 const indianStates = [
   "Tamil Nadu", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Goa", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", 
   "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
-  "Telangana", "Uttar Pradesh", "West Bengal",
-  "Delhi", "Jammu & Kashmir",
+  "Telangana",  "Uttar Pradesh", "West Bengal",
+  "Delhi", "Jammu & Kashmir" ,
 ];
 
 const emptyForm = {
-  name: "", email: "", mobile: "",
-  flat: "", area: "", city: "",
-  pinCode: "", state: "Tamil Nadu", isDefault: false,
+  name: "", email: "", mobile: "", flat: "", area: "",
+  city: "", pinCode: "", state: "Tamil Nadu", isDefault: false,
 };
 
 export default function ShippingAddress() {
@@ -27,36 +27,55 @@ export default function ShippingAddress() {
   const [editingId, setEditingId] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [userId, setUserId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  const [user, setUser] = useState(null);
+
   const navigate = useNavigate();
 
-  // ── fetch addresses from Supabase ──
-  const fetchAddresses = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user){
-      return;
-    }
+  const fetchAddresses = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      if (error) throw error;
 
-    if (error) { console.error(error.message); return; }
-    if (data && data.length > 0) {
-      setAddresses(data);
-      setSelectedId(data[0].address_id);
+      if (data) {
+        const formatted = data.map(item => ({
+          id: item.address_id,
+          name: item.full_name,
+          address: `${item.address_line1}, ${item.address_line2 || ""}, ${item.city}, ${item.state} - ${item.postal_code}`,
+          isDefault: item.is_default,
+          flat: item.address_line1,
+          area: item.address_line2 || "",
+          city: item.city,
+          state: item.state,
+          pinCode: item.postal_code,
+          mobile: item.phone_number,
+        }));
+        setAddresses(formatted);
+        
+        const defaultAddr = formatted.find(a => a.isDefault);
+        if (defaultAddr) {
+          setSelectedId(defaultAddr.id);
+        } else if (formatted.length > 0) {
+          setSelectedId(formatted[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching addresses:", err);
     }
   };
 
-  // ── fetch userId and addresses on mount ──
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUserId(session.user.id);
-        fetchAddresses();
+        setUser(session.user);
+        fetchAddresses(session.user.id);
+      } else {
+        alert("Please log in first to checkout.");
+        navigate("/account/login");
       }
     });
   }, []);
@@ -64,7 +83,6 @@ export default function ShippingAddress() {
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Name is required";
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = "Valid email is required";
     if (!form.mobile.trim() || !/^\d{10}$/.test(form.mobile.replace(/\D/g, ""))) e.mobile = "Valid 10-digit mobile is required";
     if (!form.flat.trim()) e.flat = "Address is required";
     if (!form.area.trim()) e.area = "Area is required";
@@ -88,82 +106,77 @@ export default function ShippingAddress() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
 
-    if (editingId !== null) {
-      const { error } = await supabase
-        .from("addresses")
-        .update({
-          full_name: form.name,
-          phone_number: form.mobile,
-          address_line1: form.flat,
-          address_line2: form.area,
-          city: form.city,
-          state: form.state,
-          postal_code: form.pinCode,
-          is_default: form.isDefault,
-        })
-        .eq("address_id", editingId)
-      if (error) { alert(error.message); return; }
+    try {
+      if (!user) {
+        alert("Please log in first.");
+        navigate("/account/login");
+        return;
+      }
 
-      // ── UPDATE local state only ──
-      setAddresses((prev) =>
-        prev.map((a) =>
-          a.address_id === editingId
-            ? {
-                ...a,
-                full_name: form.name,
-                phone_number: form.mobile,
-                address_line1: form.flat,
-                address_line2: form.area,
-                city: form.city,
-                state: form.state,
-                postal_code: form.pinCode,
-                is_default: form.isDefault,
-              }
-            : a
-        )
-      );
-      setEditingId(null);
-      toast("Address updated!");
-    } else {
-      // ── ADD — save to Supabase ──
-      const { data: { session } } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
-      if (!uid) { alert("Not logged in."); return; }
+      if (form.isDefault) {
+        // Reset defaults in database
+        await supabase
+          .from("addresses")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+      }
 
-      // ── check for duplicate ──
-      const isDuplicate = addresses.some(
-        (a) =>
-          a.address_line1.trim().toLowerCase() === form.flat.trim().toLowerCase() &&
-          a.postal_code === form.pinCode &&
-          a.phone_number === form.mobile
-      );
-      if (isDuplicate) { alert("This address already exists."); return; }
+      if (editingId !== null) {
+        const { error } = await supabase
+          .from("addresses")
+          .update({
+            full_name: form.name,
+            phone_number: form.mobile,
+            address_line1: form.flat,
+            address_line2: form.area,
+            city: form.city,
+            state: form.state,
+            postal_code: form.pinCode,
+            is_default: form.isDefault
+          })
+          .eq("address_id", editingId)
+          .eq("user_id", user.id);
 
-      const { data, error } = await supabase
-        .from("addresses")
-        .insert({
-          user_id: uid,
-          full_name: form.name,
-          phone_number: form.mobile,
-          address_line1: form.flat,
-          address_line2: form.area,
-          city: form.city,
-          state: form.state,
-          postal_code: form.pinCode,
-          is_default: form.isDefault,
-        })
-        .select()
-        .single();
+        if (error) throw error;
+        toast("Address updated successfully!");
+        setEditingId(null);
+      } else {
+        // check duplicate
+        const isDuplicate = addresses.some(
+          (a) =>
+            a.flat.trim().toLowerCase() === form.flat.trim().toLowerCase() &&
+            a.pinCode === form.pinCode &&
+            a.mobile === form.mobile
+        );
+        if (isDuplicate) {
+          alert("This address already exists.");
+          return;
+        }
 
-      if (error) { alert(error.message); return; }
+        const { error } = await supabase
+          .from("addresses")
+          .insert({
+            user_id: user.id,
+            full_name: form.name,
+            phone_number: form.mobile,
+            address_line1: form.flat,
+            address_line2: form.area,
+            city: form.city,
+            state: form.state,
+            postal_code: form.pinCode,
+            is_default: form.isDefault
+          });
 
-      setAddresses((prev) => [...prev, data[0]]);
-      setSelectedId(data[0].address_id);
-      toast("Address added!");
+        if (error) throw error;
+        toast("Address added successfully!");
+      }
+
+      await fetchAddresses(user.id);
+      setForm(emptyForm);
+      setErrors({});
+    } catch (err) {
+      alert("Failed to save address: " + err.message);
     }
-
-    setForm(emptyForm);
-    setErrors({});
   };
 
   // ── edit: populate form ──
@@ -204,9 +217,47 @@ export default function ShippingAddress() {
   };
 
   // ── Deliver Here — navigate ──
-  const handleDeliver = () => {
+  const handleDeliver = async () => {
     if (!selectedAddress) return;
-    navigate("/payment", { state: { address: selectedAddress } });
+    if (!user) {
+      alert("Please log in first to place your order.");
+      navigate("/account/login");
+      return;
+    }
+
+    try {
+      const product = location.state?.product || {
+        name: "Antique Bangle set",
+        price: "1299",
+        qty: 1
+      };
+
+      const numericPrice = parseFloat(product.price.toString().replace(/[^\d.]/g, '')) || 1299;
+      const orderId = "#AJW-" + Math.floor(1000 + Math.random() * 9000);
+
+      const { error } = await supabase
+        .from("orders")
+        .insert({
+          id: orderId,
+          user_id: user.id,
+          item_name: product.name,
+          quantity: product.qty || 1,
+          total_price: numericPrice * (product.qty || 1),
+          payment: 'COD',
+          type: 'Regular',
+          status: 'Pending'
+        });
+
+      if (error) throw error;
+
+      toast("Order placed successfully! Redirecting...");
+      setTimeout(() => {
+        navigate("/profile/orders");
+      }, 1500);
+
+    } catch (err) {
+      alert("Failed to place order: " + err.message);
+    }
   };
 
   const hasAddresses = addresses.length > 0;

@@ -5,21 +5,45 @@ import "./AnikaOrders.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
 
-const ALL_ORDERS = [
-  { id: "#AJW-1042", date: "12 May 2026", item: "Gold Jhumka Earrings", qty: 1, price: "₹3,200", status: "Pending" },
-  { id: "#AJW-1043", date: "18 May 2026", item: "Diamond Bangle Set", qty: 1, price: "₹8,500", status: "Delivered" },
-  { id: "#AJW-1044", date: "22 May 2026", item: "Silver Anklet Pair", qty: 2, price: "₹1,800", status: "Shipped" },
-  { id: "#AJW-1045", date: "25 May 2026", item: "Kundan Necklace", qty: 1, price: "₹12,000", status: "Pending" },
-];
-
 const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 const PAGE_SIZE = 5;
 
 export default function AnikaOrders() {
   const [activeTab, setActiveTab] = useState("Orders");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  const loadOrders = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", userId)
+        .order("order_date", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const formatted = data.map(item => ({
+          id: item.id,
+          date: new Date(item.order_date).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+          }),
+          item: item.item_name,
+          qty: item.quantity,
+          price: "₹" + parseFloat(item.total_price).toLocaleString("en-IN"),
+          status: item.status
+        }));
+        setOrders(formatted);
+      }
+    } catch (err) {
+      console.error("Error loading orders:", err);
+    }
+  };
 
   // ← fetch real user
   useEffect(() => {
@@ -29,6 +53,7 @@ export default function AnikaOrders() {
         return;
       }
       setUser(session.user);
+      loadOrders(session.user.id);
     });
   }, []);
 
@@ -48,8 +73,8 @@ export default function AnikaOrders() {
     else navigate(`/${link.toLowerCase()}`);
   };
 
-  const visibleOrders = ALL_ORDERS.slice(0, visibleCount);
-  const hasMore = visibleCount < ALL_ORDERS.length;
+  const visibleOrders = orders.slice(0, visibleCount);
+  const hasMore = visibleCount < orders.length;
 
   return (
     <>
@@ -75,7 +100,7 @@ export default function AnikaOrders() {
                 month: "short", year: "numeric"
               }) : ""}
             </span>
-            <span className="ao-vip-badge">{ALL_ORDERS.length} orders</span>
+            <span className="ao-vip-badge">{orders.length} orders</span>
           </div>
         </div>
 
@@ -98,7 +123,7 @@ export default function AnikaOrders() {
         <div className="ao-card">
           <div className="ao-card-header">
             <span className="ao-card-title">Order History</span>
-            <span className="ao-order-count">{ALL_ORDERS.length} Orders</span>
+            <span className="ao-order-count">{orders.length} Orders</span>
           </div>
 
           <div className="ao-order-list">

@@ -1,38 +1,57 @@
-# main.tf - Infrastructure Provisioning
+# main.tf - Infrastructure Orchestration
 
-# 1. Provision the brand new Supabase Project
-resource "supabase_project" "main" {
-  organization_id   = var.supabase_organization_id
-  name              = "anika-${var.environment}"
-  database_password = var.db_password
-  region            = var.region
-
-  # Prevent database password changes from triggering replacement of the project
-  lifecycle {
-    ignore_changes = [database_password]
-  }
+locals {
+  repo_name = "anika-landing-page"
 }
 
-# 2. Configure project-level API and Auth Settings
-resource "supabase_settings" "main" {
-  project_ref = supabase_project.main.id
+# 1. Provision Supabase Platform Infrastructure via Reusable Module
+module "supabase" {
+  source = "./modules/supabase"
 
-  # Configure authentication settings (e.g. redirect URL)
-  auth = jsonencode({
-    site_url              = var.site_url
-    mailer_otp_exp        = 3600 # 1 hour
-    mailer_signup_enabled = true
-  })
-
-  # Configure API gateway settings (can be customized if needed)
-  api = jsonencode({
-    db_schema            = "public,storage,graphql_public"
-    db_extra_search_path = "public,extensions"
-    max_rows             = 1000
-  })
+  supabase_organization_id = var.supabase_organization_id
+  environment              = var.environment
+  region                   = var.region
+  db_password              = var.db_password
+  site_url                 = var.site_url
+  supabase_project_ref     = var.supabase_project_ref
+  domain_name              = var.domain_name
+  use_branching            = var.use_branching
 }
 
-# Note: Database-level structures, custom RLS policies, schemas, and Storage Buckets
-# are managed via SQL migrations inside your `/supabase/migrations/` folder (using the Supabase CLI),
-# or dynamically created via your frontend client/server SDK. Terraform manages project-level
-# infrastructure and platform configurations only.
+
+# 2. Deploy Customer Portal Static Site (web/) via Reusable AWS S3 + CloudFront Module
+# module "web_storefront" {
+#   source = "./modules/static_site"
+
+#   providers = {
+#     aws           = aws
+#     aws.us_east_1 = aws.us_east_1
+#   }
+
+#   bucket_name        = "${local.repo_name}-storefront-${var.environment}"
+#   domain_name        = var.domain_name
+#   route53_zone_name  = var.route53_zone_name
+#   subdomain          = var.environment == "prod" ? "www" : "dev"
+#   additional_aliases = var.environment == "prod" ? [var.domain_name] : []
+#   use_custom_domain  = var.use_custom_domain
+#   create_dns_records = var.create_dns_records
+#   environment        = var.environment
+# }
+
+# # 3. Deploy Admin Portal Static Site (web_admin/) via Reusable AWS S3 + CloudFront Module
+# module "web_admin" {
+#   source = "./modules/static_site"
+
+#   providers = {
+#     aws           = aws
+#     aws.us_east_1 = aws.us_east_1
+#   }
+
+#   bucket_name        = "${local.repo_name}-admin-${var.environment}"
+#   domain_name        = var.domain_name
+#   route53_zone_name  = var.route53_zone_name
+#   subdomain          = var.environment == "prod" ? "admin" : "admin.dev"
+#   use_custom_domain  = var.use_custom_domain
+#   create_dns_records = var.create_dns_records
+#   environment        = var.environment
+# }

@@ -1,32 +1,68 @@
-# outputs.tf - Infrastructure Outputs
+# outputs.tf - Modular Infrastructure Outputs
 
-# Fetch project-level API keys dynamically using the data source
-data "supabase_apikeys" "main" {
-  project_ref = supabase_project.main.id
-}
-
-# 1. Output the project reference ID
+# 1. Supabase Platform Outputs
 output "project_id" {
   description = "The unique reference ID (project_ref) of the Supabase project."
-  value       = supabase_project.main.id
+  value       = module.supabase.project_id
 }
 
-# 2. Output the public Supabase API URL
 output "project_url" {
   description = "The API Gateway URL of the Supabase project."
-  value       = "https://${supabase_project.main.id}.supabase.co"
+  value       = module.supabase.project_url
 }
 
-# 3. Output the public anonymous API key (for frontend client initialization)
 output "anon_key" {
   description = "The publishable anonymous key for client authentication."
-  value       = data.supabase_apikeys.main.anon_key
+  value       = module.supabase.anon_key
   sensitive   = true
 }
 
-# 4. Output the private service role API key (highly sensitive, bypasses RLS)
 output "service_role_key" {
   description = "The private service role key. Keep secure and do not share!"
-  value       = data.supabase_apikeys.main.service_role_key
+  value       = module.supabase.service_role_key
   sensitive   = true
 }
+
+output "supabase_region" {
+  description = "The region where the Supabase project is deployed."
+  value       = module.supabase.region
+}
+
+output "db_url" {
+  description = "The connection string for database migrations."
+  value       = module.supabase.db_url
+  sensitive   = true
+}
+
+
+# # 2. Storefront Deployment Outputs
+# output "storefront_s3_bucket" {
+#   description = "The name of the S3 bucket hosting the storefront application."
+#   value       = module.web_storefront.s3_bucket_name
+# }
+
+# output "storefront_cloudfront_id" {
+#   description = "The CloudFront distribution ID for the storefront site."
+#   value       = module.web_storefront.cloudfront_distribution_id
+# }
+
+# output "storefront_url" {
+#   description = "The final HTTPS URL of the storefront application."
+#   value       = module.web_storefront.custom_domain_url
+# }
+
+# # 3. Admin Deployment Outputs
+# output "admin_s3_bucket" {
+#   description = "The name of the S3 bucket hosting the admin portal application."
+#   value       = module.web_admin.s3_bucket_name
+# }
+
+# output "admin_cloudfront_id" {
+#   description = "The CloudFront distribution ID for the admin site."
+#   value       = module.web_admin.cloudfront_distribution_id
+# }
+
+# output "admin_url" {
+#   description = "The final HTTPS URL of the admin portal application."
+#   value       = module.web_admin.custom_domain_url
+# }

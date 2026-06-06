@@ -1,0 +1,276 @@
+name: CI/CD Infrastructure & Application Deployment
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+permissions:
+  id-token: write # Required for requesting the JWT for OIDC
+  contents: read  # Required for actions/checkout
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  terraform:
+    name: Infrastructure Provisioning
+    runs-on: ubuntu-latest
+    outputs:
+      is_prod: ${{ steps.vars.outputs.is_prod }}
+#      storefront_s3_bucket: ${{ steps.aws_outputs.outputs.storefront_s3_bucket }}
+#      storefront_cf_dist: ${{ steps.aws_outputs.outputs.storefront_cf_dist }}
+#      admin_s3_bucket: ${{ steps.aws_outputs.outputs.admin_s3_bucket }}
+#      admin_cf_dist: ${{ steps.aws_outputs.outputs.admin_cf_dist }}
+#      admin_url: ${{ steps.aws_outputs.outputs.admin_url }}
+      supabase_url: ${{ steps.supabase_outputs.outputs.supabase_url }}
+      supabase_ref: ${{ steps.supabase_outputs.outputs.supabase_ref }}
+      supabase_region: ${{ steps.supabase_outputs.outputs.supabase_region }}
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Terraform Environment Variables
+        id: vars
+        run: |
+          echo "is_prod=${{ github.ref_name == 'main' }}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref_name == 'main' }}" = "true" ]; then
+            echo "ENV_NAME=prod" >> $GITHUB_ENV
+            echo "TF_WORKSPACE=anika-landing-page-prod" >> $GITHUB_ENV
+            echo "DB_PASS=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
+            echo "SITE_URL=https://www.anikajewelry.gideonjacob.in" >> $GITHUB_ENV
+            echo "db_pass=${{ secrets.PROD_DB_PASSWORD }}" >> "$GITHUB_OUTPUT"
+            echo "env_name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "ENV_NAME=dev" >> $GITHUB_ENV
+            echo "TF_WORKSPACE=anika-landing-page-dev" >> $GITHUB_ENV
+            echo "DB_PASS=AnikaDevSecureDbPass2026" >> $GITHUB_ENV
+            echo "SITE_URL=https://dev.anikajewelry.gideonjacob.in" >> $GITHUB_ENV
+            echo "db_pass=AnikaDevSecureDbPass2026" >> "$GITHUB_OUTPUT"
+            echo "env_name=dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="supabase_access_token=${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -var="supabase_organization_id=${{ secrets.SUPABASE_ORGANIZATION_ID }}" \
+            -var="supabase_project_ref=${{ secrets.SUPABASE_PROJECT_REF }}" \
+            -var="db_password=${{ env.DB_PASS }}" \
+            -var="environment=${{ env.ENV_NAME }}" \
+            -var="site_url=${{ env.SITE_URL }}"
+
+#      - name: Export AWS Deployment Outputs
+#        id: aws_outputs
+#        working-directory: terraform
+#        run: |
+#          echo "storefront_s3_bucket=$(terraform output -raw storefront_s3_bucket)" >> "$GITHUB_OUTPUT"
+#          echo "storefront_cf_dist=$(terraform output -raw storefront_cloudfront_id)" >> "$GITHUB_OUTPUT"
+#          echo "admin_s3_bucket=$(terraform output -raw admin_s3_bucket)" >> "$GITHUB_OUTPUT"
+#          echo "admin_cf_dist=$(terraform output -raw admin_cloudfront_id)" >> "$GITHUB_OUTPUT"
+#          echo "admin_url=$(terraform output -raw admin_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Supabase API Credentials
+        id: supabase_outputs
+        working-directory: terraform
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # Get all outputs in JSON format
+          outputs=$(terraform output -json)
+          
+          # Parse values using jq
+          db_url=$(echo "$outputs" | jq -r '.db_url.value // empty')
+          anon_key=$(echo "$outputs" | jq -r '.anon_key.value // empty')
+          project_url=$(echo "$outputs" | jq -r '.project_url.value // empty')
+          project_id=$(echo "$outputs" | jq -r '.project_id.value // empty')
+          supabase_region=$(echo "$outputs" | jq -r '.supabase_region.value // empty')
+          
+          # Debug output keys if db_url is empty
+          if [ -z "$db_url" ]; then
+            echo "ERROR: db_url is empty!" >&2
+            echo "Available outputs in state:" >&2
+            echo "$outputs" | jq 'keys' >&2
+            exit 1
+          fi
+          
+          echo "::add-mask::$db_url"
+          
+          # Query Supabase API for the actual connection pooler host (IPv4-compatible)
+          echo "Fetching database pooler configuration from Supabase API..."
+          pooler_info=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$project_id/config/database/pooler")
+          pooler_host=$(echo "$pooler_info" | jq -r '.[0].db_host // empty')
+          
+          if [ -n "$pooler_host" ]; then
+            echo "Resolved pooler host: $pooler_host"
+            # Extract password from direct db_url securely using python
+            db_pass=$(python3 -c "import urllib.parse as p; u=p.urlparse('$db_url'); print(u.password)")
+            pooler_db_url="postgresql://postgres.$project_id:$db_pass@$pooler_host:5432/postgres"
+            echo "::add-mask::$pooler_db_url"
+            resolved_db_url="$pooler_db_url"
+          else
+            echo "WARNING: Failed to resolve pooler host from API. Falling back to direct connection URL."
+            resolved_db_url="$db_url"
+          fi
+          
+          # Save all credentials to a JSON file to share via secure artifact
+          jq -n \
+            --arg url "$project_url" \
+            --arg anon "$anon_key" \
+            --arg ref "$project_id" \
+            --arg reg "$supabase_region" \
+            --arg db "$resolved_db_url" \
+            '{supabase_url: $url, supabase_anon_key: $anon, supabase_ref: $ref, supabase_region: $reg, supabase_db_url: $db}' \
+            > ../supabase_outputs.json
+          
+          echo "supabase_url=$project_url" >> "$GITHUB_OUTPUT"
+          echo "supabase_ref=$project_id" >> "$GITHUB_OUTPUT"
+          echo "supabase_region=$supabase_region" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Supabase Credentials Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-credentials
+          path: supabase_outputs.json
+          retention-days: 1
+
+  db_migration:
+    name: Database Migrations
+    needs: terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Credentials Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: supabase-credentials
+          path: .
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Deploy Migrations to Remote DB
+        run: |
+          # Read database URL from downloaded JSON and mask it
+          db_url=$(jq -r '.supabase_db_url' supabase_outputs.json)
+          echo "::add-mask::$db_url"
+          supabase db push --db-url "$db_url"
+
+  # deploy_storefront:
+  #   name: Deploy Storefront Portal
+  #   needs: [terraform, db_migration]
+  #   if: |
+  #     always() &&
+  #     needs.terraform.result == 'success' &&
+  #     (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-cache: npm
+
+  #     - name: Configure AWS Credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+  #         aws-region: ap-south-1
+
+  #     - name: Install Dependencies
+  #       working-directory: web
+  #       run: npm ci
+
+  #     - name: Download Credentials Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: supabase-credentials
+  #         path: .
+
+  #     - name: Build Application
+  #       working-directory: web
+  #       run: |
+  #         VITE_SUPABASE_URL=$(jq -r '.supabase_url' ../supabase_outputs.json)
+  #         VITE_SUPABASE_ANON_KEY=$(jq -r '.supabase_anon_key' ../supabase_outputs.json)
+  #         VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" VITE_ADMIN_CONSOLE_URL="${{ needs.terraform.outputs.admin_url }}" npm run build
+
+  #     - name: Sync to AWS S3
+  #       run: |
+  #         aws s3 sync web/dist/ s3://${{ needs.terraform.outputs.storefront_s3_bucket }} --delete
+
+  #     - name: Invalidate CloudFront Cache
+  #       run: |
+  #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.storefront_cf_dist }} --paths "/*"
+
+  # deploy_admin:
+  #   name: Deploy Admin Portal
+  #   needs: [terraform, db_migration]
+  #   if: |
+  #     always() &&
+  #     needs.terraform.result == 'success' &&
+  #     (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-cache: npm
+
+  #     - name: Configure AWS Credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+  #         aws-region: ap-south-1
+
+  #     - name: Install Dependencies
+  #       working-directory: web_admin
+  #       run: npm ci
+
+  #     - name: Download Credentials Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: supabase-credentials
+  #         path: .
+
+  #     - name: Build Application
+  #       working-directory: web_admin
+  #       run: |
+  #         VITE_SUPABASE_URL=$(jq -r '.supabase_url' ../supabase_outputs.json)
+  #         VITE_SUPABASE_ANON_KEY=$(jq -r '.supabase_anon_key' ../supabase_outputs.json)
+  #         VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" npm run build
+
+  #     - name: Sync to AWS S3
+  #       run: |
+  #         aws s3 sync web_admin/dist/ s3://${{ needs.terraform.outputs.admin_s3_bucket }} --delete
+
+  #     - name: Invalidate CloudFront Cache
+  #       run: |
+  #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.admin_cf_dist }} --paths "/*"

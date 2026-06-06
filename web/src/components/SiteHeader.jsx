@@ -6,26 +6,9 @@ import LogoImg from "../assets/offers/logo.svg";
 
 const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces"];
 
-const LoginDropdown = () => {
+const LoginDropdown = ({ user, isAdmin, handleLogout }) => {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const ref = useRef(null);
-  const navigate = useNavigate();
-
-  // ← check session on mount + listen for auth changes
-  useEffect(() => {
-    // Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for login/logout events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -35,13 +18,6 @@ const LoginDropdown = () => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setOpen(false);
-    navigate("/");
-  };
 
   return (
     <div className="login-wrapper" ref={ref}>
@@ -63,6 +39,20 @@ const LoginDropdown = () => {
               <p className="dropdown-email">{user.email}</p>
               <hr />
               <Link to="/profile" onClick={() => setOpen(false)}>My Profile</Link>
+              {isAdmin && (
+                <>
+                  <hr />
+                  <a 
+                    href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    onClick={() => setOpen(false)}
+                    style={{ display: "block", padding: "8px 0", color: "#b8860b", fontWeight: "600", textDecoration: "none" }}
+                  >
+                    Admin Console
+                  </a>
+                </>
+              )}
               <hr />
               <button className="dropdown-logout" onClick={handleLogout}>Logout</button>
             </>
@@ -82,6 +72,58 @@ const LoginDropdown = () => {
 
 export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+
+  // ← check session + check admin role on mount + listen for auth changes
+  useEffect(() => {
+    const checkAdmin = async (currentUser) => {
+      if (!currentUser) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from("admin_users")
+          .select("role")
+          .eq("id", currentUser.id)
+          .single();
+        
+        if (data && data.role === "admin") {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (err) {
+        setIsAdmin(false);
+      }
+    };
+
+    // Get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      checkAdmin(u);
+    });
+
+    // Listen for login/logout events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      checkAdmin(u);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsAdmin(false);
+    setMenuOpen(false);
+    navigate("/");
+  };
 
   const handleLinkClick = (link) => {
     setMenuOpen(false);
@@ -115,6 +157,17 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
                 {link}
               </button>
             ))}
+            {isAdmin && (
+              <a
+                href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-link admin-console-link"
+                style={{ color: "#b8860b", fontWeight: "600", textDecoration: "none" }}
+              >
+                Admin Console
+              </a>
+            )}
           </nav>
 
           <div className="header-actions">
@@ -134,7 +187,7 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
               </svg>
             </button>
 
-            <LoginDropdown />
+            <LoginDropdown user={user} isAdmin={isAdmin} handleLogout={handleLogout} />
           </div>
         </div>
       </header>
@@ -150,6 +203,17 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
               {link}
             </button>
           ))}
+          {isAdmin && (
+            <a
+              href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mobile-nav-link admin-console-link"
+              style={{ color: "#b8860b", fontWeight: "600", textDecoration: "none", display: "block" }}
+            >
+              Admin Console
+            </a>
+          )}
         </nav>
       </div>
     </>
