@@ -33,6 +33,43 @@ if (-not $dbUrl) {
     exit 1
 }
 
+# Resolve the correct connection pooler host dynamically using the Supabase API
+$projectRef = terraform output -raw project_id
+if (-not $projectRef) {
+    $projectRef = terraform output -json | ConvertFrom-Json | Select-Object -ExpandProperty project_id | Select-Object -ExpandProperty value
+}
+
+$varsFile = "environments/dev.tfvars"
+if (Test-Path $varsFile) {
+    $vars = Get-Content -Raw -Path $varsFile
+    $accessToken = ""
+    if ($vars -match 'supabase_access_token\s*=\s*"([^"]+)"') {
+        $accessToken = $Matches[1]
+    }
+    
+    if ($accessToken -and $projectRef) {
+        Write-Host "Fetching database pooler configuration from Supabase API..." -ForegroundColor Gray
+        $headers = @{
+            "Authorization" = "Bearer $accessToken"
+        }
+        try {
+            $ProgressPreference = 'SilentlyContinue'
+            $response = Invoke-RestMethod -Uri "https://api.supabase.com/v1/projects/$projectRef/config/database/pooler" -Headers $headers -Method Get
+            $poolerHost = $response[0].db_host
+            if ($poolerHost) {
+                Write-Host "Resolved pooler host: $poolerHost" -ForegroundColor Gray
+                # Extract password from direct dbUrl
+                if ($dbUrl -match 'postgresql://postgres:(.*)@') {
+                    $dbPass = $Matches[1]
+                    $dbUrl = "postgresql://postgres.{0}:{1}@{2}:5432/postgres" -f $projectRef, $dbPass, $poolerHost
+                }
+            }
+        } catch {
+            Write-Warning "Failed to query Supabase API for pooler configuration: $_"
+        }
+    }
+}
+
 # 4. Push database migrations via Supabase CLI
 Write-Host "4. Pushing database migrations via Supabase CLI..." -ForegroundColor Cyan
 Set-Location -Path "$ScriptDir\.."
