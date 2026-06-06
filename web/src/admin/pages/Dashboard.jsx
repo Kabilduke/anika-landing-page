@@ -84,13 +84,13 @@ const HamburgerIcon = ({ open }) =>
 // ── Menu Config ─────────────────────────────────────────────────
 const menuItems = [
   { id: "dashboard", label: "Dashboard", path: "/admin" },
-  { id: "product",   label: "Product", path: "/admin/products", children: [
-    { label: "All Products", path: "/admin/products" },
-    { label: "Add Product", path: "/admin/products/add" },
-  ]},
   { id: "category",  label: "Category", path: "/admin/categories", children: [
     { label: "All Categories", path: "/admin/categories" },
     { label: "Add Category", path: "/admin/categories/add" },
+  ]},
+  { id: "product",   label: "Product", path: "/admin/products", children: [
+    { label: "All Products", path: "/admin/products" },
+    { label: "Add Product", path: "/admin/products/add" },
   ]},
   { id: "order",     label: "Order", path: "/admin/orders", children: [
     { label: "All Orders", path: "/admin/orders" },
@@ -486,9 +486,9 @@ const Dashboard = () => {
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </button>
-          <Link to = "/profile">
+          <Link to="/profile">
             <button className="db__avatar-btn" aria-label="Profile">
-              <img src= {profile} alt="Avatar" className="db__avatar-img" />
+              <img src={profile} alt="Avatar" className="db__avatar-img" />
             </button>
           </Link>
         </div>
