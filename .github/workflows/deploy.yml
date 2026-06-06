@@ -92,14 +92,31 @@ jobs:
         id: supabase_outputs
         working-directory: terraform
         run: |
-          db_url=$(terraform output -json db_url | jq -r)
-          anon_key=$(terraform output -json anon_key | jq -r)
+          # Get all outputs in JSON format
+          outputs=$(terraform output -json)
+          
+          # Parse values using jq
+          db_url=$(echo "$outputs" | jq -r '.db_url.value // empty')
+          anon_key=$(echo "$outputs" | jq -r '.anon_key.value // empty')
+          project_url=$(echo "$outputs" | jq -r '.project_url.value // empty')
+          project_id=$(echo "$outputs" | jq -r '.project_id.value // empty')
+          supabase_region=$(echo "$outputs" | jq -r '.supabase_region.value // empty')
+          
+          # Debug output keys if db_url is empty
+          if [ -z "$db_url" ]; then
+            echo "ERROR: db_url is empty!" >&2
+            echo "Available outputs in state:" >&2
+            echo "$outputs" | jq 'keys' >&2
+            exit 1
+          fi
+          
           echo "::add-mask::$db_url"
           echo "::add-mask::$anon_key"
-          echo "supabase_url=$(terraform output -raw project_url)" >> "$GITHUB_OUTPUT"
+          
+          echo "supabase_url=$project_url" >> "$GITHUB_OUTPUT"
           echo "supabase_anon_key=$anon_key" >> "$GITHUB_OUTPUT"
-          echo "supabase_ref=$(terraform output -raw project_id)" >> "$GITHUB_OUTPUT"
-          echo "supabase_region=$(terraform output -raw supabase_region)" >> "$GITHUB_OUTPUT"
+          echo "supabase_ref=$project_id" >> "$GITHUB_OUTPUT"
+          echo "supabase_region=$supabase_region" >> "$GITHUB_OUTPUT"
           echo "supabase_db_url=$db_url" >> "$GITHUB_OUTPUT"
 
   db_migration:
