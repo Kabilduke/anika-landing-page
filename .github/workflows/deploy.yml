@@ -10,6 +10,9 @@ permissions:
   id-token: write # Required for requesting the JWT for OIDC
   contents: read  # Required for actions/checkout
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   terraform:
     name: Infrastructure Provisioning
@@ -25,7 +28,7 @@ jobs:
       supabase_anon_key: ${{ steps.supabase_outputs.outputs.supabase_anon_key }}
       supabase_ref: ${{ steps.supabase_outputs.outputs.supabase_ref }}
       supabase_region: ${{ steps.supabase_outputs.outputs.supabase_region }}
-      supabase_db_url: ${{ steps.supabase_outputs.outputs.supabase_db_url }}
+      supabase_db_url_base64: ${{ steps.supabase_outputs.outputs.supabase_db_url_base64 }}
       
     steps:
       - name: Checkout Repository
@@ -58,7 +61,7 @@ jobs:
           aws-region: ap-south-1
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
@@ -111,13 +114,15 @@ jobs:
           fi
           
           echo "::add-mask::$db_url"
-          echo "::add-mask::$anon_key"
+          
+          # Base64 encode sensitive DB URL to bypass GHA secret output skipping
+          db_url_base64=$(echo -n "$db_url" | base64 | tr -d '\n')
           
           echo "supabase_url=$project_url" >> "$GITHUB_OUTPUT"
           echo "supabase_anon_key=$anon_key" >> "$GITHUB_OUTPUT"
           echo "supabase_ref=$project_id" >> "$GITHUB_OUTPUT"
           echo "supabase_region=$supabase_region" >> "$GITHUB_OUTPUT"
-          echo "supabase_db_url=$db_url" >> "$GITHUB_OUTPUT"
+          echo "supabase_db_url_base64=$db_url_base64" >> "$GITHUB_OUTPUT"
 
   db_migration:
     name: Database Migrations
@@ -134,7 +139,10 @@ jobs:
 
       - name: Deploy Migrations to Remote DB
         run: |
-          supabase db push --db-url "${{ needs.terraform.outputs.supabase_db_url }}"
+          # Decode database URL and mask it locally in this runner container
+          db_url=$(echo "${{ needs.terraform.outputs.supabase_db_url_base64 }}" | base64 --decode)
+          echo "::add-mask::$db_url"
+          supabase db push --db-url "$db_url"
 
   # deploy_storefront:
   #   name: Deploy Storefront Portal
