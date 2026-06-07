@@ -27,7 +27,7 @@ const uploadProductImage = async (file, productName) => {
   const filePath = `products/${fileName}`;
 
   const { data, error } = await supabase.storage
-    .from("product-images")
+    .from("product_img")
     .upload(filePath, file, {
       cacheControl: "3600",
       upsert: false,
@@ -39,7 +39,7 @@ const uploadProductImage = async (file, productName) => {
   }
 
   const { data: { publicUrl } } = supabase.storage
-    .from("product-images")
+    .from("product_img")
     .getPublicUrl(filePath);
 
   return { url: publicUrl, path: filePath };
@@ -51,7 +51,7 @@ const compressImage = async (file, maxWidth = 1200, quality = 0.8) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const scale = maxWidth / img.width;
+      const scale = Math.min(1, maxWidth / img.width);
       canvas.width = maxWidth;
       canvas.height = img.height * scale;
 
@@ -80,21 +80,21 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   const [form, setForm] = useState(() =>
     initialData
       ? {
-          name: initialData.name || "",
-          description: initialData.description || "",
-          sku: initialData.sku || "",
-          category_id: initialData.category_id || "",
-          price: initialData.price || "",
-          compare_price: initialData.compare_price || "",
-          discount_price: initialData.discount_price || "",
-          stock: initialData.stock || "",
-          stock_alert: initialData.stock_alert || "",
-          material: initialData.material || "",
-          weight: initialData.weight || "",
-          sizes: initialData.sizes?.join(", ") || "",
-          colors: initialData.colors?.join(", ") || "",
-          care: initialData.care || "",
-        }
+        name: initialData.name || "",
+        description: initialData.description || "",
+        sku: initialData.sku || "",
+        category_id: initialData.category_id || "",
+        price: initialData.price || "",
+        compare_price: initialData.compare_price || "",
+        discount_price: initialData.discount_price || "",
+        stock: initialData.stock || "",
+        stock_alert: initialData.stock_alert || "",
+        material: initialData.material || "",
+        weight: initialData.weight || "",
+        sizes: initialData.sizes?.join(", ") || "",
+        colors: initialData.colors?.join(", ") || "",
+        care: initialData.care || "",
+      }
       : EMPTY_FORM
   );
 
@@ -161,14 +161,20 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   };
 
   const addFiles = (newFiles) => {
-    const filesArray = Array.from(newFiles).slice(0, 6 - rawFiles.length);
+    const remaining = 6 - images.length;
+    if (remaining <= 0) return;
+    const filesArray = Array.from(newFiles).slice(0, remaining);
     const previewUrls = filesArray.map((f) => URL.createObjectURL(f));
     setImages((prev) => [...prev, ...previewUrls].slice(0, 6));
     setRawFiles((prev) => [...prev, ...filesArray].slice(0, 6));
   };
 
   const removeImage = (idx) => {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
+    setImages((prev) => {
+      const url = prev[idx];
+      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== idx);
+    });
     setRawFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
@@ -264,11 +270,14 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   };
 
   const handlePublish = async () => {
+    if (!form.name.trim()) { alert("Product name is required."); return; }
+    if (!form.price) { alert("Price is required."); return; }
     const result = await saveProduct("Visible");
     if (!result.error && onPublish) onPublish(result.data);
   };
 
   const handleDraft = async () => {
+    if (!form.name.trim()) { alert("Product name is required."); return; }
     const result = await saveProduct("Draft");
     if (!result.error && onSaveDraft) onSaveDraft(result.data);
   };
@@ -550,10 +559,10 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         <button
           type="button"
           className="btn-draft"
-          onClick={handleDraft}
+          onClick={isEditing ? handleDraft : onBack}
           disabled={uploading}
         >
-          {isEditing ? "Save Changes as Draft" : "cancel"}
+          {isEditing ? "Save as Draft" : "Cancel"}
         </button>
         <button
           type="button"
@@ -561,7 +570,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
           onClick={handlePublish}
           disabled={uploading}
         >
-          {uploading ? "Uploading..." : isEditing ? "Update Product" : "save"}
+          {uploading ? "Uploading..." : isEditing ? "Update Product" : "Save"}
         </button>
       </div>
     </div>

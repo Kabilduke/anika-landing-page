@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import "./Dashboard.css";
 
@@ -366,6 +367,54 @@ const Dashboard = () => {
     setOpenMenus(expanded);
   }, [currentPath]);
 
+  // ── Fetch categories from Supabase on mount ─────────────────────
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (!error && data) {
+        setCategories(
+          data.map((row) => ({
+            ...row,
+            id: row.category_id,
+            categoryImage: row.image_url || null,
+            status: row.is_active ? "Active" : "Draft",
+          }))
+        );
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Normalize a raw Supabase product row into the shape productlist.jsx expects
+  const normalizeProductRow = (row) => ({
+    ...row,
+    id: row.product_id ?? row.id,
+    images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
+    image: row.image_url || null,
+    category: row.categories?.name || row.category || "",
+    status: row.is_active ? "Visible" : "Draft",
+  });
+
+  // ── Fetch products from Supabase on mount ─────────────────────
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, categories(name)")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setProducts(data.map(normalizeProductRow));
+      }
+    };
+    fetchProducts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const handleResize = () => { if (window.innerWidth > 768) setSidebarOpen(false); };
     window.addEventListener("resize", handleResize);
@@ -390,16 +439,31 @@ const Dashboard = () => {
     navigate("/admin/products/add");
   };
 
-  const handleDeleteProduct = (id) => setProducts((p) => p.filter((x) => x.id !== id));
+
+
+  const handleDeleteProduct = async (id) => {
+    await supabase.from("products").delete().eq("product_id", id);
+    setProducts((p) => p.filter((x) => x.id !== id));
+  };
 
   const handlePublish = (data) => {
-    setProducts((p) => editingProduct ? p.map((x) => x.id === editingProduct.id ? { ...data, id: editingProduct.id } : x) : [data, ...p]);
+    const normalized = normalizeProductRow(data);
+    setProducts((p) =>
+      editingProduct
+        ? p.map((x) => x.id === editingProduct.id ? normalized : x)
+        : [normalized, ...p]
+    );
     setEditingProduct(null);
     navigate("/admin/products");
   };
 
   const handleSaveDraft = (data) => {
-    setProducts((p) => editingProduct ? p.map((x) => x.id === editingProduct.id ? { ...data, id: editingProduct.id } : x) : [data, ...p]);
+    const normalized = normalizeProductRow(data);
+    setProducts((p) =>
+      editingProduct
+        ? p.map((x) => x.id === editingProduct.id ? normalized : x)
+        : [normalized, ...p]
+    );
     setEditingProduct(null);
     navigate("/admin/products");
   };
@@ -414,16 +478,39 @@ const Dashboard = () => {
     navigate("/admin/categories/add");
   };
 
-  const handleDeleteCategory = (id) => setCategories((p) => p.filter((x) => x.id !== id));
+  const handleDeleteCategory = async (id) => {
+    const row = categories.find((x) => x.id === id);
+    if (row) {
+      await supabase.from("categories").delete().eq("category_id", id);
+    }
+    setCategories((p) => p.filter((x) => x.id !== id));
+  };
+
+  const normalizeCategoryRow = (data) => ({
+    ...data,
+    id: data.category_id ?? data.id,
+    categoryImage: data.image_url || null,
+    status: data.is_active ? "Active" : "Draft",
+  });
 
   const handlePublishCategory = (data) => {
-    setCategories((p) => editingCategory ? p.map((x) => x.id === editingCategory.id ? { ...data, id: editingCategory.id } : x) : [data, ...p]);
+    const normalized = normalizeCategoryRow(data);
+    setCategories((p) =>
+      editingCategory
+        ? p.map((x) => x.id === editingCategory.id ? normalized : x)
+        : [normalized, ...p]
+    );
     setEditingCategory(null);
     navigate("/admin/categories");
   };
 
   const handleSaveDraftCategory = (data) => {
-    setCategories((p) => editingCategory ? p.map((x) => x.id === editingCategory.id ? { ...data, id: editingCategory.id } : x) : [data, ...p]);
+    const normalized = normalizeCategoryRow(data);
+    setCategories((p) =>
+      editingCategory
+        ? p.map((x) => x.id === editingCategory.id ? normalized : x)
+        : [normalized, ...p]
+    );
     setEditingCategory(null);
     navigate("/admin/categories");
   };

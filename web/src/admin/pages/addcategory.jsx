@@ -1,390 +1,68 @@
 import React, { useState, useRef, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 import back from "../../assets/admin/back.png";
 import "./addcategory.css";
 
-// ─────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────
-
 const EMPTY_FORM = {
   name: "",
+  slug: "",
+  sort_order: "",
   description: "",
-  sku: "",
-  category: "",
-  price: "",
-  comparePrice: "",
-  discountPrice: "",
-  stock: "",
-  stockQty: "",
-  material: "",
-  weight: "",
-  size: "",
-  care: "",
 };
 
-const EMPTY_GROUP = (id) => ({ id, title: "", options: [], inputVal: "" });
+// ── Image Upload ──────────────────────────────────────────────
+const uploadCategoryImage = async (file, categoryName) => {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${categoryName.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.${fileExt}`;
+  const filePath = `categories/${fileName}`;
 
-const inputBase = {
-  display: "block",
-  width: "100%",
-  height: "44px",
-  paddingLeft: "18px",
-  paddingRight: "18px",
-  border: "1px solid #e0e0e0",
-  borderRadius: "12px",
-  fontSize: "13px",
-  color: "#333",
-  background: "#fafafa",
-  outline: "none",
-  boxSizing: "border-box",
+  const { data, error } = await supabase.storage
+    .from("categories_img")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("Upload error:", error);
+    return { error };
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("categories_img")
+    .getPublicUrl(filePath);
+
+  return { url: publicUrl, path: filePath };
 };
 
-// ─────────────────────────────────────────────
-// FilterAttributesSection
-// ─────────────────────────────────────────────
-
-function FilterAttributesSection({ filters, setFilters, groups, setGroups }) {
-  const addGroup = () => setGroups((g) => [...g, EMPTY_GROUP(Date.now())]);
-  const removeGroup = (id) => setGroups((g) => g.filter((grp) => grp.id !== id));
-
-  const updateGroup = (id, patch) =>
-    setGroups((g) => g.map((grp) => (grp.id === id ? { ...grp, ...patch } : grp)));
-
-  const confirmOption = (grp) => {
-    const v = grp.inputVal.trim();
-    if (v && !grp.options.includes(v))
-      updateGroup(grp.id, { options: [...grp.options, v], inputVal: "" });
-    else updateGroup(grp.id, { inputVal: "" });
-  };
-
-  const removeOption = (grpId, opt) =>
-    setGroups((g) =>
-      g.map((grp) =>
-        grp.id === grpId
-          ? { ...grp, options: grp.options.filter((o) => o !== opt) }
-          : grp
-      )
-    );
-
-  const totalOptions = groups.reduce((s, g) => s + g.options.length, 0);
-
-  return (
-    <>
-      {/* Filter tags card */}
-      <div className="ap-card">
-        <div className="ap-card-title">Filter attributes</div>
-        <div className="ap-fa-top-card">
-          <div className="ap-fa-section-label">Filters</div>
-          {filters.length === 0 ? (
-            <div className="ap-fa-empty-hint">No filters added yet</div>
-          ) : (
-            <div className="ap-fa-tag-row">
-              {filters.map((tag) => (
-                <span key={tag} className="ap-fa-tag">
-                  {tag}
-                  <button
-                    className="ap-fa-tag-remove"
-                    onClick={() => setFilters((f) => f.filter((t) => t !== tag))}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Custom filter groups card */}
-      <div className="ap-card">
-        <div className="ap-fa-groups-header">
-          <div>
-            <div className="ap-card-title" style={{ marginBottom: 2 }}>
-              Custom filter groups
-            </div>
-            <div className="ap-fa-groups-sub">
-              Create your own filter groups and add options inside each one.
-              Shoppers will see these as filters on the category page.
-            </div>
-          </div>
-          {groups.length > 0 && (
-            <div className="ap-fa-groups-count">
-              {groups.length} {groups.length === 1 ? "group" : "groups"} · {totalOptions} options
-            </div>
-          )}
-        </div>
-
-        {groups.length === 0 && (
-          <div className="ap-fa-empty-groups">
-            No custom filter groups yet. Click "Add new filter group" to create one.
-          </div>
-        )}
-
-        {groups.map((grp) => (
-          <div key={grp.id} className="ap-fa-group-card">
-            <div className="ap-fa-group-title-row">
-              <input
-                className="ap-fa-group-title-input"
-                placeholder="Group name e.g. Stone type"
-                value={grp.title}
-                onChange={(e) => updateGroup(grp.id, { title: e.target.value })}
-              />
-              <button
-                className="ap-fa-delete-btn"
-                onClick={() => removeGroup(grp.id)}
-                title="Delete group"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
-              </button>
-            </div>
-
-            {grp.options.length > 0 && (
-              <div className="ap-fa-tag-row" style={{ marginBottom: 10 }}>
-                {grp.options.map((opt) => (
-                  <span key={opt} className="ap-fa-tag ap-fa-tag--group">
-                    {opt}
-                    <button
-                      className="ap-fa-tag-remove"
-                      onClick={() => removeOption(grp.id, opt)}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="ap-fa-section-label" style={{ marginBottom: 6 }}>
-              Select one after adding option
-            </div>
-            <div className="ap-fa-input-row">
-              <input
-                className="ap-fa-option-input"
-                placeholder="Add an option e.g. Gold"
-                value={grp.inputVal}
-                onChange={(e) => updateGroup(grp.id, { inputVal: e.target.value })}
-                onKeyDown={(e) => e.key === "Enter" && confirmOption(grp)}
-              />
-              <button className="ap-fa-confirm-btn" onClick={() => confirmOption(grp)}>
-                Confirm
-              </button>
-            </div>
-          </div>
-        ))}
-
-        <button className="ap-fa-add-group-btn" onClick={addGroup}>
-          + Add new filter group
-        </button>
-      </div>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────
-// CategoryImagesSection
-// ─────────────────────────────────────────────
-
-function CategoryImagesSection({
-  categoryImage,
-  setCategoryImage,
-  categoryImageMeta,
-  setCategoryImageMeta,
-  storefrontImages,
-  setStorefrontImages,
-  categoryName,
-  isEditing,
-}) {
-  const mainDropRef = useRef();
-  const storefrontInputRef = useRef();
-
-  const processFile = (file) => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setCategoryImage(url);
+// ── Compress Image ────────────────────────────────────────────
+const compressImage = async (file, maxWidth = 800, quality = 0.8) => {
+  return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      setCategoryImageMeta({
-        name: file.name,
-        size: file.size,
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        uploadedAt: new Date(),
-      });
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          resolve(
+            new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+              type: "image/webp",
+            })
+          );
+        },
+        "image/webp",
+        quality
+      );
     };
-    img.src = url;
-  };
-
-  const handleMainDrop = (e) => { e.preventDefault(); processFile(e.dataTransfer.files[0]); };
-  const handleMainFileChange = (e) => processFile(e.target.files[0]);
-
-  const formatSize = (bytes) => {
-    if (!bytes) return "";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + "KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + "MB";
-  };
-
-  const timeAgo = (date) => {
-    if (!date) return "";
-    const d = date instanceof Date ? date : new Date(date);
-    const diff = Math.floor((Date.now() - d) / 1000);
-    if (diff < 60) return "just now";
-    if (diff < 3600) return Math.floor(diff / 60) + " minutes ago";
-    if (diff < 86400) return Math.floor(diff / 3600) + " hours ago";
-    const days = Math.floor(diff / 86400);
-    return days + (days === 1 ? " day ago" : " days ago");
-  };
-
-  const handleStorefrontFiles = (files) => {
-    const urls = Array.from(files)
-      .slice(0, 6 - storefrontImages.length)
-      .map((f) => URL.createObjectURL(f));
-    setStorefrontImages((prev) => [...prev, ...urls].slice(0, 6));
-  };
-
-  const removeStorefrontImage = (idx) =>
-    setStorefrontImages((prev) => prev.filter((_, i) => i !== idx));
-
-  const previewLabel = categoryName?.trim() || "Category";
-
-  return (
-    <div className="ap-card">
-      <div className="ap-card-title">Category Images</div>
-
-      {isEditing && categoryImage ? (
-        <div className="ap-ci-preview-row">
-          <div className="ap-ci-preview-thumb">
-            <img src={categoryImage} alt="Category" />
-          </div>
-          <div className="ap-ci-preview-meta">
-            <div className="ap-ci-preview-filename">
-              {categoryImageMeta?.name || "category-image"}
-            </div>
-            {categoryImageMeta && (
-              <div className="ap-ci-preview-info">
-                Uploaded {timeAgo(categoryImageMeta.uploadedAt)} ·{" "}
-                {categoryImageMeta.width}×{categoryImageMeta.height}px ·{" "}
-                {formatSize(categoryImageMeta.size)}
-              </div>
-            )}
-            <div className="ap-ci-preview-actions">
-              <button className="ap-ci-preview-edit" onClick={() => mainDropRef.current.click()}>
-                Edit
-              </button>
-              <button
-                className="ap-ci-preview-delete"
-                onClick={() => { setCategoryImage(null); setCategoryImageMeta(null); }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div
-            className="ap-drop-zone"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleMainDrop}
-            onClick={() => mainDropRef.current.click()}
-          >
-            <div className="ap-drop-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              Click or drop image
-            </div>
-            <div className="ap-drop-hint">JPG, PNG or WEBP • Max 2 MB each</div>
-          </div>
-
-          {categoryImage && (
-            <div className="ap-thumbs" style={{ marginTop: 10 }}>
-              <div className="ap-thumb-wrapper">
-                <img src={categoryImage} className="ap-thumb" alt="Category" />
-                <button
-                  className="ap-thumb-del"
-                  onClick={(e) => { e.stopPropagation(); setCategoryImage(null); setCategoryImageMeta(null); }}
-                  title="Remove image"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      <input
-        ref={mainDropRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={handleMainFileChange}
-      />
-
-      <div className="ap-ci-hint">
-        This image appears in the category strip on the home page and on the category listing page.
-      </div>
-
-      <div className="ap-ci-storefront-title">Storefront Preview</div>
-      <input
-        ref={storefrontInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        style={{ display: "none" }}
-        onChange={(e) => handleStorefrontFiles(e.target.files)}
-      />
-
-      <div className="ap-ci-storefront-grid">
-        {storefrontImages.map((src, i) => (
-          <div key={i} className="ap-ci-storefront-item">
-            <div className="ap-ci-storefront-thumb">
-              <img src={src} alt={`storefront-${i}`} />
-              <button
-                className="ap-ci-storefront-del"
-                onClick={(e) => { e.stopPropagation(); removeStorefrontImage(i); }}
-                title="Remove"
-              >
-                ×
-              </button>
-            </div>
-            <span className="ap-ci-storefront-label">{previewLabel}</span>
-          </div>
-        ))}
-
-        {storefrontImages.length < 6 && (
-          <div className="ap-ci-storefront-item">
-            <div
-              className="ap-ci-storefront-add"
-              onClick={() => storefrontInputRef.current.click()}
-              title="Add storefront image"
-            >
-              +
-            </div>
-            <span className="ap-ci-storefront-label">{previewLabel}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="ap-ci-storefront-hint">
-        Preview of how this category will appear in the home page category strip.
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// AddCategory (main export)
-// ─────────────────────────────────────────────
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 export default function AddCategory({ onBack, onPublish, onSaveDraft, initialData }) {
   const isEditing = !!initialData;
@@ -392,90 +70,156 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
   const [form, setForm] = useState(() =>
     initialData
       ? {
-          name:          initialData.name          || "",
-          description:   initialData.description   || "",
-          sku:           initialData.sku            || "",
-          category:      initialData.category       || "",
-          price:         initialData.price          || "",
-          comparePrice:  initialData.comparePrice   || "",
-          discountPrice: initialData.discountPrice  || "",
-          stock:         initialData.stock          || "",
-          stockQty:      initialData.stockQty       || "",
-          material:      initialData.material       || "",
-          weight:        initialData.weight         || "",
-          size:          initialData.size           || "",
-          care:          initialData.care           || "",
+          name: initialData.name || "",
+          slug: initialData.slug || "",
+          sort_order: initialData.sort_order?.toString() || "",
+          description: initialData.description || "",
         }
       : EMPTY_FORM
   );
 
-  const [categoryImage, setCategoryImage]         = useState(initialData?.categoryImage || null);
-  const [categoryImageMeta, setCategoryImageMeta] = useState(initialData?.categoryImageMeta || null);
-  const [storefrontImages, setStorefrontImages]   = useState(initialData?.storefrontImages || []);
-  const [visibility, setVisibility]               = useState([
-    initialData?.visible  ?? false,
-    initialData?.featured ?? false,
-  ]);
-  const [filters, setFilters]           = useState(initialData?.filters || []);
-  const [filterGroups, setFilterGroups] = useState(initialData?.filterGroups || []);
+  const [imageUrl, setImageUrl] = useState(initialData?.image_url || null);
+  const [rawFile, setRawFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const fileRef = useRef();
 
   useEffect(() => {
     if (initialData) {
       setForm({
-        name:          initialData.name          || "",
-        description:   initialData.description   || "",
-        sku:           initialData.sku            || "",
-        category:      initialData.category       || "",
-        price:         initialData.price          || "",
-        comparePrice:  initialData.comparePrice   || "",
-        discountPrice: initialData.discountPrice  || "",
-        stock:         initialData.stock          || "",
-        stockQty:      initialData.stockQty       || "",
-        material:      initialData.material       || "",
-        weight:        initialData.weight         || "",
-        size:          initialData.size           || "",
-        care:          initialData.care           || "",
+        name: initialData.name || "",
+        slug: initialData.slug || "",
+        sort_order: initialData.sort_order?.toString() || "",
+        description: initialData.description || "",
       });
-      setCategoryImage(initialData.categoryImage || null);
-      setCategoryImageMeta(initialData.categoryImageMeta || null);
-      setStorefrontImages(initialData.storefrontImages || []);
-      setVisibility([initialData.visible ?? false, initialData.featured ?? false]);
-      setFilters(initialData.filters || []);
-      setFilterGroups(initialData.filterGroups || []);
+      setImageUrl(initialData.image_url || null);
+      setRawFile(null);
+      setIsActive(initialData.is_active ?? true);
     } else {
       setForm(EMPTY_FORM);
-      setCategoryImage(null);
-      setCategoryImageMeta(null);
-      setStorefrontImages([]);
-      setVisibility([false, false]);
-      setFilters([]);
-      setFilterGroups([]);
+      setImageUrl(null);
+      setRawFile(null);
+      setIsActive(true);
     }
   }, [initialData]);
 
-  const toggleVis = (i) =>
-    setVisibility((v) => v.map((val, idx) => (idx === i ? !val : val)));
+  const set = (k) => (e) => {
+    const value = e.target.value;
+    setForm((f) => {
+      const updated = { ...f, [k]: value };
+      // Auto-generate slug from name while typing (add mode only)
+      if (k === "name" && !isEditing) {
+        updated.slug = value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      }
+      return updated;
+    });
+  };
 
-  const buildData = (status) => ({
-    ...(isEditing ? { id: initialData.id } : { id: Date.now() }),
-    name: form.name, description: form.description,
-    sku: form.sku, category: form.category,
-    price: form.price, comparePrice: form.comparePrice, discountPrice: form.discountPrice,
-    stock: form.stock, stockQty: form.stockQty,
-    material: form.material, weight: form.weight, size: form.size, care: form.care,
-    categoryImage, categoryImageMeta, storefrontImages,
-    visible: visibility[0], featured: visibility[1],
-    status, filters, filterGroups,
-  });
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  };
 
-  const handlePublish = () => { if (onPublish) onPublish(buildData("Visible")); };
-  const handleDraft   = () => { if (onSaveDraft) onSaveDraft(buildData("Draft")); };
+  const processFile = (file) => {
+    setImageUrl((prev) => {
+      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setRawFile(file);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) processFile(file);
+  };
+
+  const removeImage = () => {
+    setImageUrl((prev) => {
+      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setRawFile(null);
+  };
+
+  // ── Upload Image ────────────────────────────────────────────
+  const uploadImage = async () => {
+    if (!rawFile) return { url: imageUrl, error: null };
+
+    setUploading(true);
+    const compressed = await compressImage(rawFile);
+    const { url, error } = await uploadCategoryImage(compressed, form.name || "category");
+
+    setUploading(false);
+    return { url, error };
+  };
+
+  // ── Save Category ───────────────────────────────────────────
+  const saveCategory = async (status) => {
+    const { url: uploadedUrl, error: uploadError } = await uploadImage();
+    if (uploadError) {
+      alert("Failed to upload image: " + uploadError.message);
+      return { error: uploadError };
+    }
+
+    const categoryData = {
+      name: form.name,
+      slug: form.slug,
+      sort_order: parseInt(form.sort_order) || 0,
+      description: form.description,
+      image_url: uploadedUrl,
+      is_active: isActive,
+    };
+
+    if (isEditing) {
+      const { data, error } = await supabase
+        .from("categories")
+        .update(categoryData)
+        .eq("category_id", initialData.category_id)
+        .select();
+
+      if (error) {
+        alert("Update failed: " + error.message);
+        return { error };
+      }
+      return { data: data[0], error: null };
+    } else {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert(categoryData)
+        .select();
+
+      if (error) {
+        alert("Insert failed: " + error.message);
+        return { error };
+      }
+      return { data: data[0], error: null };
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!form.name.trim()) {
+      alert("Category name is required.");
+      return;
+    }
+    const result = await saveCategory("active");
+    if (!result.error && onPublish) {
+      onPublish(result.data); // parent handles refresh
+    }
+  };
+
+  const handleDraft = async () => {
+    if (!form.name.trim()) {
+      alert("Category name is required.");
+      return;
+    }
+    const result = await saveCategory("draft");
+    if (!result.error && onSaveDraft) onSaveDraft(result.data);
+  };
 
   return (
     <div className="ap-page">
-
       {/* ── Header ── */}
       <div className="ap-header">
         <button className="ap-back-btn" onClick={onBack}>
@@ -484,73 +228,110 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
         <h1>{isEditing ? "Edit Category" : "Add Category"}</h1>
       </div>
 
-      {/* ── Name & Description ── */}
+      {/* ── Name & Details ── */}
       <div className="ap-card">
-        <div className="ap-card-title">Name &amp; description</div>
+        <div className="ap-card-title">Category Details</div>
+        
         <div className="ap-field">
           <label>Category Name</label>
-          <input placeholder="Input your text" value={form.name} onChange={set("name")} />
+          <input
+            placeholder="e.g Rings"
+            value={form.name}
+            onChange={set("name")}
+          />
         </div>
+        
         <div className="ap-field">
           <label>Description</label>
-          <textarea placeholder="Enter Description" value={form.description} onChange={set("description")} />
+          <input
+            placeholder="Short description for SEO"
+            value={form.description}
+            onChange={set("description")}
+          />
         </div>
+        
         <div className="ap-row-2">
           <div className="ap-field">
             <label>Display Order</label>
-            <input placeholder="Input your text" value={form.sku} onChange={set("sku")} />
-            <div className="ap-auto-hint">Lower number appears first in the category strip</div>
+            <input
+              type="number"
+              placeholder="0"
+              value={form.sort_order}
+              onChange={set("sort_order")}
+            />
+            <div className="ap-auto-hint">Lower number appears first</div>
           </div>
           <div className="ap-field">
-            <label>Slug/URL</label>
-            <input placeholder="Input your text" value={form.category} onChange={set("category")} />
-            <div className="ap-auto-hint">Auto-generated from name — or optional</div>
+            <label>Slug</label>
+            <input
+              placeholder="auto-generated"
+              value={form.slug}
+              onChange={set("slug")}
+            />
+            <div className="ap-auto-hint">URL-friendly name</div>
           </div>
         </div>
       </div>
 
-      {/* ── Category Images ── */}
-      <CategoryImagesSection
-        categoryImage={categoryImage}
-        setCategoryImage={setCategoryImage}
-        categoryImageMeta={categoryImageMeta}
-        setCategoryImageMeta={setCategoryImageMeta}
-        storefrontImages={storefrontImages}
-        setStorefrontImages={setStorefrontImages}
-        categoryName={form.name}
-        isEditing={isEditing}
-      />
-
-      {/* ── Filter Attributes ── */}
-      <div className="ap-fa-section-wrap">
-        <FilterAttributesSection
-          filters={filters}
-          setFilters={setFilters}
-          groups={filterGroups}
-          setGroups={setFilterGroups}
-        />
-      </div>
-
-      {/* ── Visibility Options ── */}
+      {/* ── Category Image ── */}
       <div className="ap-card">
-        <div className="ap-card-title">Visibility Options</div>
-        <div className="ap-toggle-row">
-          <div>
-            <div className="ap-toggle-label">Show On Store</div>
-            <div className="ap-toggle-sub">Category will be visible to customers</div>
+        <div className="ap-card-title">Category Image</div>
+        
+        <div
+          className={`ap-drop-zone ${uploading ? "uploading" : ""}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current.click()}
+        >
+          <div className="ap-drop-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            {uploading ? "Uploading..." : "Click or drop image"}
           </div>
-          <label className="ap-toggle">
-            <input type="checkbox" checked={visibility[0]} onChange={() => toggleVis(0)} />
-            <span className="ap-slider" />
-          </label>
+          <div className="ap-drop-hint">SVG, PNG or WEBP • Max 2 MB</div>
         </div>
+        
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+
+        {imageUrl && (
+          <div className="ap-thumbs" style={{ marginTop: 10 }}>
+            <div className="ap-thumb-wrapper">
+              <img src={imageUrl} className="ap-thumb" alt="Category" />
+              <button
+                className="ap-thumb-del"
+                onClick={(e) => { e.stopPropagation(); removeImage(); }}
+                title="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Visibility ── */}
+      <div className="ap-card">
+        <div className="ap-card-title">Visibility</div>
         <div className="ap-toggle-row">
           <div>
-            <div className="ap-toggle-label">Featured category</div>
-            <div className="ap-toggle-sub">Show in featured collections on home page</div>
+            <div className="ap-toggle-label">Active</div>
+            <div className="ap-toggle-sub">Category visible on store</div>
           </div>
           <label className="ap-toggle">
-            <input type="checkbox" checked={visibility[1]} onChange={() => toggleVis(1)} />
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={() => setIsActive((v) => !v)}
+            />
             <span className="ap-slider" />
           </label>
         </div>
@@ -558,14 +339,13 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
 
       {/* ── Footer ── */}
       <div className="ap-footer">
-        <button type="button" className="ap-btn-draft" onClick={handleDraft}>
-          {isEditing ? "Save Changes as Draft" : "Save Draft"}
+        <button type="button" className="ap-btn-draft" onClick={handleDraft} disabled={uploading}>
+          Save Draft
         </button>
-        <button type="button" className="ap-btn-publish" onClick={handlePublish}>
-          {isEditing ? "Update Category" : "Publish now"}
+        <button type="button" className="ap-btn-publish" onClick={handlePublish} disabled={uploading}>
+          {uploading ? "Uploading..." : isEditing ? "Update Category" : "Publish"}
         </button>
       </div>
-
     </div>
   );
 }

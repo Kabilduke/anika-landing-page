@@ -1,19 +1,16 @@
 import React, { useState } from "react";
 import "./productlist.css";
 import searchEmpty from "../../assets/admin/search.png";
-import editIcon    from "../../assets/admin/Edit.png";
-import trashIcon   from "../../assets/admin/Trash.png";
+import editIcon from "../../assets/admin/Edit.png";
+import trashIcon from "../../assets/admin/Trash.png";
 
 const getCategoryStyle = (category) => {
   const styles = {
-    Electronics: { background: "#e0f2fe", color: "#0369a1" },
-    Clothing:    { background: "#fce7f3", color: "#be185d" },
-    Home:        { background: "#dcfce7", color: "#15803d" },
-    Sports:      { background: "#fff7ed", color: "#c2410c" },
-    Rings:       { background: "#f0e6ff", color: "#7c3aed" },
-    Earrings:    { background: "#fce7f3", color: "#be185d" },
-    Necklaces:   { background: "#fff7ed", color: "#c2410c" },
-    Bracelets:   { background: "#e0f2fe", color: "#0369a1" },
+    Rings: { background: "#f0e6ff", color: "#7c3aed" },
+    Earrings: { background: "#fce7f3", color: "#be185d" },
+    Bangles: { background: "#dcfce7", color: "#15803d" },
+    Necklaces: { background: "#fff7ed", color: "#c2410c" },
+    Bracelets: { background: "#e0f2fe", color: "#0369a1" },
   };
   return styles[category] || { background: "#f0e6ff", color: "#7c3aed" };
 };
@@ -62,9 +59,9 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
 
 const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], onBack }) => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [currentPage, setCurrentPage]   = useState(1);
-  const [searchInput, setSearchInput]   = useState("");
-  const [searchQuery, setSearchQuery]   = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 8;
 
   // Detect mobile card breakpoint
@@ -78,18 +75,18 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   // Search filter
   const filteredProducts = searchQuery.trim()
     ? products.filter((p) => {
-        const q = searchQuery.toLowerCase();
-        return (
-          p.name?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q)
-        );
-      })
+      const q = searchQuery.toLowerCase();
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q)
+      );
+    })
     : products;
 
-  const totalItems      = filteredProducts.length;
-  const totalPages      = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const startIndex      = (currentPage - 1) * itemsPerPage;
-  const endIndex        = startIndex + itemsPerPage;
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   const handleSearchKeyDown = (e) => {
@@ -106,7 +103,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
   const handleDelete = (id) => {
     if (onDeleteProduct) onDeleteProduct(id);
-    const newTotal      = filteredProducts.length - 1;
+    const newTotal = filteredProducts.length - 1;
     const newTotalPages = Math.max(1, Math.ceil(newTotal / itemsPerPage));
     if (currentPage > newTotalPages) setCurrentPage(newTotalPages);
     setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
@@ -168,17 +165,17 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
       <div className="pl-filters">
         <div className="pl-filter-group">
           <div className="pl-dropdown">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
             <span>All categories</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
           </div>
           <div className="pl-dropdown">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             <span>All Status</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
           </div>
           <div className="pl-dropdown">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
             <span>All Stock</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
           </div>
@@ -318,7 +315,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                       <span className={
                         "pl-status-badge " +
                         (product.status === "Visible" ? "pl-status-visible" :
-                         product.status === "Draft"   ? "pl-status-draft"   : "")
+                          product.status === "Draft" ? "pl-status-draft" : "")
                       }>
                         {product.status}
                       </span>
