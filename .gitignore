@@ -9,7 +9,8 @@ node_modules
 /coverage
 
 # production
-/build
+build/
+dist/ 
 
 # misc
 .DS_Store
@@ -35,7 +36,6 @@ graphify-out/
 .env.keys
 .env.local
 .env.*.local
-
 
 # Terraform
 # Local .terraform directories
