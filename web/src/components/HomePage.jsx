@@ -28,22 +28,7 @@ export default function HomePage({ onProductClick }) {
   };
 
   const handleCategoryClick = (name) => {
-    let sectionId = '';
-
-    if (name === 'Necklaces') {
-      sectionId = 'necklaces';
-    } else if (name === 'Bangles') {
-      sectionId = 'shop';
-    } else if (name === 'Earrings') {
-      sectionId = 'offers';
-    } else {
-      return;
-    }
-
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    navigate(`/${name.toLowerCase()}`);
   };
 
   return (
