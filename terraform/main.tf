@@ -1,7 +1,7 @@
 # main.tf - Infrastructure Orchestration
 
 locals {
-  repo_name = "anika-landing-page"
+  repo_name = "anika-fashion-ecom"
 }
 
 # 1. Provision Supabase Platform Infrastructure via Reusable Module
