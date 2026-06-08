@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
 
 export default function AdminRoute({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -8,21 +8,21 @@ export default function AdminRoute({ children }) {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      try {
+        const user = await authService.getUser();
+        
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const data = await authService.checkAdminUser(user.id);
+        setIsAdmin(data?.role === "admin");
+      } catch (error) {
+        console.error("Error in admin route check:", error);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const { data } = await supabase
-        .from("admin_users")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      setIsAdmin(data?.role === "admin");
-      setLoading(false);
     };
 
     checkAdmin();

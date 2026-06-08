@@ -7,8 +7,7 @@ context: |
   This project is a monorepo for "Anika Jewelry Landing Page / Platform", an e-commerce platform for high-quality jewelry. It consists of a customer-facing storefront, an admin panel, a Supabase backend database with Row-Level Security (RLS) policies, and Terraform infrastructure management.
 
   Monorepo Structure & Key Components:
-    - `web`: The customer-facing storefront built using React 19, Vite, React Router DOM (v7), and Vanilla CSS. Features user signup, OTP login verification, storefront category display, product details, address booking, and order histories.
-    - `web_admin`: The administrative dashboard interface built with React 19, Vite, and Lucide React icons, styled with Vanilla CSS.
+    - `web`: The customer-facing storefront and admin dashboard application built using React 19, Vite, React Router DOM (v7), and Vanilla CSS. Features user signup, OTP login verification, storefront category display, product details, address booking, order histories, and administrative console (`web/src/admin`).
     - `supabase`: Local development setup containing database migrations, configuration, database triggers, seed data, and Edge Functions.
     - `terraform`: Infrastructure orchestration for provisioning AWS static sites (S3 + CloudFront) and Supabase resources.
 
@@ -34,7 +33,7 @@ context: |
 rules:
   proposal:
     - Keep proposals clear, concise, and focused on target outcomes.
-    - Explicitly detail the impact on monorepo subprojects (`web`, `web_admin`, `supabase`, `terraform`).
+    - Explicitly detail the impact on monorepo subprojects (`web`, `supabase`, `terraform`).
     - Outline database schema migrations or RLS policy additions.
     - Identify any new environment variable requirements.
   specs:

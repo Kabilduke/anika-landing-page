@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";    
+import { authService } from "../services/authService";    
 import "./OtpVerify.css";
 import otpImg from "../assets/sign/welcome.png";
 import Toast from "../components/Toast"
@@ -52,18 +52,13 @@ export default function OtpVerify() {
       return;
     }
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: "email",
-    });
-
-    if (error) {
-      showToast(error.message, "error");
-    } else {
+    try {
+      const data = await authService.verifyOtp(email, code, "email");
       showToast("Login successful!", "success");
       console.log(data);
       setTimeout(() => navigate("/profile"), 1200);
+    } catch (error) {
+      showToast(error.message, "error");
     }
   };
 
@@ -71,11 +66,11 @@ export default function OtpVerify() {
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0]?.focus();
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) {
-      showToast(error.message, "error");
-    } else {
+    try {
+      await authService.signInWithOtp(email);
       showToast("OTP resent!", "success");
+    } catch (error) {
+      showToast(error.message, "error");
     }
   };
 

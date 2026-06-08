@@ -15,7 +15,7 @@ terraform {
     organization = "GenLabTesting"
 
     workspaces {
-      tags = ["anika-landing-page"]
+      tags = ["anika-fashion-ecom"]
     }
   }
 }

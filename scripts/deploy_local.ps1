@@ -8,7 +8,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -Path "$ScriptDir\..\terraform"
 
 Write-Host "1. Selecting dev workspace..." -ForegroundColor Cyan
-terraform workspace select anika-landing-page-dev
+terraform workspace select anika-fashion-ecom-dev
 
 Write-Host "2. Applying Terraform configuration..." -ForegroundColor Cyan
 terraform apply "-var-file=environments/dev.tfvars" -auto-approve

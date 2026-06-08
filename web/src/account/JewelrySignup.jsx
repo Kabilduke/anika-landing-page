@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
 import "./JewelrySignup.css";
 import Toast from "../components/Toast";
 import signupImg from "../assets/sign/welcome.png";
@@ -33,33 +33,22 @@ export default function JewelrySignup() {
 
     setLoading(true);
 
-    const { data: existingUser } = await supabase
-      .from("Users")
-      .select("user_id")
-      .eq("Email", email)
-      .maybeSingle();
+    try {
+      const existingUser = await authService.checkUserExists(email);
 
-    if (existingUser) {
-      // Existing user → send OTP directly
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) {
-        showToast(error.message, "error");
-      } else {
+      if (existingUser) {
+        // Existing user → send OTP directly
+        await authService.signInWithOtp(email);
         showToast("OTP sent! Check your email.", "success");
         setTimeout(() => navigate("/account/otp-verify", { state: { email } }), 1200);
-      }
-    } else {
-      // New user → send OTP with create
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-      if (error) {
-        showToast(error.message, "error");
       } else {
+        // New user → send OTP with create
+        await authService.signInWithOtp(email, { shouldCreateUser: true });
         showToast("OTP sent to email!", "success");
         setTimeout(() => navigate("/account/otp-verify", { state: { email } }), 1200);
       }
+    } catch (error) {
+      showToast(error.message, "error");
     }
 
     setLoading(false);

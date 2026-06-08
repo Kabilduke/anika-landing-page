@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
+import { productService } from "../../services/productService";
 import back from "../../assets/admin/back.png";
 import "./addproduct.css";
 
@@ -26,23 +26,14 @@ const uploadProductImage = async (file, productName) => {
   const fileName = `${productName.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.${fileExt}`;
   const filePath = `products/${fileName}`;
 
-  const { data, error } = await supabase.storage
-    .from("product_img")
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
+  try {
+    await productService.uploadProductImage(filePath, file);
+    const publicUrl = productService.getProductImagePublicUrl(filePath);
+    return { url: publicUrl, path: filePath };
+  } catch (error) {
     console.error("Upload error:", error);
     return { error };
   }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("product_img")
-    .getPublicUrl(filePath);
-
-  return { url: publicUrl, path: filePath };
 };
 
 // ── Compress Image Before Upload ──────────────────────────────
@@ -112,13 +103,15 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data } = await supabase
-        .from("categories")
-        .select("category_id, name")
-        .eq("is_active", true)
-        .order("sort_order");
-
-      setCategories(data || []);
+      try {
+        const data = await productService.getCategories();
+        const activeCategories = data
+          .filter((cat) => cat.is_active)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        setCategories(activeCategories || []);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
     };
     fetchCategories();
   }, []);
@@ -239,33 +232,19 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       is_featured: visibility[1],
     };
 
-    if (isEditing) {
-      // Update existing product
-      const { data, error } = await supabase
-        .from("products")
-        .update(productData)
-        .eq("product_id", initialData.product_id)
-        .select();
-
-      if (error) {
-        alert("Update failed: " + error.message);
-        return { error };
+    try {
+      if (isEditing) {
+        // Update existing product
+        const data = await productService.updateProduct(initialData.product_id, productData);
+        return { data: data[0], error: null };
+      } else {
+        // Insert new product
+        const data = await productService.insertProduct(productData);
+        return { data: data[0], error: null };
       }
-
-      return { data: data[0], error: null };
-    } else {
-      // Insert new product
-      const { data, error } = await supabase
-        .from("products")
-        .insert(productData)
-        .select();
-
-      if (error) {
-        alert("Insert failed: " + error.message);
-        return { error };
-      }
-
-      return { data: data[0], error: null };
+    } catch (error) {
+      alert((isEditing ? "Update failed: " : "Insert failed: ") + error.message);
+      return { error };
     }
   };
 

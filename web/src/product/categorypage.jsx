@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { productService } from "../services/productService";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import Toast from "../components/Toast";
@@ -43,30 +43,8 @@ export default function CategoryPage({ category, onProductClick }) {
     const fetchProducts = async () => {
       setLoading(true);
 
-      const { data: catData } = await supabase
-        .from('categories')
-        .select('category_id')
-        .eq('name', category)
-        .eq('is_active', true)
-        .single();
-
-      if (!catData) {
-        setProducts([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: productsData, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category_id', catData.category_id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching products:', error);
-        setProducts([]);
-      } else {
+      try {
+        const productsData = await productService.getProductsByCategoryName(category);
         const mapped = (productsData || []).map(p => ({
           id: p.product_id,
           img: p.image_url,
@@ -78,6 +56,9 @@ export default function CategoryPage({ category, onProductClick }) {
           stock: p.stock > 0 ? "in-stock" : "out-of-stock"
         }));
         setProducts(mapped);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
       }
 
       setLoading(false);
