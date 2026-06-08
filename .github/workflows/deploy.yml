@@ -52,11 +52,11 @@ jobs:
             echo "env_name=dev" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
-          aws-region: ap-south-1
+#       - name: Configure AWS Credentials (OIDC)
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+#           aws-region: ap-south-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
@@ -226,51 +226,3 @@ jobs:
   #     - name: Invalidate CloudFront Cache
   #       run: |
   #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.storefront_cf_dist }} --paths "/*"
-
-  # deploy_admin:
-  #   name: Deploy Admin Portal
-  #   needs: [terraform, db_migration]
-  #   if: |
-  #     always() &&
-  #     needs.terraform.result == 'success' &&
-  #     (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-cache: npm
-
-  #     - name: Configure AWS Credentials (OIDC)
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
-  #         aws-region: ap-south-1
-
-  #     - name: Install Dependencies
-  #       working-directory: web_admin
-  #       run: npm ci
-
-  #     - name: Download Credentials Artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: supabase-credentials
-  #         path: .
-
-  #     - name: Build Application
-  #       working-directory: web_admin
-  #       run: |
-  #         VITE_SUPABASE_URL=$(jq -r '.supabase_url' ../supabase_outputs.json)
-  #         VITE_SUPABASE_ANON_KEY=$(jq -r '.supabase_anon_key' ../supabase_outputs.json)
-  #         VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" npm run build
-
-  #     - name: Sync to AWS S3
-  #       run: |
-  #         aws s3 sync web_admin/dist/ s3://${{ needs.terraform.outputs.admin_s3_bucket }} --delete
-
-  #     - name: Invalidate CloudFront Cache
-  #       run: |
-  #         aws cloudfront create-invalidation --distribution-id ${{ needs.terraform.outputs.admin_cf_dist }} --paths "/*"
