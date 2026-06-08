@@ -163,5 +163,32 @@ export const productService = {
       .from('categories_img')
       .getPublicUrl(filePath);
     return data.publicUrl;
+  },
+
+  /**
+   * Retrieves active products for a specific category name.
+   * @param {string} categoryName
+   * @returns {Promise<any[]>}
+   */
+  async getProductsByCategoryName(categoryName) {
+    const { data: catData, error: catError } = await supabase
+      .from('categories')
+      .select('category_id')
+      .eq('name', categoryName)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (catError) throw catError;
+    if (!catData) return [];
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category_id', catData.category_id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
   }
 };
