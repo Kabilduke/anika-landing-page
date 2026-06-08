@@ -1,16 +1,33 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { useAdmin } from "../hooks/useAdmin";
 import "./SiteHeader.css";
 import LogoImg from "../assets/offers/logo.svg";
+import UserIcon from "../assets/header/User.png";
+import CartIcon from "../assets/header/cards.png";
 
 const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces"];
 
-const LoginDropdown = ({ user, isAdmin, handleLogout }) => {
+const LoginDropdown = () => {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const { isAdmin } = useAdmin();
   const ref = useRef(null);
+  const navigate = useNavigate();
 
-  // Close dropdown on outside click
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -19,21 +36,22 @@ const LoginDropdown = ({ user, isAdmin, handleLogout }) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setOpen(false);
+    navigate("/");
+  };
+
   return (
     <div className="login-wrapper" ref={ref}>
       <button className="icon-btn" aria-label="Account" onClick={() => setOpen(!open)}>
-        <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
-          <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-        {/* ← show User or Login based on session */}
-        <p className="account-label">{user ? (user.user_metadata?.name || "User") : "Login"}</p>
+        <img src={UserIcon} alt="Account" className="header-icon" />
       </button>
 
       {open && (
         <div className="login-dropdown">
           {user ? (
-            //logged in menu
             <>
               <p className="dropdown-name">{user.user_metadata?.name || "User"}</p>
               <p className="dropdown-email">{user.email}</p>
@@ -42,22 +60,15 @@ const LoginDropdown = ({ user, isAdmin, handleLogout }) => {
               {isAdmin && (
                 <>
                   <hr />
-                  <a 
-                    href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    onClick={() => setOpen(false)}
-                    style={{ display: "block", padding: "8px 0", color: "#b8860b", fontWeight: "600", textDecoration: "none" }}
-                  >
-                    Admin Console
-                  </a>
+                  <Link to="/admin" onClick={() => setOpen(false)} className="admin_link">
+                    Admin Panel
+                  </Link>
                 </>
               )}
               <hr />
               <button className="dropdown-logout" onClick={handleLogout}>Logout</button>
             </>
           ) : (
-            //logged out menu
             <>
               <Link to="/account/login">Login</Link>
               <hr />
@@ -72,58 +83,7 @@ const LoginDropdown = ({ user, isAdmin, handleLogout }) => {
 
 export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const navigate = useNavigate();
-
-  // ← check session + check admin role on mount + listen for auth changes
-  useEffect(() => {
-    const checkAdmin = async (currentUser) => {
-      if (!currentUser) {
-        setIsAdmin(false);
-        return;
-      }
-      try {
-        const { data, error } = await supabase
-          .from("admin_users")
-          .select("role")
-          .eq("id", currentUser.id)
-          .single();
-        
-        if (data && data.role === "admin") {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (err) {
-        setIsAdmin(false);
-      }
-    };
-
-    // Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      checkAdmin(u);
-    });
-
-    // Listen for login/logout events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      checkAdmin(u);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAdmin(false);
-    setMenuOpen(false);
-    navigate("/");
-  };
+  const navigate = useNavigate(); // ← added
 
   const handleLinkClick = (link) => {
     setMenuOpen(false);
@@ -157,37 +117,40 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
                 {link}
               </button>
             ))}
-            {isAdmin && (
-              <a
-                href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-link admin-console-link"
-                style={{ color: "#b8860b", fontWeight: "600", textDecoration: "none" }}
-              >
-                Admin Console
-              </a>
-            )}
           </nav>
 
           <div className="header-actions">
+
+            {/* Search */}
             <button className="icon-btn" aria-label="Search">
-              <svg viewBox="0 0 20 20" fill="none" width="22" height="22">
-                <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M15.5 15.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
               </svg>
             </button>
 
-            <button className="icon-btn" aria-label="Wishlist">
+            {/* Wishlist — navigates to /wishlist on click */}
+            <button className="icon-btn" aria-label="Wishlist" onClick={() => navigate("/wishlist")}>
               <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
                 <path
-                  d="M12 21C12 21 3 14.5 3 8.5A4.5 4.5 0 0 1 12 6.27 4.5 4.5 0 0 1 21 8.5C21 14.5 12 21 12 21Z"
-                  stroke="currentColor" strokeWidth="1.6"
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
                 />
               </svg>
             </button>
 
-            <LoginDropdown user={user} isAdmin={isAdmin} handleLogout={handleLogout} />
+            {/* Cart — PNG icon */}
+            <button
+             className="icon-btn"
+              aria-label="Cart"
+               onClick={() => navigate("/cart")}
+>
+               <img src={CartIcon} alt="Cart" className="header-icon" />
+             </button>
+
+            {/* Account — PNG icon */}
+            <LoginDropdown />
+
           </div>
         </div>
       </header>
@@ -203,17 +166,6 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
               {link}
             </button>
           ))}
-          {isAdmin && (
-            <a
-              href={import.meta.env.VITE_ADMIN_CONSOLE_URL || "http://localhost:5173"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mobile-nav-link admin-console-link"
-              style={{ color: "#b8860b", fontWeight: "600", textDecoration: "none", display: "block" }}
-            >
-              Admin Console
-            </a>
-          )}
         </nav>
       </div>
     </>

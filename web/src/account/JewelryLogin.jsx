@@ -3,17 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./JewelryLogin.css"
+import Toast from "../components/Toast";
 import loginImg from "../assets/sign/welcome.png";
 import anikalogo from "../assets/offers/logo.svg";
 
 export default function JewelryLogin() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "" });
   const navigate = useNavigate();
+
+  const showToast = (message, type = "info") => {
+    setToast({ message: "", type: ""});
+    setTimeout(() => setToast({ message, type}), 10);
+  };
 
   const handleSendOTP = async () => {
     if (!email) {
-      alert("Please enter your email.");
+      showToast("Please enter your email.", "error");
       return;
     }
 
@@ -29,15 +36,15 @@ export default function JewelryLogin() {
 
     // Step 2 — user doesn't exist → redirect to signup
     if (error) {
-      alert("Email not found! Please sign up first.");
-      navigate("/account/signup");
+      showToast("Email not found! Please sign up first.", "error");
+      setTimeout(() => navigate("/account/signup"),  1500);
       setLoading(false);
       return; // ← stops here
     }
 
     // Step 3 — user exists → OTP sent → redirect to verify
-    alert("OTP sent to email!");
-    navigate("/account/otp-verify", { state: { email } });
+    showToast("OTP sent to email!", "success");
+    setTimeout(() => navigate("/account/otp-verify", { state: { email } }), 1200);
 
     setLoading(false);
   };
@@ -105,7 +112,11 @@ export default function JewelryLogin() {
 
         </div>
       </div>
-
+      <Toast
+        message={toast.message}
+        type = {toast.type}
+        onClose={() => setToast({ message: "", type: ""})}
+      />
     </div>
   );
 }
