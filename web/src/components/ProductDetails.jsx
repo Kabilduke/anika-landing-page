@@ -168,8 +168,11 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
   const toggleShowAll = useCallback(() => setShowAll(s => !s), []);
 
   const handleHeaderLinkClick = (link) => {
-    // Navigate back to home for any header link
-    onBack();
+    if (link === "Home") {
+      navigate("/");
+    } else {
+      navigate(`/${link.toLowerCase()}`);
+    }
   };
 
   const handleBuyNow = useCallback(() => {

@@ -11,6 +11,7 @@ import ShippingAddress from "./components/shippingAddress";
 import Payment from "./components/CartPage";
 import HomePage from './components/HomePage';
 import ProductDetails from './components/ProductDetails';
+import CategoryPage from "./product/categorypage";
 import WishlistPage from './components/wishlistPage'; // ← added
 import Cartpage from './components/CartPage';
 import AdminRoute from "./components/AdminRoute";
@@ -41,6 +42,11 @@ function App() {
             />
           }
         />
+        <Route path="/rings" element={<CategoryPage category="Rings" onProductClick={handleProductClick} />} />
+        <Route path="/earrings" element={<CategoryPage category="Earrings" onProductClick={handleProductClick} />} />
+        <Route path="/bracelets" element={<CategoryPage category="Bracelets" onProductClick={handleProductClick} />} />
+        <Route path="/bangles" element={<CategoryPage category="Bangles" onProductClick={handleProductClick} />} />
+        <Route path="/necklaces" element={<CategoryPage category="Necklaces" onProductClick={handleProductClick} />} />
         <Route path="/account/login" element={<Login />} />
         <Route path="/account/signup" element={<Signup />} />
         <Route path="/account/otp-verify" element={<OtpVerify />} />
