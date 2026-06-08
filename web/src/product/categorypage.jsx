@@ -268,12 +268,12 @@ export default function CategoryPage({ category, onProductClick }) {
             <h3 className="filter-title-no-collapse">Stock Status</h3>
             <div className="filter-options-content">
               <label className="checkbox-item-label">
-                <input type="checkbox" checked={stockStatus.inStock} onChange={() => handleStockToggle("inStock")} />
+                <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.inStock} onChange={() => handleStockToggle("inStock")} />
                 <span className="checkbox-custom-box"></span>
                 <span className="checkbox-item-text">In Stock</span>
               </label>
               <label className="checkbox-item-label">
-                <input type="checkbox" checked={stockStatus.outOfStock} onChange={() => handleStockToggle("outOfStock")} />
+                <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.outOfStock} onChange={() => handleStockToggle("outOfStock")} />
                 <span className="checkbox-custom-box"></span>
                 <span className="checkbox-item-text">Out of Stock</span>
               </label>
@@ -292,7 +292,7 @@ export default function CategoryPage({ category, onProductClick }) {
                 <div className="filter-options-content size-list-layout">
                   {sizeOptions.map(size => (
                     <label key={size} className="checkbox-item-label">
-                      <input type="checkbox" checked={selectedSizes.includes(size)} onChange={() => handleSizeToggle(size)} />
+                      <input type="checkbox" className="filter-checkbox-input" checked={selectedSizes.includes(size)} onChange={() => handleSizeToggle(size)} />
                       <span className="checkbox-custom-box"></span>
                       <span className="checkbox-item-text">Size {size}</span>
                     </label>
