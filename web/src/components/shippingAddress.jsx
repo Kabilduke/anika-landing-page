@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
+import { orderService } from "../services/orderService";
 import "./shippingAddress.css";
 import Navbar from "./SiteHeader";
 import Footer from "./SiteFooter";
@@ -41,27 +40,25 @@ export default function ShippingAddress() {
 
   // ── fetch addresses from Supabase ──
   const fetchAddresses = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user){
-      return;
-    }
+    try {
+      const user = await authService.getUser();
+      if (!user){
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) { console.error(error.message); return; }
-    if (data && data.length > 0) {
-      setAddresses(data);
-      setSelectedId(data[0].address_id);
+      const data = await orderService.getAddresses(user.id);
+      if (data && data.length > 0) {
+        setAddresses(data);
+        setSelectedId(data[0].address_id);
+      }
+    } catch (err) {
+      console.error("Error loading addresses:", err);
     }
   };
 
   // ── fetch userId and addresses on mount ──
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getSession().then((session) => {
       if (session) {
         setUserId(session.user.id);
         fetchAddresses();
@@ -95,10 +92,9 @@ export default function ShippingAddress() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
 
-    if (editingId !== null) {
-      const { error } = await supabase
-        .from("addresses")
-        .update({
+    try {
+      if (editingId !== null) {
+        await orderService.updateAddress(editingId, {
           full_name: form.name,
           phone_number: form.mobile,
           address_line1: form.flat,
@@ -107,48 +103,44 @@ export default function ShippingAddress() {
           state: form.state,
           postal_code: form.pinCode,
           is_default: form.isDefault,
-        })
-        .eq("address_id", editingId)
-      if (error) { alert(error.message); return; }
+        });
 
-      // ── UPDATE local state only ──
-      setAddresses((prev) =>
-        prev.map((a) =>
-          a.address_id === editingId
-            ? {
-                ...a,
-                full_name: form.name,
-                phone_number: form.mobile,
-                address_line1: form.flat,
-                address_line2: form.area,
-                city: form.city,
-                state: form.state,
-                postal_code: form.pinCode,
-                is_default: form.isDefault,
-              }
-            : a
-        )
-      );
-      setEditingId(null);
-      showToast("Address updated!", "success");
-    } else {
-      // ── ADD — save to Supabase ──
-      const { data: { session } } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
-      if (!uid) { alert("Not logged in."); return; }
+        // ── UPDATE local state only ──
+        setAddresses((prev) =>
+          prev.map((a) =>
+            a.address_id === editingId
+              ? {
+                  ...a,
+                  full_name: form.name,
+                  phone_number: form.mobile,
+                  address_line1: form.flat,
+                  address_line2: form.area,
+                  city: form.city,
+                  state: form.state,
+                  postal_code: form.pinCode,
+                  is_default: form.isDefault,
+                }
+              : a
+          )
+        );
+        setEditingId(null);
+        showToast("Address updated!", "success");
+      } else {
+        // ── ADD — save to Supabase ──
+        const session = await authService.getSession();
+        const uid = session?.user?.id;
+        if (!uid) { alert("Not logged in."); return; }
 
-      // ── check for duplicate ──
-      const isDuplicate = addresses.some(
-        (a) =>
-          a.address_line1.trim().toLowerCase() === form.flat.trim().toLowerCase() &&
-          a.postal_code === form.pinCode &&
-          a.phone_number === form.mobile
-      );
-      if (isDuplicate) { showToast("This address already exists.", "error"); return; }
+        // ── check for duplicate ──
+        const isDuplicate = addresses.some(
+          (a) =>
+            a.address_line1.trim().toLowerCase() === form.flat.trim().toLowerCase() &&
+            a.postal_code === form.pinCode &&
+            a.phone_number === form.mobile
+        );
+        if (isDuplicate) { showToast("This address already exists.", "error"); return; }
 
-      const { data, error } = await supabase
-        .from("addresses")
-        .insert({
+        const inserted = await orderService.createAddress({
           user_id: uid,
           full_name: form.name,
           phone_number: form.mobile,
@@ -158,19 +150,19 @@ export default function ShippingAddress() {
           state: form.state,
           postal_code: form.pinCode,
           is_default: form.isDefault,
-        })
-        .select()
-        .single();
+        });
 
-      if (error) { alert(error.message); return; }
+        const data = Array.isArray(inserted) ? inserted[0] : inserted;
+        setAddresses((prev) => [...prev, data]);
+        setSelectedId(data.address_id);
+        showToast("Address added!", "success");
+      }
 
-      setAddresses((prev) => [...prev, data]);
-      setSelectedId(data.address_id);
-      showToast("Address added!", "success");
+      setForm(emptyForm);
+      setErrors({});
+    } catch (err) {
+      alert("Failed to save address: " + err.message);
     }
-
-    setForm(emptyForm);
-    setErrors({});
   };
 
   // ── edit: populate form ──
@@ -195,19 +187,15 @@ export default function ShippingAddress() {
   const handleDelete = async (id) => {
     setDeletingId(id);
 
-    const { error } = await supabase
-      .from("addresses")
-      .delete()
-      .eq("address_id", id)
-
-    if (error){
-      alert(error.message);
+    try {
+      await orderService.deleteAddress(id, userId);
+      setAddresses((prev) => prev.filter((a) => a.address_id !== id));
+      if (selectedId === id) setSelectedId(null);
+    } catch (error) {
+      alert("Failed to delete address: " + error.message);
+    } finally {
       setDeletingId(null);
-      return;
     }
-    setAddresses((prev) => prev.filter((a) => a.address_id !== id));
-    if (selectedId === id) setSelectedId(null);
-    setDeletingId(null);
   };
 
   // ── Deliver Here — navigate ──

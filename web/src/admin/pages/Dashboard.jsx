@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
+import { productService } from "../../services/productService";
 import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import "./Dashboard.css";
 
@@ -367,23 +367,23 @@ const Dashboard = () => {
     setOpenMenus(expanded);
   }, [currentPath]);
 
-  // ── Fetch categories from Supabase on mount ─────────────────────
+  // ── Fetch categories on mount ─────────────────────
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("sort_order", { ascending: true });
-
-      if (!error && data) {
-        setCategories(
-          data.map((row) => ({
-            ...row,
-            id: row.category_id,
-            categoryImage: row.image_url || null,
-            status: row.is_active ? "Active" : "Draft",
-          }))
-        );
+      try {
+        const data = await productService.getCategories();
+        if (data) {
+          setCategories(
+            data.map((row) => ({
+              ...row,
+              id: row.category_id,
+              categoryImage: row.image_url || null,
+              status: row.is_active ? "Active" : "Draft",
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
       }
     };
     fetchCategories();
@@ -399,16 +399,16 @@ const Dashboard = () => {
     status: row.is_active ? "Visible" : "Draft",
   });
 
-  // ── Fetch products from Supabase on mount ─────────────────────
+  // ── Fetch products on mount ─────────────────────
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, categories(name)")
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setProducts(data.map(normalizeProductRow));
+      try {
+        const data = await productService.getProducts();
+        if (data) {
+          setProducts(data.map(normalizeProductRow));
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
       }
     };
     fetchProducts();
@@ -442,8 +442,13 @@ const Dashboard = () => {
 
 
   const handleDeleteProduct = async (id) => {
-    await supabase.from("products").delete().eq("product_id", id);
-    setProducts((p) => p.filter((x) => x.id !== id));
+    try {
+      await productService.deleteProduct(id);
+      setProducts((p) => p.filter((x) => x.id !== id));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product: " + error.message);
+    }
   };
 
   const handlePublish = (data) => {
@@ -481,9 +486,14 @@ const Dashboard = () => {
   const handleDeleteCategory = async (id) => {
     const row = categories.find((x) => x.id === id);
     if (row) {
-      await supabase.from("categories").delete().eq("category_id", id);
+      try {
+        await productService.deleteCategory(id);
+        setCategories((p) => p.filter((x) => x.id !== id));
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        alert("Failed to delete category: " + error.message);
+      }
     }
-    setCategories((p) => p.filter((x) => x.id !== id));
   };
 
   const normalizeCategoryRow = (data) => ({

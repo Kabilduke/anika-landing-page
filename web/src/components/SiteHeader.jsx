@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
 import { useAdmin } from "../hooks/useAdmin";
 import "./SiteHeader.css";
 import LogoImg from "../assets/offers/logo.svg";
@@ -17,11 +17,11 @@ const LoginDropdown = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getSession().then((session) => {
       setUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const subscription = authService.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -37,7 +37,7 @@ const LoginDropdown = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await authService.signOut();
     setUser(null);
     setOpen(false);
     navigate("/");

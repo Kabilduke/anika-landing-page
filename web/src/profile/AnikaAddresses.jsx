@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
+import { orderService } from "../services/orderService";
 import "./AnikaAddresses.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -26,13 +27,7 @@ export default function AnikaAddresses() {
 
   const fetchAddresses = async (userId) => {
     try {
-      const { data, error } = await supabase
-        .from("addresses")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await orderService.getAddresses(userId);
       setAddresses(data || []);
     } catch (err) {
       console.error("Error loading addresses:", err);
@@ -41,7 +36,7 @@ export default function AnikaAddresses() {
 
   // ── Load user + addresses on mount ──
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getSession().then((session) => {
       if (!session) {
         navigate("/account/login");
         return;
@@ -76,27 +71,20 @@ export default function AnikaAddresses() {
     try {
       if (form.isDefault) {
         // Unset defaults first
-        await supabase
-          .from("addresses")
-          .update({ is_default: false })
-          .eq("user_id", user.id);
+        await orderService.resetAddressDefaults(user.id);
       }
 
-      const { error } = await supabase
-        .from("addresses")
-        .insert({
-          user_id: user.id,
-          full_name: form.name,
-          phone_number: form.mobile,
-          address_line1: form.flat,
-          address_line2: form.area,
-          city: form.city,
-          state: form.state,
-          postal_code: form.pinCode,
-          is_default: form.isDefault,
-        });
-
-      if (error) throw error;
+      await orderService.createAddress({
+        user_id: user.id,
+        full_name: form.name,
+        phone_number: form.mobile,
+        address_line1: form.flat,
+        address_line2: form.area,
+        city: form.city,
+        state: form.state,
+        postal_code: form.pinCode,
+        is_default: form.isDefault,
+      });
 
       await fetchAddresses(user.id);
       setForm({
@@ -110,13 +98,7 @@ export default function AnikaAddresses() {
 
   const handleDelete = async (id) => {
     try {
-      const { error } = await supabase
-        .from("addresses")
-        .delete()
-        .eq("address_id", id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      await orderService.deleteAddress(id, user.id);
       setAddresses((prev) => prev.filter((a) => a.address_id !== id));
     } catch (err) {
       alert("Failed to delete address: " + err.message);
@@ -125,22 +107,7 @@ export default function AnikaAddresses() {
 
   const handleSetDefault = async (id) => {
     try {
-      // Unset all defaults first
-      const { error: resetError } = await supabase
-        .from("addresses")
-        .update({ is_default: false })
-        .eq("user_id", user.id);
-
-      if (resetError) throw resetError;
-
-      // Set new default
-      const { error: updateError } = await supabase
-        .from("addresses")
-        .update({ is_default: true })
-        .eq("address_id", id)
-        .eq("user_id", user.id);
-
-      if (updateError) throw updateError;
+      await orderService.setAddressDefault(id, user.id);
       await fetchAddresses(user.id);
     } catch (err) {
       alert("Failed to update default address: " + err.message);

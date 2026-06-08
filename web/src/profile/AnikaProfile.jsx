@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
 import "./AnikaProfile.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -30,29 +30,33 @@ export default function AnikaProfile() {
   // ← fetch real user data from Supabase
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
+      try {
+        const session = await authService.getSession();
+        const user = session?.user;
 
-      if (!user) {
-        navigate("/account/login"); // ← redirect if not logged in
-        return;
+        if (!user) {
+          navigate("/account/login"); // ← redirect if not logged in
+          return;
+        }
+
+        const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
+          month: "short",
+          year: "numeric",
+        });
+
+        const details = {
+          name: user.user_metadata?.name || "No name set",
+          phone: user.user_metadata?.phone || "No phone set",
+          email: user.email,
+          customerSince: joinedDate,
+          totalOrders: "0 orders",
+        };
+
+        setCustomerDetails(details);
+        setTempDetails(details);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
       }
-
-      const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
-        month: "short",
-        year: "numeric",
-      });
-
-      const details = {
-        name: user.user_metadata?.name || "No name set",
-        phone: user.user_metadata?.phone || "No phone set",
-        email: user.email,
-        customerSince: joinedDate,
-        totalOrders: "0 orders",
-      };
-
-      setCustomerDetails(details);
-      setTempDetails(details);
     };
 
     fetchUser();
@@ -64,20 +68,20 @@ export default function AnikaProfile() {
   };
 
   const handleSave = async () => {
-    // ← save name and phone back to Supabase metadata
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        name: tempDetails.name,
-        phone: tempDetails.phone,
-      },
-    });
+    try {
+      // ← save name and phone back to Supabase metadata
+      await authService.updateUser({
+        data: {
+          name: tempDetails.name,
+          phone: tempDetails.phone,
+        },
+      });
 
-    if (error) {
-      alert(error.message);
-    } else {
-      await supabase.auth.refreshSession();
+      await authService.refreshSession();
       setCustomerDetails({ ...tempDetails });
       setIsEditing(false);
+    } catch (error) {
+      alert(error.message);
     }
   };
 
@@ -93,10 +97,12 @@ export default function AnikaProfile() {
   const tabs = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 
   const handleTabClick = (tab) =>{
-    if (tab == "Orders"){
+    if (tab === "Orders"){
       navigate("/profile/orders");
-    }else{
-      setActiveTab(Tab)
+    } else if (tab === "Addresses") {
+      navigate("/profile/addresses");
+    } else {
+      setActiveTab(tab);
     }
   };
 

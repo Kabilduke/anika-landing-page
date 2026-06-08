@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { supabase } from "../lib/supabase"; 
+import { authService } from "../services/authService"; 
+import { orderService } from "../services/orderService";
 import "./AnikaOrders.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -17,13 +18,7 @@ export default function AnikaOrders() {
 
   const loadOrders = async (userId) => {
     try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("user_id", userId)
-        .order("order_date", { ascending: false });
-
-      if (error) throw error;
+      const data = await orderService.getOrders(userId);
 
       if (data) {
         const formatted = data.map(item => ({
@@ -47,7 +42,7 @@ export default function AnikaOrders() {
 
   // ← fetch real user
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getSession().then((session) => {
       if (!session) {
         navigate("/account/login");
         return;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
 import "./JewelryLogin.css"
 import Toast from "../components/Toast";
 import loginImg from "../assets/sign/welcome.png";
@@ -26,16 +26,13 @@ export default function JewelryLogin() {
 
     setLoading(true);
 
-    // Step 1 — try to send OTP only if user exists
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
+    try {
+      // Step 1 — try to send OTP only if user exists
+      await authService.signInWithOtp(email, {
         shouldCreateUser: false,
-      },
-    });
-
-    // Step 2 — user doesn't exist → redirect to signup
-    if (error) {
+      });
+    } catch (error) {
+      // Step 2 — user doesn't exist → redirect to signup
       showToast("Email not found! Please sign up first.", "error");
       setTimeout(() => navigate("/account/signup"),  1500);
       setLoading(false);

@@ -50,19 +50,3 @@ output "db_url" {
 #   description = "The final HTTPS URL of the storefront application."
 #   value       = module.web_storefront.custom_domain_url
 # }
-
-# # 3. Admin Deployment Outputs
-# output "admin_s3_bucket" {
-#   description = "The name of the S3 bucket hosting the admin portal application."
-#   value       = module.web_admin.s3_bucket_name
-# }
-
-# output "admin_cloudfront_id" {
-#   description = "The CloudFront distribution ID for the admin site."
-#   value       = module.web_admin.cloudfront_distribution_id
-# }
-
-# output "admin_url" {
-#   description = "The final HTTPS URL of the admin portal application."
-#   value       = module.web_admin.custom_domain_url
-# }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
+import { productService } from "../../services/productService";
 import back from "../../assets/admin/back.png";
 import "./addcategory.css";
 
@@ -16,23 +16,14 @@ const uploadCategoryImage = async (file, categoryName) => {
   const fileName = `${categoryName.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.${fileExt}`;
   const filePath = `categories/${fileName}`;
 
-  const { data, error } = await supabase.storage
-    .from("categories_img")
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
+  try {
+    await productService.uploadCategoryImage(filePath, file);
+    const publicUrl = productService.getCategoryImagePublicUrl(filePath);
+    return { url: publicUrl, path: filePath };
+  } catch (error) {
     console.error("Upload error:", error);
     return { error };
   }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("categories_img")
-    .getPublicUrl(filePath);
-
-  return { url: publicUrl, path: filePath };
 };
 
 // ── Compress Image ────────────────────────────────────────────
@@ -172,29 +163,17 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       is_active: isActive,
     };
 
-    if (isEditing) {
-      const { data, error } = await supabase
-        .from("categories")
-        .update(categoryData)
-        .eq("category_id", initialData.category_id)
-        .select();
-
-      if (error) {
-        alert("Update failed: " + error.message);
-        return { error };
+    try {
+      if (isEditing) {
+        const data = await productService.updateCategory(initialData.category_id, categoryData);
+        return { data: data[0], error: null };
+      } else {
+        const data = await productService.insertCategory(categoryData);
+        return { data: data[0], error: null };
       }
-      return { data: data[0], error: null };
-    } else {
-      const { data, error } = await supabase
-        .from("categories")
-        .insert(categoryData)
-        .select();
-
-      if (error) {
-        alert("Insert failed: " + error.message);
-        return { error };
-      }
-      return { data: data[0], error: null };
+    } catch (error) {
+      alert((isEditing ? "Update failed: " : "Insert failed: ") + error.message);
+      return { error };
     }
   };
 
