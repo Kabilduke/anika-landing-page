@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, memo, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useNavigate } from "react-router-dom";
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
@@ -95,17 +95,16 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
           </div>
         ))}
       </div>
-      <div className="pp-show-wrap">
-        <button className="pp-show-btn" onClick={() => setShowAll(s => !s)}>
-          {showAll ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
+      {relatedItems.length > 4 && (
+        <div className="pp-show-wrap">
+          <button className="pp-show-btn" onClick={() => setShowAll(s => !s)}>
+            {showAll ? 'Show Less' : 'Show More'}
+          </button>
+        </div>
+      )}
     </section>
   );
 });
-
-import { PRODUCTS } from './ProductSection';
-import { OFFER_PRODUCTS } from './Offers';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ProductPage({ onBack }) {
@@ -129,6 +128,8 @@ export default function ProductPage({ onBack }) {
   const addToCart = useStore(state => state.addToCart);
   const toggleWishlist = useStore(state => state.toggleWishlist);
   const wishlistItems = useStore(state => state.wishlistItems);
+  const fetchProductsByCategory = useStore(state => state.fetchProductsByCategory);
+  const productsCache = useStore(state => state.products);
 
   const isWishlisted = useMemo(() => {
     const currentId = selectedProduct?.productId || selectedProduct?.id;
@@ -152,20 +153,41 @@ export default function ProductPage({ onBack }) {
 
   const cat = selectedProduct?.category || 'Bangles';
 
-  // Dynamic Related Items from Catalog
+  // Fetch related products from DB when category changes
+  useEffect(() => {
+    fetchProductsByCategory(cat);
+  }, [cat, fetchProductsByCategory]);
+
+  // Scroll to top when selected product changes (resets window scroll and desktop column scroll)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const infoCol = document.querySelector('.pp-info');
+    if (infoCol) {
+      infoCol.scrollTop = 0;
+    }
+  }, [selectedProduct]);
+
+  // Dynamic Related Items from DB catalog
   const dynamicRelated = useMemo(() => {
-    // Determine which catalog to use
-    const catalog = cat === 'Bangles' ? PRODUCTS : OFFER_PRODUCTS;
+    const dbProducts = productsCache[cat] || [];
+    const currentId = selectedProduct?.productId || selectedProduct?.id;
 
-    // Filter out the current product by ID (if available) or by image
-    const filtered = catalog.filter(item =>
-      item.id !== selectedProduct?.id || item.img !== selectedProduct?.img
-    );
+    // Map DB products to the shape RelatedProducts expects
+    const mapped = dbProducts
+      .filter(p => p.id !== currentId && p.productId !== currentId)
+      .map(p => ({
+        ...p,
+        sub: p.desc || p.category || cat,
+        price: typeof p.price === 'number' ? `₹${p.price}.00` : p.price,
+        original: p.originalPrice
+          ? (typeof p.originalPrice === 'number' ? `₹${p.originalPrice}.00` : p.originalPrice)
+          : p.original || '',
+        badge: '',
+        category: p.category || cat,
+      }));
 
-    // If we filtered out the current item, we might have fewer than 5.
-    // We'll take what's left, and if it's empty, we fallback to a generic list.
-    return filtered.length > 0 ? filtered : catalog.slice(0, 5);
-  }, [cat, selectedProduct, displayImage]);
+    return mapped.length > 0 ? mapped : [];
+  }, [cat, productsCache, selectedProduct]);
 
   // Dynamic Info Rows
   const dynamicInfo = useMemo(() => [
@@ -196,6 +218,19 @@ export default function ProductPage({ onBack }) {
       navigate(`/${link.toLowerCase()}`);
     }
   };
+
+  const handleRelatedProductClick = useCallback((product) => {
+    const formattedProduct = {
+      ...product,
+      price: typeof product.price === 'number' ? `₹${product.price}.00` : product.price,
+      original: product.originalPrice
+        ? (typeof product.originalPrice === 'number' ? `₹${product.originalPrice}.00` : product.originalPrice)
+        : product.original || '',
+      category: product.category || cat,
+    };
+    setSelectedProduct(formattedProduct);
+    navigate("/product");
+  }, [cat, setSelectedProduct, navigate]);
 
   const handleBuyNow = useCallback(() => {
   navigate("/shipping", {
@@ -405,7 +440,7 @@ export default function ProductPage({ onBack }) {
         showAll={showAll}
         setShowAll={setShowAll}
         relatedItems={dynamicRelated}
-        onProductClick={setSelectedProduct}
+        onProductClick={handleRelatedProductClick}
       />
 
 

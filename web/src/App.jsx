@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Signup from "./account/JewelrySignup";
 import Login from "./account/JewelryLogin";
@@ -18,6 +18,15 @@ import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
 import { useStore } from './hooks/useStore';
 
+// Scrolls to top on every route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   const initAuth = useStore(state => state.initAuth);
 
@@ -27,6 +36,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route
           path="/"

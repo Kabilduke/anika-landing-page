@@ -652,13 +652,15 @@ button {
 .pp-related-grid {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 14px;
   width: 100%;
 }
 
 .pp-rel-card {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 calc(25% - 10.5px);
+  min-width: calc(25% - 10.5px);
+  max-width: calc(25% - 10.5px);
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius);

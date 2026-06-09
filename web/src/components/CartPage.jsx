@@ -218,7 +218,7 @@ export default function CartPage() {
 
   return (
     <>
-      <Navbar onLinkClick={handleNavClick}/>
+      <Navbar activeLink="" onLinkClick={handleNavClick}/>
       <div className="cart-page-wrapper">
       
       {/* TOAST */}
