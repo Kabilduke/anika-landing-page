@@ -23,7 +23,7 @@ const ProductSkeleton = () => (
   </div>
 );
 
-export default function CategoryPage({ category, onProductClick }) {
+export default function CategoryPage({ category }) {
   const navigate = useNavigate();
 
   // Search and filter states
@@ -43,6 +43,7 @@ export default function CategoryPage({ category, onProductClick }) {
   const wishlistItems = useStore(state => state.wishlistItems);
   const toggleWishlist = useStore(state => state.toggleWishlist);
   const addToCart = useStore(state => state.addToCart);
+  const setSelectedProduct = useStore(state => state.setSelectedProduct);
 
   const wishlistProductIds = useMemo(() => wishlistItems.map(w => w.id), [wishlistItems]);
 
@@ -176,7 +177,7 @@ export default function CategoryPage({ category, onProductClick }) {
       original: `₹${product.originalPrice}.00`,
       category
     };
-    onProductClick(formattedProduct);
+    setSelectedProduct(formattedProduct);
     navigate("/product");
   };
 

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, memo, lazy, Suspense } from 'rea
 import { useNavigate } from "react-router-dom";
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
+import Toast from './Toast';
 import { useStore } from '../hooks/useStore';
 
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
@@ -107,28 +108,38 @@ import { PRODUCTS } from './ProductSection';
 import { OFFER_PRODUCTS } from './Offers';
 
 // ═════════════════════════════════════════════════════════════════════════════
-export default function ProductPage({ onBack, product, onProductSelect }) {
+export default function ProductPage({ onBack }) {
   const [activeThumb, setActiveThumb] = useState(-1);
   const [qty, setQty] = useState(1);
   const [descOpen, setDescOpen] = useState(false);
   const [addlOpen, setAddlOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastType, setToastType] = useState("success");
+
+  const showToast = (message, type = "success") => {
+    setToastMsg("");
+    setToastType(type);
+    setTimeout(() => setToastMsg(message), 10);
+  };
 
   // Zustand Store
+  const selectedProduct = useStore(state => state.selectedProduct);
+  const setSelectedProduct = useStore(state => state.setSelectedProduct);
   const addToCart = useStore(state => state.addToCart);
   const toggleWishlist = useStore(state => state.toggleWishlist);
   const wishlistItems = useStore(state => state.wishlistItems);
 
   const isWishlisted = useMemo(() => {
-    const currentId = product?.productId || product?.id;
+    const currentId = selectedProduct?.productId || selectedProduct?.id;
     return wishlistItems.some(w => w.id === currentId);
-  }, [wishlistItems, product]);
+  }, [wishlistItems, selectedProduct]);
 
   // Determine which image to show in gallery
-  const displayImage = product?.img || MainBangle;
-  const displayName = product?.name || 'Antique Bangle set';
-  const displayPrice = product?.price || '₹1,299.00';
-  const displayOriginal = product?.original || '₹2,800.00';
+  const displayImage = selectedProduct?.img || MainBangle;
+  const displayName = selectedProduct?.name || 'Antique Bangle set';
+  const displayPrice = selectedProduct?.price || '₹1,299.00';
+  const displayOriginal = selectedProduct?.original || '₹2,800.00';
 
   const navigate = useNavigate();
 
@@ -139,7 +150,7 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
     alt: `${displayName} view ${i + 1}`
   })), [displayImage, displayName]);
 
-  const cat = product?.category || 'Bangles';
+  const cat = selectedProduct?.category || 'Bangles';
 
   // Dynamic Related Items from Catalog
   const dynamicRelated = useMemo(() => {
@@ -148,13 +159,13 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
 
     // Filter out the current product by ID (if available) or by image
     const filtered = catalog.filter(item =>
-      item.id !== product?.id || item.img !== product?.img
+      item.id !== selectedProduct?.id || item.img !== selectedProduct?.img
     );
 
     // If we filtered out the current item, we might have fewer than 5.
     // We'll take what's left, and if it's empty, we fallback to a generic list.
     return filtered.length > 0 ? filtered : catalog.slice(0, 5);
-  }, [cat, product, displayImage]);
+  }, [cat, selectedProduct, displayImage]);
 
   // Dynamic Info Rows
   const dynamicInfo = useMemo(() => [
@@ -249,9 +260,9 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
               <button 
                 className="pp-cart-btn"
                 onClick={async () => {
-                  if (product) {
-                    await addToCart(product, qty, null);
-                    alert(`Added "${displayName}" to cart!`);
+                  if (selectedProduct) {
+                    await addToCart(selectedProduct, qty, null);
+                    showToast(`Added "${displayName}" to cart!`);
                   }
                 }}
               >
@@ -261,8 +272,8 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
                 className="pp-wish-btn" 
                 aria-label="Add to wishlist"
                 onClick={async () => {
-                  if (product) {
-                    await toggleWishlist(product);
+                  if (selectedProduct) {
+                    await toggleWishlist(selectedProduct);
                   }
                 }}
               >
@@ -394,7 +405,7 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
         showAll={showAll}
         setShowAll={setShowAll}
         relatedItems={dynamicRelated}
-        onProductClick={onProductSelect}
+        onProductClick={setSelectedProduct}
       />
 
 
@@ -410,6 +421,13 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
       <Suspense fallback={<LoadingSkeleton height="300px" />}>
         <SiteFooter />
       </Suspense>
+
+      {/* ── TOAST ── */}
+      <Toast
+        message={toastMsg}
+        type={toastType}
+        onClose={() => setToastMsg("")}
+      />
     </div>
   );
 }

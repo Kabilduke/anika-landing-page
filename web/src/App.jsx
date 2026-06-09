@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Signup from "./account/JewelrySignup";
@@ -19,40 +19,32 @@ import Dashboard from "./admin/pages/Dashboard";
 import { useStore } from './hooks/useStore';
 
 function App() {
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const initAuth = useStore(state => state.initAuth);
 
   useEffect(() => {
     initAuth();
   }, [initAuth]);
 
-  const handleProductClick = (product) => {
-    setSelectedProduct(product);
-    window.scrollTo(0, 0);
-  };
-
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/"
-          element={<HomePage onProductClick={handleProductClick} />}
+          element={<HomePage />}
         />
         <Route
           path="/product"
           element={
             <ProductDetails
-              product={selectedProduct}
               onBack={() => window.history.back()}
-              onProductSelect={handleProductClick}
             />
           }
         />
-        <Route path="/rings" element={<CategoryPage category="Rings" onProductClick={handleProductClick} />} />
-        <Route path="/earrings" element={<CategoryPage category="Earrings" onProductClick={handleProductClick} />} />
-        <Route path="/bracelets" element={<CategoryPage category="Bracelets" onProductClick={handleProductClick} />} />
-        <Route path="/bangles" element={<CategoryPage category="Bangles" onProductClick={handleProductClick} />} />
-        <Route path="/necklaces" element={<CategoryPage category="Necklaces" onProductClick={handleProductClick} />} />
+        <Route path="/rings" element={<CategoryPage category="Rings" />} />
+        <Route path="/earrings" element={<CategoryPage category="Earrings" />} />
+        <Route path="/bracelets" element={<CategoryPage category="Bracelets" />} />
+        <Route path="/bangles" element={<CategoryPage category="Bangles" />} />
+        <Route path="/necklaces" element={<CategoryPage category="Necklaces" />} />
         <Route path="/account/login" element={<Login />} />
         <Route path="/account/signup" element={<Signup />} />
         <Route path="/account/otp-verify" element={<OtpVerify />} />

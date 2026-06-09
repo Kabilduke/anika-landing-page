@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase';
 
+/** Strip currency symbols & commas so "₹1,299" → 1299 */
+const parsePrice = (v) => {
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  const n = Number(String(v).replace(/[₹,\s]/g, ''));
+  return isNaN(n) ? 0 : n;
+};
+
 export const cartService = {
   /**
    * Retrieves all cart items for a user.
@@ -14,15 +22,17 @@ export const cartService = {
       .eq('user_id', userId);
 
     if (error) throw error;
+
     return (data || []).map(item => ({
       id: item.id, // DB primary key
       productId: item.product_id,
       name: item.products.name,
-      price: Number(item.products.price),
-      originalPrice: Number(item.products.compare_price || Math.round(item.products.price * 1.3)),
+      price: parsePrice(item.products.price),
+      originalPrice: parsePrice(item.products.compare_price || Math.round(parsePrice(item.products.price) * 1.3)),
       category: item.products.categories?.name || '',
       qty: item.qty,
       size: item.size,
+      color: item.color,
       image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
       deliveryDate: 'Sep 12, 2025' // mock matching storefront expectation
     }));
@@ -34,16 +44,18 @@ export const cartService = {
    * @param {number} productId
    * @param {number} qty
    * @param {string|null} size
+   * @param {string|null} color
    */
-  async addCartItem(userId, productId, qty = 1, size = null) {
+  async addCartItem(userId, productId, qty = 1, size = null, color = null) {
     const { data, error } = await supabase
       .from('cart_items')
       .upsert({
         user_id: userId,
         product_id: productId,
         qty,
-        size
-      }, { onConflict: 'user_id,product_id,size' })
+        size,
+        color
+      }, { onConflict: 'user_id,product_id,size,color' })
       .select();
 
     if (error) throw error;
@@ -88,7 +100,7 @@ export const cartService = {
     if (!items || items.length === 0) return;
     const { data, error } = await supabase
       .from('cart_items')
-      .upsert(items, { onConflict: 'user_id,product_id,size' })
+      .upsert(items, { onConflict: 'user_id,product_id,size,color' })
       .select();
 
     if (error) throw error;

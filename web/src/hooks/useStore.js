@@ -5,6 +5,14 @@ import { cartService } from '../services/cartService';
 import { wishlistService } from '../services/wishlistService';
 import { authService } from '../services/authService';
 
+/** Strip currency symbols & commas so "₹1,299" → 1299 */
+const parsePrice = (v) => {
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  const n = Number(String(v).replace(/[₹,\s]/g, ''));
+  return isNaN(n) ? 0 : n;
+};
+
 export const useStore = create((set, get) => ({
   // --- Authentication State ---
   session: null,
@@ -21,6 +29,16 @@ export const useStore = create((set, get) => ({
   wishlistItems: [],
   loadingCart: false,
   loadingWishlist: false,
+
+  // --- Selected Product ---
+  selectedProduct: (() => {
+    const saved = localStorage.getItem('anika_selected_product');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  })(),
 
   // --- Actions ---
 
@@ -114,24 +132,49 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // --- Selected Product Actions ---
+  setSelectedProduct: (product) => {
+    set({ selectedProduct: product });
+    if (product) {
+      localStorage.setItem('anika_selected_product', JSON.stringify(product));
+    } else {
+      localStorage.removeItem('anika_selected_product');
+    }
+  },
+
   // --- Cart Actions ---
-  addToCart: async (product, qty = 1, size = null) => {
+  addToCart: async (product, qty = 1, size = null, color = null) => {
     const user = get().user;
     if (user) {
       set({ loadingCart: true });
       try {
-        await cartService.addCartItem(user.id, product.productId || product.id, qty, size);
+        const existingItem = get().cartItems.find(
+          item => item.productId === (product.productId || product.id) &&
+                  item.size === size &&
+                  item.color === color
+        );
+
+        if (existingItem) {
+          const newQty = existingItem.qty + qty;
+          await cartService.updateCartItemQty(existingItem.id, newQty);
+        } else {
+          await cartService.addCartItem(user.id, product.productId || product.id, qty, size, color);
+        }
+
         const updatedItems = await cartService.getCartItems(user.id);
         set({ cartItems: updatedItems, loadingCart: false });
       } catch (err) {
         console.error('Error adding to database cart:', err);
         set({ loadingCart: false });
+        alert("Failed to add product to cart. Please sign out and sign in again to refresh your session.");
       }
     } else {
       // Guest local update
       const localCart = [...get().cartItems];
       const existingIdx = localCart.findIndex(
-        item => item.productId === (product.productId || product.id) && item.size === size
+        item => item.productId === (product.productId || product.id) &&
+                item.size === size &&
+                item.color === color
       );
 
       if (existingIdx > -1) {
@@ -141,11 +184,12 @@ export const useStore = create((set, get) => ({
           id: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           productId: product.productId || product.id,
           name: product.name,
-          price: Number(product.price),
-          originalPrice: Number(product.originalPrice || product.compare_price || Math.round(product.price * 1.3)),
+          price: parsePrice(product.price),
+          originalPrice: parsePrice(product.originalPrice || product.original || product.compare_price || Math.round(parsePrice(product.price) * 1.3)),
           category: product.category,
           qty,
           size,
+          color,
           image: product.img || product.image || (product.images && product.images[0]) || '/src/assets/cart/bangle1.webp',
           deliveryDate: 'Sep 12, 2025'
         });
@@ -233,6 +277,7 @@ export const useStore = create((set, get) => ({
       } catch (err) {
         console.error('Error toggling wishlist:', err);
         set({ loadingWishlist: false });
+        alert("Failed to toggle wishlist item. Please sign out and sign in again to refresh your session.");
       }
     } else {
       // Guest local update
@@ -323,14 +368,15 @@ export const useStore = create((set, get) => ({
           user_id: userId,
           product_id: dbItem.productId,
           qty: dbItem.qty,
-          size: dbItem.size
+          size: dbItem.size,
+          color: dbItem.color
         });
       });
 
       // Merge guest cart items
       guestCart.forEach(guestItem => {
         const existingIdx = mergedCart.findIndex(
-          m => m.product_id === guestItem.productId && m.size === guestItem.size
+          m => m.product_id === guestItem.productId && m.size === guestItem.size && m.color === guestItem.color
         );
         if (existingIdx > -1) {
           mergedCart[existingIdx].qty = Math.max(mergedCart[existingIdx].qty, guestItem.qty);
@@ -339,7 +385,8 @@ export const useStore = create((set, get) => ({
             user_id: userId,
             product_id: guestItem.productId,
             qty: guestItem.qty,
-            size: guestItem.size
+            size: guestItem.size,
+            color: guestItem.color
           });
         }
       });
