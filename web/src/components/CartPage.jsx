@@ -426,42 +426,44 @@ export default function CartPage() {
         </div>
 
         {/* RIGHT — ORDER SUMMARY */}
-        <div className="cart-right">
-          <div className="order-summary">
-            <div className="summary-row summary-subtotal">
-              <span>Subtotal</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+        {cartItems.length > 0 && (
+          <div className="cart-right">
+            <div className="order-summary">
+              <div className="summary-row summary-subtotal">
+                <span>Subtotal</span>
+                <span>₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-row">
+                <span>Taxes</span>
+                <span>₹{taxes}</span>
+              </div>
+              <div className="summary-row">
+                <span>GST</span>
+                <span>₹{gst}</span>
+              </div>
+              <div className="summary-row">
+                <span>Flatform Fee</span>
+                <span>₹{platformFee}</span>
+              </div>
+              <div className="summary-row">
+                <span>Delivery Fee</span>
+                <span className="free-label">FREE</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-row summary-grand">
+                <span>Grand Total</span>
+                <span>₹{grandTotal.toFixed(2)}</span>
+              </div>
+              <button
+                className="checkout-btn"
+                onClick={() => showToast("Proceeding to checkout!")}
+              >
+                Checkout
+              </button>
             </div>
-            <div className="summary-divider"></div>
-            <div className="summary-row">
-              <span>Taxes</span>
-              <span>₹{taxes}</span>
-            </div>
-            <div className="summary-row">
-              <span>GST</span>
-              <span>₹{gst}</span>
-            </div>
-            <div className="summary-row">
-              <span>Flatform Fee</span>
-              <span>₹{platformFee}</span>
-            </div>
-            <div className="summary-row">
-              <span>Delivery Fee</span>
-              <span className="free-label">FREE</span>
-            </div>
-            <div className="summary-divider"></div>
-            <div className="summary-row summary-grand">
-              <span>Grand Total</span>
-              <span>₹{grandTotal.toFixed(2)}</span>
-            </div>
-            <button
-              className="checkout-btn"
-              onClick={() => showToast("Proceeding to checkout!")}
-            >
-              Checkout
-            </button>
           </div>
-        </div>
+        )}
 
       </main>
 
