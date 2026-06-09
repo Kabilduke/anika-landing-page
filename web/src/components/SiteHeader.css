@@ -251,6 +251,14 @@
     height: 64px !important;
   }
 
+  /* Lock header in place when mobile menu is open */
+  .header.menu-open {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
   /* 3-column grid: burger | logo | icons */
   .header-top-row {
     padding: 0 16px !important;

@@ -91,6 +91,16 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
   const wishlistCount = wishlistItems.length;
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
   const handleLinkClick = (link) => {
     setMenuOpen(false);
     if (onLinkClick) onLinkClick(link);
