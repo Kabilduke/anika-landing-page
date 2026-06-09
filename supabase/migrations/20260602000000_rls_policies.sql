@@ -34,18 +34,14 @@ create policy "Users can update their own profile"
 
 -- ── 2. PRODUCT CATEGORIES TABLE ──
 create table if not exists public.categories (
-  id serial primary key,
+  category_id bigint generated always as identity primary key,
   name text not null unique,
   description text,
-  sku text,
-  category_image text,
-  category_image_meta jsonb,
-  storefront_images text[],
-  visible boolean default false,
-  featured boolean default false,
-  status text not null default 'Visible',
-  filters text[],
-  filter_groups jsonb,
+  slug text not null unique,
+  image_url text,
+  parent_id bigint references public.categories(category_id) on delete set null,
+  sort_order integer default 0,
+  is_active boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -66,25 +62,27 @@ create policy "Admins can manage categories"
 
 -- ── 3. PRODUCTS CATALOG TABLE ──
 create table if not exists public.products (
-  id serial primary key,
+  product_id bigint generated always as identity primary key,
+  category_id bigint references public.categories(category_id) on delete set null,
   name text not null,
   description text,
-  sku text not null unique,
-  category text references public.categories(name) on update cascade,
+  sku text unique,
+  image_url text,
+  images text[],
   price numeric not null,
   compare_price numeric,
   discount_price numeric,
-  stock integer not null default 0,
-  stock_qty integer not null default 0,
+  stock integer default 0,
+  stock_alert integer default 5,
   material text,
-  weight text,
-  size text,
+  weight numeric,
+  sizes text[],
+  colors text[],
   care text,
-  images text[],
-  visible boolean default false,
-  featured boolean default false,
-  status text not null default 'Visible',
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+  is_active boolean default true,
+  is_featured boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table public.products enable row level security;
@@ -104,16 +102,17 @@ create policy "Admins can manage products"
 
 -- ── 4. CUSTOMER ADDRESSES TABLE ──
 create table if not exists public.addresses (
-  id uuid default gen_random_uuid() primary key,
+  address_id bigint generated always as identity primary key,
   user_id uuid references auth.users on delete cascade not null,
-  name text not null,
-  email text,
-  mobile text not null,
-  flat text not null,
-  area text not null,
+  full_name text not null,
+  phone_number text not null,
+  address_line1 text not null,
+  address_line2 text,
   city text not null,
   state text not null,
-  pin_code text not null,
+  postal_code text not null,
+  country text default 'India'::text,
+  address_type text default 'home'::text,
   is_default boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -187,3 +186,58 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ── 8. STORAGE BUCKETS & RLS POLICIES FOR S3 IMAGES ──
+
+-- Create buckets if they do not exist
+insert into storage.buckets (id, name, public)
+values 
+  ('product_img', 'product_img', true),
+  ('categories_img', 'categories_img', true)
+on conflict (id) do nothing;
+
+-- Enable public read access to objects in product_img and categories_img
+create policy "Allow public read access to product images" 
+  on storage.objects for select 
+  using (bucket_id = 'product_img');
+
+create policy "Allow public read access to category images" 
+  on storage.objects for select 
+  using (bucket_id = 'categories_img');
+
+-- Allow admins to manage (upload, update, delete) images in product_img
+create policy "Admins can manage product images" 
+  on storage.objects for all 
+  using (
+    bucket_id = 'product_img' and 
+    exists (
+      select 1 from public.admin_users 
+      where public.admin_users.id = auth.uid() and public.admin_users.role = 'admin'
+    )
+  )
+  with check (
+    bucket_id = 'product_img' and 
+    exists (
+      select 1 from public.admin_users 
+      where public.admin_users.id = auth.uid() and public.admin_users.role = 'admin'
+    )
+  );
+
+-- Allow admins to manage (upload, update, delete) images in categories_img
+create policy "Admins can manage category images" 
+  on storage.objects for all 
+  using (
+    bucket_id = 'categories_img' and 
+    exists (
+      select 1 from public.admin_users 
+      where public.admin_users.id = auth.uid() and public.admin_users.role = 'admin'
+    )
+  )
+  with check (
+    bucket_id = 'categories_img' and 
+    exists (
+      select 1 from public.admin_users 
+      where public.admin_users.id = auth.uid() and public.admin_users.role = 'admin'
+    )
+  );
+

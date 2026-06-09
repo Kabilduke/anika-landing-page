@@ -262,7 +262,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   };
 
   return (
-    <div className="page">
+    <div className="ap-page">
       {/* ── Header ── */}
       <div className="ap-header">
         <button className="back-btn" onClick={onBack}>

@@ -1,10 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap');
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-
 /* ── Page ── */
-.page {
+.ap-page {
   width: 100%;
   padding: 12px 24px 24px;
   min-height: 100%;
@@ -13,7 +10,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
   flex-direction: column;
   align-items: stretch;
 }
-.page > * { width: 100%; }
+.ap-page > * { width: 100%; }
 
 /* ── AP Header (renamed to avoid clash with SiteHeader.css .header) ── */
 .ap-header {
@@ -285,7 +282,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 }
 
 @media (max-width: 768px) {
-  .page { padding: 12px 16px 20px; }
+  .ap-page { padding: 12px 16px 20px; }
   .ap-header h1 { font-size: 26px; line-height: 34px; }
   .card { padding: 18px 18px; margin-bottom: 14px; }
   .card-title { font-size: 17px; line-height: 26px; }
@@ -293,7 +290,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 }
 
 @media (max-width: 600px) {
-  .page { padding: 10px 12px 18px; }
+  .ap-page { padding: 10px 12px 18px; }
   .ap-header { gap: 8px; margin-bottom: 12px; }
   .ap-header h1 { font-size: 22px; line-height: 30px; }
   .card { padding: 16px 14px; border-radius: 10px; }
@@ -329,7 +326,7 @@ body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 }
 
 @media (max-width: 360px) {
-  .page { padding: 8px 10px 16px; }
+  .ap-page { padding: 8px 10px 16px; }
   .ap-header h1 { font-size: 17px; line-height: 24px; }
   .card { padding: 12px 10px; border-radius: 8px; }
   .card-title { font-size: 14px; }

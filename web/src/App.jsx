@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Signup from "./account/JewelrySignup";
@@ -16,9 +16,15 @@ import WishlistPage from './components/wishlistPage'; // ← added
 import Cartpage from './components/CartPage';
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
+import { useStore } from './hooks/useStore';
 
 function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const initAuth = useStore(state => state.initAuth);
+
+  useEffect(() => {
+    initAuth();
+  }, [initAuth]);
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);

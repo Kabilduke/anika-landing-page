@@ -3,7 +3,8 @@ import "./CartPage.css";
 import Navbar from "./SiteHeader"
 import Footer from "./SiteFooter"
 import { useNavigate } from "react-router-dom";
-// import WishlistPage from "./WishlistPage";
+import WishlistPage from "./wishlistPage";
+import { useStore } from "../hooks/useStore";
 
 const initialCartItems = [
   {
@@ -60,10 +61,15 @@ const recentlyViewed = [
 ];
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const cartItems = useStore((state) => state.cartItems);
+  const wishlistItems = useStore((state) => state.wishlistItems);
+  const updateCartQty = useStore((state) => state.updateCartQty);
+  const removeFromCart = useStore((state) => state.removeFromCart);
+  const removeSelectedFromCart = useStore((state) => state.removeSelectedFromCart);
+  const toggleWishlist = useStore((state) => state.toggleWishlist);
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [wishlist, setWishlist] = useState([]);
   const [toast, setToast] = useState("");
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [showWishlist, setShowWishlist] = useState(false);
@@ -146,42 +152,52 @@ export default function CartPage() {
     );
   };
 
-  const updateQty = (id, val) => {
-    setCartItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, qty: Math.max(1, val) } : item)
-    );
+  const updateQty = async (id, val) => {
+    await updateCartQty(id, val);
   };
 
-  const deleteSelected = () => {
-    setCartItems((prev) => prev.filter((i) => !selectedIds.includes(i.id)));
+  const deleteSelected = async () => {
+    await removeSelectedFromCart(selectedIds);
     setSelectedIds([]);
     showToast("Items removed from cart");
   };
 
-  const moveToWishlist = () => {
+  const moveToWishlist = async () => {
     const moved = cartItems.filter((i) => selectedIds.includes(i.id));
-    setWishlist((prev) => {
-      const existingIds = prev.map((w) => w.id);
-      const newItems = moved.filter((m) => !existingIds.includes(m.id));
-      return [...prev, ...newItems];
-    });
-    setCartItems((prev) => prev.filter((i) => !selectedIds.includes(i.id)));
+    for (const item of moved) {
+      const isWishlisted = wishlistItems.some((w) => w.id === item.productId);
+      if (!isWishlisted) {
+        await toggleWishlist({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          category: item.category,
+          img: item.image
+        });
+      }
+    }
+    await removeSelectedFromCart(selectedIds);
     setSelectedIds([]);
     showToast("Items moved to wishlist");
     setTimeout(() => setShowWishlist(true), 800);
   };
 
-  const toggleWishlistItem = (item) => {
-    setWishlist((prev) => {
-      const exists = prev.find((w) => w.id === item.id);
-      if (exists) {
-        showToast("Removed from wishlist");
-        return prev.filter((w) => w.id !== item.id);
-      } else {
-        showToast("Added to wishlist");
-        return [...prev, { ...item, qty: 1 }];
-      }
+  const toggleWishlistItem = async (item) => {
+    const exists = wishlistItems.some((w) => w.id === (item.productId || item.id));
+    await toggleWishlist({
+      productId: item.productId || item.id,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      category: item.category,
+      img: item.image || item.img
     });
+    if (exists) {
+      showToast("Removed from wishlist");
+    } else {
+      showToast("Added to wishlist");
+    }
   };
 
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -195,8 +211,6 @@ export default function CartPage() {
   if (showWishlist) {
     return (
       <WishlistPage
-        wishlistItems={wishlist}
-        setWishlistItems={setWishlist}
         onBack={() => setShowWishlist(false)}
       />
     );
@@ -366,13 +380,13 @@ export default function CartPage() {
                   <div className="recent-img-wrapper">
                     <img src={item.image} alt={item.name} className="recent-img" />
                     <button
-                      className={`recent-wish-btn ${wishlist.find((w) => w.id === item.id) ? "wishlisted" : ""}`}
+                      className={`recent-wish-btn ${wishlistItems.some((w) => w.id === item.id) ? "wishlisted" : ""}`}
                       onClick={() => toggleWishlistItem(item)}
                       aria-label="Wishlist"
                     >
                       <svg
                         viewBox="0 0 24 24"
-                        fill={wishlist.find((w) => w.id === item.id) ? "currentColor" : "none"}
+                        fill={wishlistItems.some((w) => w.id === item.id) ? "currentColor" : "none"}
                         stroke="currentColor"
                         strokeWidth="2"
                       >

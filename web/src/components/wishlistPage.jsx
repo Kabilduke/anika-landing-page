@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./WishlistPage.css";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
+import { useStore } from "../hooks/useStore";
 
 // ── Wishlist section images
 import bangle4 from "../assets/wishlist/bangle4.png";
@@ -31,13 +32,18 @@ const allRecentlyViewed = [
   { id: "rv6", name: "Emerald Pendant",    price: 5499, originalPrice: 7299,  image: photo6 },
 ];
 
-export default function WishlistPage() {
+export default function WishlistPage({ onBack }) {
   const navigate = useNavigate();
-  const [wishlistItems, setWishlistItems] = useState([]);
+
+  // Zustand Store
+  const wishlistItems = useStore((state) => state.wishlistItems);
+  const removeFromWishlist = useStore((state) => state.removeFromWishlist);
+  const removeSelectedFromWishlist = useStore((state) => state.removeSelectedFromWishlist);
+  const toggleWishlist = useStore((state) => state.toggleWishlist);
+
   const [selectedIds, setSelectedIds]     = useState([]);
   const [toast, setToast]                 = useState("");
   const [recentStart, setRecentStart]     = useState(0);
-  const [wishlist, setWishlist]           = useState([]);
   const [newsletterEmail, setNewsletterEmail] = useState("");
 
   const PAGE_SIZE = 6;
@@ -51,12 +57,21 @@ export default function WishlistPage() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const toggleWishlistItem = (item) => {
-    setWishlist((prev) =>
-      prev.find((w) => w.id === item.id)
-        ? prev.filter((w) => w.id !== item.id)
-        : [...prev, item]
-    );
+  const toggleWishlistItem = async (item) => {
+    const exists = wishlistItems.some((w) => w.id === (item.productId || item.id));
+    await toggleWishlist({
+      productId: item.productId || item.id,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      category: item.category,
+      img: item.image || item.img
+    });
+    if (exists) {
+      showToast("Removed from wishlist");
+    } else {
+      showToast("Added to wishlist");
+    }
   };
 
   const allSelected = wishlistItems.length > 0 && selectedIds.length === wishlistItems.length;
@@ -72,16 +87,15 @@ export default function WishlistPage() {
     );
   };
 
-  const deleteSelected = () => {
-    setWishlistItems((prev) => prev.filter((i) => !selectedIds.includes(i.id)));
+  const deleteSelected = async () => {
+    await removeSelectedFromWishlist(selectedIds);
     setSelectedIds([]);
     showToast("Items removed from wishlist");
   };
 
   const updateQty = (id, val) => {
-    setWishlistItems((prev) =>
-      prev.map((item) => item.id === id ? { ...item, qty: Math.max(1, val) } : item)
-    );
+    // Quantities not stored in DB, mock locally or ignore.
+    showToast("Quantity updated");
   };
 
   return (
@@ -89,9 +103,10 @@ export default function WishlistPage() {
 
       {/* ── HEADER ──────────────────────────────────────────── */}
       <SiteHeader
-        activeLink="Home"
+        activeLink=""
         onLinkClick={(link) => {
           if (link === "Home") navigate("/");
+          else navigate(`/${link.toLowerCase()}`);
         }}
       />
 
@@ -107,8 +122,14 @@ export default function WishlistPage() {
 
       <main className="wishlist-main">
 
-        {/* Header row — back button removed */}
-        <div className="wishlist-header-row">
+        <div className="wishlist-header-row" style={{ display: 'flex', alignItems: 'center' }}>
+          {onBack && (
+            <button onClick={onBack} aria-label="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '15px', display: 'flex', alignItems: 'center', padding: '5px', color: 'inherit' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="24" height="24">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+          )}
           <h1 className="wishlist-title">Wishlist</h1>
         </div>
 
@@ -195,8 +216,8 @@ export default function WishlistPage() {
                   </div>
                   <button
                     className="wishlist-remove-btn"
-                    onClick={() => {
-                      setWishlistItems((prev) => prev.filter((w) => w.id !== item.id));
+                    onClick={async () => {
+                      await removeFromWishlist(item.id);
                       showToast("Item removed from wishlist");
                     }}
                     aria-label="Remove from wishlist"
@@ -260,13 +281,13 @@ export default function WishlistPage() {
                 <div className="recent-img-wrapper">
                   <img src={item.image} alt={item.name} className="recent-img" />
                   <button
-                    className={`recent-wish-btn ${wishlist.find((w) => w.id === item.id) ? "wishlisted" : ""}`}
+                    className={`recent-wish-btn ${wishlistItems.find((w) => w.id === item.id) ? "wishlisted" : ""}`}
                     onClick={() => toggleWishlistItem(item)}
                     aria-label="Wishlist"
                   >
                     <svg
                       viewBox="0 0 24 24"
-                      fill={wishlist.find((w) => w.id === item.id) ? "currentColor" : "none"}
+                      fill={wishlistItems.find((w) => w.id === item.id) ? "currentColor" : "none"}
                       stroke="currentColor"
                       strokeWidth="2"
                     >

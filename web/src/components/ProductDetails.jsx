@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, memo, lazy, Suspense } from 'rea
 import { useNavigate } from "react-router-dom";
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
+import { useStore } from '../hooks/useStore';
 
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
 const SiteFooter = lazy(() => import('./SiteFooter'));
@@ -112,6 +113,16 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
   const [descOpen, setDescOpen] = useState(false);
   const [addlOpen, setAddlOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+
+  // Zustand Store
+  const addToCart = useStore(state => state.addToCart);
+  const toggleWishlist = useStore(state => state.toggleWishlist);
+  const wishlistItems = useStore(state => state.wishlistItems);
+
+  const isWishlisted = useMemo(() => {
+    const currentId = product?.productId || product?.id;
+    return wishlistItems.some(w => w.id === currentId);
+  }, [wishlistItems, product]);
 
   // Determine which image to show in gallery
   const displayImage = product?.img || MainBangle;
@@ -235,9 +246,27 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
                 <span>{qty}</span>
                 <button onClick={() => handleQtyChange(1)} aria-label="Increase quantity">+</button>
               </div>
-              <button className="pp-cart-btn">Add to Cart</button>
-              <button className="pp-wish-btn" aria-label="Add to wishlist">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5" aria-hidden="true">
+              <button 
+                className="pp-cart-btn"
+                onClick={async () => {
+                  if (product) {
+                    await addToCart(product, qty, null);
+                    alert(`Added "${displayName}" to cart!`);
+                  }
+                }}
+              >
+                Add to Cart
+              </button>
+              <button 
+                className="pp-wish-btn" 
+                aria-label="Add to wishlist"
+                onClick={async () => {
+                  if (product) {
+                    await toggleWishlist(product);
+                  }
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isWishlisted ? "#C42049" : "none"} stroke={isWishlisted ? "#C42049" : "#888"} strokeWidth="1.5" aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </button>

@@ -32,3 +32,11 @@ A shared request helper function `apiClient` MUST wrap HTTP Fetch calls to resol
 #### Scenario: Authorized API Request
 - **WHEN** the application invokes `apiClient` to request a secure Supabase Edge Function
 - **THEN** the client SHALL retrieve the active session, append the access token as a Bearer authorization header, and parse the JSON response
+
+### Requirement: Cart and Wishlist Service Functions
+The API Services layer SHALL provide helper functions inside a service module to insert, update, retrieve, and delete cart and wishlist records in Supabase.
+
+#### Scenario: Update Cart Item Quantity
+- **WHEN** a user updates quantity for an item in the cart
+- **THEN** the service SHALL call `supabase.from('cart_items').update({ qty }).eq('id', itemId)` to synchronize the change to the backend.
+

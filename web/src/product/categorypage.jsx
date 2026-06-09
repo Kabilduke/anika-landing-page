@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { productService } from "../services/productService";
+import { useStore } from "../hooks/useStore";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import Toast from "../components/Toast";
 import "./categorypage.css";
 
 const ITEMS_PER_PAGE = 9;
+const EMPTY_PRODUCTS = [];
 
 // ─── Loading Skeleton ─────────────────────────────────────────
 const ProductSkeleton = () => (
@@ -23,8 +24,6 @@ const ProductSkeleton = () => (
 );
 
 export default function CategoryPage({ category, onProductClick }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Search and filter states
@@ -34,39 +33,23 @@ export default function CategoryPage({ category, onProductClick }) {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [sizeMenuOpen, setSizeMenuOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [wishlist, setWishlist] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
 
-  // Fetch products from database
+  // Zustand Store Hooks
+  const products = useStore(state => state.products[category] || EMPTY_PRODUCTS);
+  const loading = useStore(state => state.loadingProducts);
+  const fetchProductsByCategory = useStore(state => state.fetchProductsByCategory);
+  const wishlistItems = useStore(state => state.wishlistItems);
+  const toggleWishlist = useStore(state => state.toggleWishlist);
+  const addToCart = useStore(state => state.addToCart);
+
+  const wishlistProductIds = useMemo(() => wishlistItems.map(w => w.id), [wishlistItems]);
+
+  // Fetch products from database through store (cached automatically)
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-
-      try {
-        const productsData = await productService.getProductsByCategoryName(category);
-        const mapped = (productsData || []).map(p => ({
-          id: p.product_id,
-          img: p.image_url,
-          name: p.name,
-          desc: p.description,
-          price: p.price,
-          originalPrice: p.compare_price || Math.round(p.price * 1.3),
-          sizes: p.sizes || [],
-          stock: p.stock > 0 ? "in-stock" : "out-of-stock"
-        }));
-        setProducts(mapped);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setProducts([]);
-      }
-
-      setLoading(false);
-      setCurrentPage(1);
-    };
-
-    fetchProducts();
-  }, [category]);
+    fetchProductsByCategory(category);
+  }, [category, fetchProductsByCategory]);
 
   // Reset filters when category changes
   useEffect(() => {
@@ -93,19 +76,20 @@ export default function CategoryPage({ category, onProductClick }) {
     setToastType(type);
   };
 
-  const handleWishlistToggle = (e, productId) => {
+  const handleWishlistToggle = async (e, product) => {
     e.stopPropagation();
-    if (wishlist.includes(productId)) {
-      setWishlist(prev => prev.filter(id => id !== productId));
+    const isWishlisted = wishlistProductIds.includes(product.id);
+    await toggleWishlist(product);
+    if (isWishlisted) {
       showToast("Removed from wishlist", "info");
     } else {
-      setWishlist(prev => [...prev, productId]);
       showToast("Added to wishlist", "success");
     }
   };
 
-  const handleAddToCart = (e, product) => {
+  const handleAddToCart = async (e, product) => {
     e.stopPropagation();
+    await addToCart(product, 1, null);
     showToast(`Added "${product.name}" to cart!`, "success");
   };
 
@@ -358,8 +342,8 @@ export default function CategoryPage({ category, onProductClick }) {
                           </svg>
                           Add To Cart
                         </button>
-                        <button type="button" onClick={(e) => handleWishlistToggle(e, product.id)} className={`product-card-wishlist-toggle-btn ${wishlist.includes(product.id) ? "active" : ""}`}>
-                          <svg viewBox="0 0 24 24" fill={wishlist.includes(product.id) ? "#C42049" : "none"} stroke={wishlist.includes(product.id) ? "#C42049" : "currentColor"} strokeWidth="2">
+                        <button type="button" onClick={(e) => handleWishlistToggle(e, product)} className={`product-card-wishlist-toggle-btn ${wishlistProductIds.includes(product.id) ? "active" : ""}`}>
+                          <svg viewBox="0 0 24 24" fill={wishlistProductIds.includes(product.id) ? "#C42049" : "none"} stroke={wishlistProductIds.includes(product.id) ? "#C42049" : "currentColor"} strokeWidth="2">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                           </svg>
                         </button>
