@@ -50,7 +50,8 @@ export default function AnikaAddresses() {
     if (tab === "Profile")        navigate("/profile");
     else if (tab === "Orders")    navigate("/profile/orders");
     else if (tab === "Addresses") setActiveTab("Addresses");
-    else navigate(`/profile/${tab.toLowerCase()}`);
+    else if (tab === "Wishlists") navigate("/profile/wishlists");
+    else if (tab === "Account")   navigate("/profile/account");
   };
 
   const handleNavClick = (link) => {

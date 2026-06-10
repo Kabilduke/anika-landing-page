@@ -40,6 +40,26 @@ export const useStore = create((set, get) => ({
     }
   })(),
 
+  // --- Selected Admin Order ---
+  selectedAdminOrder: (() => {
+    const saved = localStorage.getItem('anika_selected_admin_order');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  })(),
+
+  // --- Selected Admin Customer ---
+  selectedAdminCustomer: (() => {
+    const saved = localStorage.getItem('anika_selected_admin_customer');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  })(),
+
   // --- Actions ---
 
   // Initialize Auth & Session
@@ -139,6 +159,26 @@ export const useStore = create((set, get) => ({
       localStorage.setItem('anika_selected_product', JSON.stringify(product));
     } else {
       localStorage.removeItem('anika_selected_product');
+    }
+  },
+
+  setSelectedAdminOrder: (orderOrFn) => {
+    const nextOrder = typeof orderOrFn === 'function' ? orderOrFn(get().selectedAdminOrder) : orderOrFn;
+    set({ selectedAdminOrder: nextOrder });
+    if (nextOrder) {
+      localStorage.setItem('anika_selected_admin_order', JSON.stringify(nextOrder));
+    } else {
+      localStorage.removeItem('anika_selected_admin_order');
+    }
+  },
+
+  setSelectedAdminCustomer: (customerOrFn) => {
+    const nextCustomer = typeof customerOrFn === 'function' ? customerOrFn(get().selectedAdminCustomer) : customerOrFn;
+    set({ selectedAdminCustomer: nextCustomer });
+    if (nextCustomer) {
+      localStorage.setItem('anika_selected_admin_customer', JSON.stringify(nextCustomer));
+    } else {
+      localStorage.removeItem('anika_selected_admin_customer');
     }
   },
 

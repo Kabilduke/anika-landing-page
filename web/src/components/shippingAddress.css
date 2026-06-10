@@ -513,3 +513,126 @@ body {
   .form-grid { grid-template-columns: 1fr; }
   .form-group.half { grid-column: 1 / -1; }
 }
+
+/* ── PAYMENT METHODS SECTION ── */
+.payment-section {
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.payment-card {
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  padding: 20px 16px;
+  cursor: pointer;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: border-color 0.2s, background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.payment-card:hover {
+  background: #fff;
+  border-color: #aaa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.payment-card.selected {
+  border-color: #8b0030;
+  background: #fff;
+  box-shadow: 0 0 0 1px #8b0030;
+}
+
+.payment-card-icon {
+  width: 32px;
+  height: 32px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.payment-card.selected .payment-card-icon {
+  color: #8b0030;
+}
+
+.payment-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.payment-card-desc {
+  font-size: 11.5px;
+  color: #666;
+  text-align: center;
+}
+
+/* ── ORDER SUMMARY PREVIEW ── */
+.order-summary-preview {
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  padding: 16px 20px;
+  background: #fff;
+  margin-bottom: 24px;
+}
+
+.summary-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+}
+
+.summary-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.summary-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #8b0030;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* ── STEP STEPPER ENHANCEMENTS ── */
+.step.completed .step-icon {
+  background: #27ae60;
+  color: #fff;
+}
+
+.step.completed .step-label {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.step-line.active {
+  background: #8b0030;
+}
+

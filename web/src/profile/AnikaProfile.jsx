@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { authService } from "../services/authService";
+import { useStore } from "../hooks/useStore";
+import { orderService } from "../services/orderService";
+import { productService } from "../services/productService";
 import "./AnikaProfile.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -18,6 +21,12 @@ export default function AnikaProfile() {
     }
   };
 
+  const wishlistItems = useStore((state) => state.wishlistItems);
+  const removeFromWishlist = useStore((state) => state.removeFromWishlist);
+  const setSelectedProduct = useStore((state) => state.setSelectedProduct);
+
+  const [userOrders, setUserOrders] = useState([]);
+  const [productsMap, setProductsMap] = useState({});
   const [customerDetails, setCustomerDetails] = useState({
     name: "",
     phone: "",
@@ -27,15 +36,15 @@ export default function AnikaProfile() {
   });
   const [tempDetails, setTempDetails] = useState({ ...customerDetails });
 
-  // ← fetch real user data from Supabase
+  // Fetch real user data, orders, and products map
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchProfileData = async () => {
       try {
         const session = await authService.getSession();
         const user = session?.user;
 
         if (!user) {
-          navigate("/account/login"); // ← redirect if not logged in
+          navigate("/account/login");
           return;
         }
 
@@ -44,22 +53,37 @@ export default function AnikaProfile() {
           year: "numeric",
         });
 
+        // Fetch user's orders from database
+        const ordersData = await orderService.getOrders(user.id);
+        setUserOrders(ordersData || []);
+        const orderCountStr = `${ordersData?.length || 0} order${ordersData?.length !== 1 ? 's' : ''}`;
+
         const details = {
           name: user.user_metadata?.name || "No name set",
           phone: user.user_metadata?.phone || "No phone set",
           email: user.email,
           customerSince: joinedDate,
-          totalOrders: "0 orders",
+          totalOrders: orderCountStr,
         };
 
         setCustomerDetails(details);
         setTempDetails(details);
+
+        // Fetch products to map item names to full product rows
+        const productsData = await productService.getProducts();
+        const map = {};
+        if (productsData) {
+          productsData.forEach((p) => {
+            map[p.name] = p;
+          });
+        }
+        setProductsMap(map);
       } catch (err) {
-        console.error("Error fetching profile:", err);
+        console.error("Error fetching profile data:", err);
       }
     };
 
-    fetchUser();
+    fetchProfileData();
   }, []);
 
   const handleEdit = () => {
@@ -96,11 +120,15 @@ export default function AnikaProfile() {
 
   const tabs = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 
-  const handleTabClick = (tab) =>{
-    if (tab === "Orders"){
+  const handleTabClick = (tab) => {
+    if (tab === "Orders") {
       navigate("/profile/orders");
     } else if (tab === "Addresses") {
       navigate("/profile/addresses");
+    } else if (tab === "Wishlists") {
+      navigate("/profile/wishlists");
+    } else if (tab === "Account") {
+      navigate("/profile/account");
     } else {
       setActiveTab(tab);
     }

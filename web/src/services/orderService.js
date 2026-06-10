@@ -9,7 +9,7 @@ export const orderService = {
   async getOrders(userId) {
     const { data, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, order_items(*)')
       .eq('user_id', userId)
       .order('order_date', { ascending: false });
     if (error) throw error;
@@ -106,5 +106,63 @@ export const orderService = {
       .eq('address_id', addressId)
       .eq('user_id', userId);
     if (error) throw error;
+  },
+
+  /**
+   * Retrieves all orders in the system (admin view).
+   * @returns {Promise<any[]>}
+   */
+  async getAllOrders() {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .order('order_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Retrieves all customer profiles in the system (admin view).
+   * @returns {Promise<any[]>}
+   */
+  async getAllCustomers() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Updates the status of a specific order.
+   * @param {string} orderId 
+   * @param {string} status 
+   * @returns {Promise<any>}
+   */
+  async updateOrderStatus(orderId, status) {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', orderId)
+      .select();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Updates the admin note for a specific order.
+   * @param {string} orderId 
+   * @param {string} note 
+   * @returns {Promise<any>}
+   */
+  async updateOrderNote(orderId, note) {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ admin_notes: note })
+      .eq('id', orderId)
+      .select();
+    if (error) throw error;
+    return data;
   }
 };

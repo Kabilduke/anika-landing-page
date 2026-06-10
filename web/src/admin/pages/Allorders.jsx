@@ -7,6 +7,8 @@ const STATUS_STYLE = {
   Delivered: { bg: "#F0FDF4", color: "#16A34A" },
   Confirmed: { bg: "#F5F3FF", color: "#7C3AED" },
   Return:    { bg: "#FEF2F2", color: "#DC2626" },
+  Returned:  { bg: "#FEF2F2", color: "#DC2626" },
+  Cancelled: { bg: "#FEF2F2", color: "#DC2626" },
 };
 
 const PAYMENT_STYLE = {
@@ -15,7 +17,7 @@ const PAYMENT_STYLE = {
 };
 
 const CATEGORIES = ["All Category", "Necklaces", "Earrings", "Rings", "Bracelets"];
-const STATUSES   = ["All Status",   "Pending", "Confirmed", "Shipped", "Delivered", "Return"];
+const STATUSES   = ["All Status",   "Pending", "Confirmed", "Shipped", "Delivered", "Cancelled", "Return", "Returned"];
 const TYPES      = ["All Types",    "Regular", "Return"];
 const PER_PAGE   = 6;
 
@@ -110,10 +112,7 @@ const FilterDropdown = ({ value, options, onChange }) => {
 };
 
 /* ── Main Component ── */
-const AllOrders = ({ onViewDetail, fetchOrders }) => {
-  const [orders,   setOrders]   = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
+const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
   const [category, setCategory] = useState("All Category");
   const [status,   setStatus]   = useState("All Status");
   const [type,     setType]     = useState("All Types");
@@ -121,43 +120,6 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
   const [selected, setSelected] = useState([]);
   const [page,     setPage]     = useState(1);
   const [activeTab, setActiveTab] = useState("all");
-
-  /* ── Load data ── */
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (typeof fetchOrders === "function") {
-        const data = await fetchOrders();
-        setOrders(data || []);
-      } else {
-        /* No fetch function provided — stay empty */
-        setOrders([]);
-      }
-    } catch (err) {
-      setError(err.message || "Failed to load orders");
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchOrders]);
-
-  useEffect(() => { loadOrders(); }, [loadOrders]);
-
-  /* ── Expose addOrders for imperative use ── */
-  const addOrders = useCallback((newOrders) => {
-    setOrders((prev) => {
-      const map = new Map(prev.map((o) => [o.id, o]));
-      newOrders.forEach((o) => map.set(o.id, o));
-      return Array.from(map.values());
-    });
-    setLoading(false);
-  }, []);
-
-  /* Attach to window so backend can call window.ordersAPI.addOrders([...]) */
-  useEffect(() => {
-    window.ordersAPI = { addOrders, reload: loadOrders };
-    return () => { delete window.ordersAPI; };
-  }, [addOrders, loadOrders]);
 
   /* ── Derived lists ── */
   const displayOrders = activeTab === "return"
@@ -170,7 +132,8 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
     const matchSearch =
       !search ||
       o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer.toLowerCase().includes(search.toLowerCase());
+      (o.customer?.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer?.email || "").toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchType && matchSearch;
   });
 
@@ -200,7 +163,29 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
     return [1, "…", p, "…", totalPages];
   };
 
-  /* ── Render helpers ── */
+  /* ── Stats helpers ── */
+  const revenue = orders
+    .filter(o => !['cancelled','returned'].includes(o.status?.toLowerCase()))
+    .reduce((s, o) => s + Number(o.total_price || 0), 0);
+
+  const fmtRevenue = (v) => {
+    if (v >= 100000) return `₹${(v/100000).toFixed(1)}L`;
+    if (v >= 1000)   return `₹${(v/1000).toFixed(1)}K`;
+    return `₹${v.toLocaleString('en-IN')}`;
+  };
+
+  const fulfillmentRate = orders.length > 0
+    ? Math.round((count('Delivered') / orders.length) * 100)
+    : 0;
+
+  const codCount  = orders.filter(o => o.payment === 'COD').length;
+  const paidCount = orders.filter(o => o.payment === 'Paid').length;
+
+  const actionNeeded = count('Pending') + count('Confirmed');
+  const inTransit    = count('Shipped');
+  const problems     = count('Cancelled') + count('Returned') + count('Return');
+
+
   const renderBody = () => {
     if (loading) {
       return Array.from({ length: PER_PAGE }).map((_, i) => <SkeletonRow key={i} />);
@@ -218,7 +203,6 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
               </div>
               <p className="ao__empty-title">Something went wrong</p>
               <p className="ao__empty-desc">{error}</p>
-              <button className="ao__retry-btn" onClick={loadOrders}>Try again</button>
             </div>
           </td>
         </tr>
@@ -257,8 +241,8 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
     }
 
     return paginated.map((order) => {
-      const ss  = STATUS_STYLE[order.status]   || {};
-      const ps  = PAYMENT_STYLE[order.payment] || {};
+      const ss  = STATUS_STYLE[order.status]   || { bg: "#FFF4E5", color: "#D97706" };
+      const ps  = PAYMENT_STYLE[order.payment] || { bg: "#FFF4E5", color: "#D97706" };
       const sel = selected.includes(order.id);
       return (
         <tr key={order.id} className={`ao__row${sel ? " ao__row--selected" : ""}`}>
@@ -270,10 +254,15 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
               onChange={() => toggleRow(order.id)}
             />
           </td>
-          <td className="ao__cell-id">{order.id}</td>
-          <td className="ao__cell-customer">{order.customer}</td>
-          <td className="ao__cell-items ao__col-items">{order.items}</td>
-          <td className="ao__cell-total">{order.total}</td>
+          <td className="ao__cell-id">#{order.id?.slice(-6) || order.id}</td>
+          <td className="ao__cell-customer">
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: '500' }}>{order.customer?.name || "Unknown"}</span>
+              <span style={{ fontSize: '11px', color: '#888' }}>{order.customer?.email || ""}</span>
+            </div>
+          </td>
+          <td className="ao__cell-items ao__col-items">{order.item_name} {order.quantity > 1 ? `x${order.quantity}` : ''}</td>
+          <td className="ao__cell-total">₹{Number(order.total_price || 0).toLocaleString('en-IN')}</td>
           <td className="ao__col-payment">
             <span className="ao__badge" style={{ background: ps.bg, color: ps.color }}>
               {order.payment}
@@ -321,24 +310,116 @@ const AllOrders = ({ onViewDetail, fetchOrders }) => {
         </div>
       </div>
 
-      {/* ── Stats row ── */}
-      <div className="ao__stats">
-        {[
-          { label: "All Orders", value: loading ? "—" : orders.length.toLocaleString() },
-          { label: "Pending",    value: loading ? "—" : count("Pending") },
-          { label: "Confirmed",  value: loading ? "—" : count("Confirmed") },
-          { label: "Shipped",    value: loading ? "—" : count("Shipped") },
-          { label: "Delivered",  value: loading ? "—" : count("Delivered") },
-          { label: "Returns",    value: loading ? "—" : count("Return") },
-        ].map(({ label, value }) => (
-          <div key={label} className="ao__stat">
-            <span className="ao__stat-label">{label}</span>
-            <span className={`ao__stat-value${loading ? " ao__stat-value--loading" : ""}`}>
-              {value}
-            </span>
+      {/* ── Stats grid ── */}
+      <div className="ao__stats-grid">
+
+        {/* KPI row */}
+        <div className="ao__kpi-row">
+
+          {/* Total Orders + Revenue */}
+          <div className="ao__kpi-card ao__kpi-card--orders">
+            <div className="ao__kpi-top">
+              <span className="ao__kpi-icon">📦</span>
+              <span className="ao__kpi-label">Total Orders</span>
+            </div>
+            <div className={`ao__kpi-value${loading ? ' ao__kpi-value--loading' : ''}`}>
+              {loading ? '—' : orders.length.toLocaleString()}
+            </div>
+            <div className="ao__kpi-sub">
+              Revenue: <strong>{loading ? '—' : fmtRevenue(revenue)}</strong>
+            </div>
+            <div className="ao__kpi-bar">
+              <div className="ao__kpi-bar-fill" style={{ width: '100%', background: '#6366f1' }} />
+            </div>
           </div>
-        ))}
+
+          {/* Action needed */}
+          <div className="ao__kpi-card ao__kpi-card--action">
+            <div className="ao__kpi-top">
+              <span className="ao__kpi-icon">⏳</span>
+              <span className="ao__kpi-label">Needs Action</span>
+            </div>
+            <div className={`ao__kpi-value${loading ? ' ao__kpi-value--loading' : ''}`}>
+              {loading ? '—' : actionNeeded}
+            </div>
+            <div className="ao__kpi-sub">
+              <span className="ao__kpi-chip ao__kpi-chip--pending">{loading ? '—' : count('Pending')} Pending</span>
+              <span className="ao__kpi-chip ao__kpi-chip--confirmed">{loading ? '—' : count('Confirmed')} Confirmed</span>
+            </div>
+            <div className="ao__kpi-bar">
+              <div className="ao__kpi-bar-fill" style={{
+                width: orders.length ? `${(actionNeeded / orders.length) * 100}%` : '0%',
+                background: '#f59e0b'
+              }} />
+            </div>
+          </div>
+
+          {/* In Transit */}
+          <div className="ao__kpi-card ao__kpi-card--transit">
+            <div className="ao__kpi-top">
+              <span className="ao__kpi-icon">🚚</span>
+              <span className="ao__kpi-label">In Transit</span>
+            </div>
+            <div className={`ao__kpi-value${loading ? ' ao__kpi-value--loading' : ''}`}>
+              {loading ? '—' : inTransit}
+            </div>
+            <div className="ao__kpi-sub">
+              Delivered: <strong>{loading ? '—' : count('Delivered')}</strong>
+              &nbsp;·&nbsp; Rate: <strong>{loading ? '—' : `${fulfillmentRate}%`}</strong>
+            </div>
+            <div className="ao__kpi-bar">
+              <div className="ao__kpi-bar-fill" style={{
+                width: `${fulfillmentRate}%`,
+                background: '#10b981'
+              }} />
+            </div>
+          </div>
+
+          {/* Payment split */}
+          <div className="ao__kpi-card ao__kpi-card--payment">
+            <div className="ao__kpi-top">
+              <span className="ao__kpi-icon">💳</span>
+              <span className="ao__kpi-label">Payment Split</span>
+            </div>
+            <div className={`ao__kpi-value${loading ? ' ao__kpi-value--loading' : ''}`}>
+              {loading ? '—' : `${paidCount} / ${codCount}`}
+            </div>
+            <div className="ao__kpi-sub">
+              <span className="ao__kpi-chip ao__kpi-chip--paid">{loading ? '—' : paidCount} Paid</span>
+              <span className="ao__kpi-chip ao__kpi-chip--cod">{loading ? '—' : codCount} COD</span>
+            </div>
+            <div className="ao__kpi-bar">
+              <div className="ao__kpi-bar-split">
+                <div style={{ flex: paidCount || 0, background: '#10b981' }} />
+                <div style={{ flex: codCount  || 0, background: '#f59e0b' }} />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Status pill row */}
+        <div className="ao__pill-row">
+          {[
+            { label: 'Pending',   val: count('Pending'),   color: '#f59e0b', bg: '#fffbeb' },
+            { label: 'Confirmed', val: count('Confirmed'), color: '#7c3aed', bg: '#f5f3ff' },
+            { label: 'Shipped',   val: count('Shipped'),   color: '#2563eb', bg: '#eff6ff' },
+            { label: 'Delivered', val: count('Delivered'), color: '#16a34a', bg: '#f0fdf4' },
+            { label: 'Cancelled', val: count('Cancelled'), color: '#dc2626', bg: '#fef2f2' },
+            { label: 'Returned',  val: count('Returned') + count('Return'), color: '#dc2626', bg: '#fef2f2' },
+          ].map(({ label, val, color, bg }) => (
+            <div key={label} className="ao__pill" style={{ '--pill-color': color, '--pill-bg': bg }}>
+              <span className="ao__pill-dot" />
+              <span className="ao__pill-label">{label}</span>
+              <span className={`ao__pill-val${loading ? ' ao__pill-val--loading' : ''}`}>
+                {loading ? '—' : val}
+              </span>
+            </div>
+          ))}
+        </div>
+
       </div>
+
 
       {/* ── Toolbar ── */}
       <div className="ao__toolbar">

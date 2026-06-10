@@ -7,6 +7,8 @@ import OtpVerify from "./account/OtpVerify";
 import AnikaProfile from "./profile/AnikaProfile";
 import AnikaOrders from "./profile/AnikaOrders";
 import AnikaAddresses from "./profile/AnikaAddresses";
+import AnikaWishlist from "./profile/AnikaWishlist";
+import AnikaAccount from "./profile/AnikaAccount";
 import ShippingAddress from "./components/shippingAddress";
 import Payment from "./components/CartPage";
 import HomePage from './components/HomePage';
@@ -63,6 +65,8 @@ function App() {
         <Route path="/profile" element={<AnikaProfile />} />
         <Route path="/profile/orders" element={<AnikaOrders />} />
         <Route path="/profile/addresses" element={<AnikaAddresses />} />
+        <Route path="/profile/wishlists" element={<AnikaWishlist />} />
+        <Route path="/profile/account" element={<AnikaAccount />} />
         <Route path="/cart" element={<Cartpage />} />
         <Route path="/wishlist" element={<WishlistPage />} /> {/* ← added */}
 

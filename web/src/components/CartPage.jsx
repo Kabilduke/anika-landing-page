@@ -457,7 +457,7 @@ export default function CartPage() {
               </div>
               <button
                 className="checkout-btn"
-                onClick={() => showToast("Proceeding to checkout!")}
+                onClick={() => navigate("/shipping")}
               >
                 Checkout
               </button>

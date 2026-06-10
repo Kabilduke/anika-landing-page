@@ -9,6 +9,7 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "supabase:db:push": "supabase db push"
+    "supabase:db:push": "supabase db push",
+    "supabase:functions:serve": "supabase functions serve --no-verify-jwt --env-file supabase/functions/.env"
   }
 }

@@ -236,6 +236,7 @@ export default function ProductPage({ onBack }) {
   navigate("/shipping", {
     state: {
       product: {
+        productId: selectedProduct?.productId || selectedProduct?.id,
         name: displayName,
         price: displayPrice,
         qty: qty,
@@ -244,7 +245,7 @@ export default function ProductPage({ onBack }) {
       }
     }
   });
-}, [displayName, displayPrice, qty, displayImage, cat]);
+}, [displayName, displayPrice, qty, displayImage, cat, selectedProduct]);
 
   const handleShareWhatsApp = useCallback(() => {
     const message = `Check out this beautiful ${displayName} from Anika: ${window.location.href}`;

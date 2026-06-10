@@ -86,73 +86,180 @@
   .ao__tab + .ao__tab { margin-left: 18px; }
 }
 
-/* ── Stats Row ── */
-.ao__stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 14px;
-  padding: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-@media (min-width: 480px) {
-  .ao__stats { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 768px) {
-  .ao__stats {
-    display: flex;
-    align-items: stretch;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 10px;
-  }
-}
-
-.ao__stat {
-  flex: 1;
+/* ── Stats Grid ── */
+.ao__stats-grid {
   display: flex;
   flex-direction: column;
-  padding: 12px 14px;
-  gap: 4px;
-  background: #F7F7F7;
-  border-radius: 10px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-@media (min-width: 768px) {
-  .ao__stat { padding: 14px 18px; }
+/* KPI row — 4 cards */
+.ao__kpi-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-.ao__stat-label {
+@media (min-width: 900px) {
+  .ao__kpi-row { grid-template-columns: repeat(4, 1fr); }
+}
+
+.ao__kpi-card {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 14px;
+  padding: 16px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.ao__kpi-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ao__kpi-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.ao__kpi-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ao__kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.ao__kpi-value--loading {
+  color: #ddd;
+}
+
+.ao__kpi-sub {
+  font-size: 11.5px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ao__kpi-sub strong {
+  color: #555;
+  font-weight: 600;
+}
+
+/* Mini chips inside sub-line */
+.ao__kpi-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 20px;
   font-size: 11px;
-  color: #aaa;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.ao__kpi-chip--pending   { background: #fffbeb; color: #b45309; }
+.ao__kpi-chip--confirmed { background: #f5f3ff; color: #7c3aed; }
+.ao__kpi-chip--paid      { background: #f0fdf4; color: #15803d; }
+.ao__kpi-chip--cod       { background: #fffbeb; color: #b45309; }
+
+/* Accent bar at bottom of each KPI card */
+.ao__kpi-bar {
+  height: 3px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.ao__kpi-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease;
+  min-width: 4px;
+}
+
+/* Split bar for payment */
+.ao__kpi-bar-split {
+  display: flex;
+  height: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.ao__kpi-bar-split > div {
+  height: 100%;
+  min-width: 3px;
+  border-radius: 999px;
+  transition: flex 0.6s ease;
+}
+
+/* ── Status Pill Row ── */
+.ao__pill-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 @media (min-width: 640px) {
-  .ao__stat-label { font-size: 11.5px; }
+  .ao__pill-row { grid-template-columns: repeat(6, 1fr); }
 }
 
-.ao__stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111;
-  line-height: 1.2;
-  transition: color 0.2s;
+.ao__pill {
+  background: var(--pill-bg, #f7f7f7);
+  border: 1px solid color-mix(in srgb, var(--pill-color, #888) 15%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
-.ao__stat-value--loading {
+.ao__pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pill-color, #888);
+  flex-shrink: 0;
+}
+
+.ao__pill-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pill-color, #555);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ao__pill-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--pill-color, #333);
+  line-height: 1;
+}
+
+.ao__pill-val--loading {
   color: #ccc;
 }
 
-@media (min-width: 768px) {
-  .ao__stat-value { font-size: 21px; }
-}
 
 /* ── Toolbar ── */
 .ao__toolbar {

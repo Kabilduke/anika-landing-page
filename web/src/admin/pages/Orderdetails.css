@@ -143,6 +143,20 @@
 }
 .od__item-row:last-child { border-bottom: none; }
 
+.od__item-row--clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 13px 8px !important;
+  margin: 0 -8px;
+  transition: background-color 0.2s ease;
+}
+.od__item-row--clickable:hover {
+  background-color: #f7f7f8;
+}
+.od__item-row--clickable:hover .od__view-link {
+  text-decoration: underline;
+}
+
 .od__item-img {
   width: 44px;
   height: 44px;

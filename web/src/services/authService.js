@@ -115,5 +115,14 @@ export const authService = {
   onAuthStateChange(callback) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(callback);
     return subscription;
+  },
+
+  /**
+   * Deletes the currently logged-in user account via public RPC.
+   * @returns {Promise<void>}
+   */
+  async deleteAccount() {
+    const { error } = await supabase.rpc("delete_own_user");
+    if (error) throw error;
   }
 };

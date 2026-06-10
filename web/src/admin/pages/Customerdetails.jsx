@@ -1,60 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { orderService } from "../../services/orderService";
+import { productService } from "../../services/productService";
+import { useStore } from "../../hooks/useStore";
 import "./Customerdetails.css";
-
-const mockCustomer = {
-  name: "Meera Nair",
-  phone: "+91 98400 12345",
-  email: "meera.nair@gmail.com",
-  accountCreated: "3 Nov 2024",
-  lastLogin: "12 May 2026",
-  status: "Blocked",
-  profileInfo: {
-    totalOrders: 8,
-    totalSpent: "₹26,400",
-    lastOrder: "12 May 2026",
-    returns: 0,
-    avgOrderValue: "₹3,050",
-  },
-  addresses: {
-    home: {
-      label: "Home (Default)",
-      name: "Priya Sharma",
-      line1: "42, Anna Nagar East",
-      line2: "Chennai — 600102",
-      state: "Tamil Nadu, India",
-      phone: "+91 98400 11111",
-    },
-    office: {
-      label: "Office",
-      name: "Priya Sharma",
-      line1: "B42 Abinav, Datrons 4",
-      line2: "Perungalathur, Chennai — 600088",
-      state: "Tamil Nadu, India",
-      phone: "+91 98400 11111",
-    },
-  },
-  orderHistory: [
-    { id: "AK-JH-1542", product: "Kundan Finger Ring — Gold", qty: 1, date: "12 May 2026", amount: "₹3,200", status: "Pending" },
-    { id: "AK-JH-1542", product: "Kundan Finger Ring — Gold", qty: 1, date: "12 May 2026", amount: "₹3,200", status: "Delivered" },
-    { id: "AK-JH-1542", product: "Kundan Finger Ring — Gold", qty: 1, date: "12 May 2025", amount: "₹3,200", status: "Pending" },
-    { id: "AK-JH-1542", product: "Kundan Finger Ring — Gold", qty: 1, date: "12 May 2026", amount: "₹3,200", status: "Pending" },
-    { id: "AK-JH-1542", product: "Kundan Finger Ring — Gold", qty: 1, date: "12 May 2026", amount: "₹3,200", status: "Pending" },
-  ],
-  wishlist: [
-    { name: "Kundan Finger Ring — Gold", price: "₹3,200" },
-    { name: "Kundan Finger Ring — Gold", price: "₹3,200" },
-    { name: "Kundan Finger Ring — Gold", price: "₹3,200" },
-    { name: "Kundan Finger Ring — Gold", price: "₹3,200" },
-    { name: "Kundan Finger Ring — Gold", price: "₹3,200" },
-  ],
-  recentActivity: [
-    { color: "#ef4444", text: "Placed order #AK-JH-1042 — Gold Jhumka Earrings" },
-    { color: "#10b981", text: "Added Diamond Nose Pin to wishlist" },
-    { color: "#ef4444", text: "Placed order #AK-JH-1042 — Gold Jhumka Earrings" },
-    { color: "#f59e0b", text: "Updated shipping address — added Office address" },
-    { color: "#ef4444", text: "Placed order #AK-JH-1042 — Gold Jhumka Earrings" },
-  ],
-};
 
 const RingProductImage = () => (
   <div className="cd__product-img">
@@ -75,6 +24,8 @@ const StatusBadge = ({ status }) => {
     Delivered: { bg: "#f0fdf4", color: "#16a34a" },
     Cancelled: { bg: "#fef2f2", color: "#dc2626" },
     Blocked:   { bg: "#fef2f2", color: "#dc2626" },
+    Confirmed: { bg: "#f5f3ff", color: "#7c3aed" },
+    Shipped:   { bg: "#fef9c3", color: "#a16207" }
   };
   const s = map[status] || { bg: "#f5f5f5", color: "#666" };
   return (
@@ -87,8 +38,129 @@ const StatusBadge = ({ status }) => {
 const CustomerDetails = ({ customer, onBack }) => {
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm]   = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [productsMap, setProductsMap] = useState({});
 
-  const c = { ...mockCustomer, ...(customer || {}) };
+  const setSelectedProduct = useStore(state => state.setSelectedProduct);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await productService.getProducts();
+        const map = {};
+        if (data) {
+          data.forEach(p => {
+            map[p.name] = p;
+          });
+        }
+        setProductsMap(map);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleItemClick = (item) => {
+    const product = productsMap[item.product_name];
+    if (product) {
+      const formattedProduct = {
+        ...product,
+        id: product.product_id || product.id,
+        productId: product.product_id || product.id,
+        img: product.image_url || (product.images && product.images[0]) || '/src/assets/cart/bangle1.webp',
+        name: product.name,
+        desc: product.description,
+        price: product.price,
+        originalPrice: product.compare_price || Math.round(product.price * 1.3),
+        sizes: product.sizes || [],
+        stock: product.stock > 0 ? 'in-stock' : 'out-of-stock',
+        category: product.categories?.name || product.category || 'Bangles'
+      };
+      setSelectedProduct(formattedProduct);
+      navigate("/product");
+    }
+  };
+
+  const c = customer || {
+    id: "UNKNOWN",
+    name: "Unknown Customer",
+    phone: "N/A",
+    email: "N/A",
+    created_at: new Date().toISOString(),
+    orderCount: 0,
+    totalSpent: 0
+  };
+
+  useEffect(() => {
+    if (c.id && c.id !== "UNKNOWN") {
+      const fetchAddresses = async () => {
+        try {
+          setAddressesLoading(true);
+          const data = await orderService.getAddresses(c.id);
+          setAddresses(data || []);
+        } catch (err) {
+          console.error("Error fetching customer addresses:", err);
+        } finally {
+          setAddressesLoading(false);
+        }
+      };
+
+      const fetchOrders = async () => {
+        try {
+          setOrdersLoading(true);
+          const data = await orderService.getOrders(c.id);
+          setOrders(data || []);
+        } catch (err) {
+          console.error("Error fetching customer orders:", err);
+        } finally {
+          setOrdersLoading(false);
+        }
+      };
+
+      fetchAddresses();
+      fetchOrders();
+    }
+  }, [c.id]);
+
+  const stats = useMemo(() => {
+    const totalOrders = orders.length;
+    const totalSpent = orders
+      .filter(o => o.status?.toLowerCase() !== 'cancelled')
+      .reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+    const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    const lastOrder = orders[0]?.order_date 
+      ? new Date(orders[0].order_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : "N/A";
+
+    return {
+      totalOrders,
+      totalSpent,
+      avgOrderValue,
+      lastOrder
+    };
+  }, [orders]);
+
+  const recentActivity = useMemo(() => {
+    const activities = [];
+    if (c.created_at) {
+      activities.push({
+        color: "#10b981",
+        text: `Account created on ${new Date(c.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+      });
+    }
+    [...orders].reverse().forEach(order => {
+      activities.push({
+        color: order.status === 'Cancelled' ? '#ef4444' : order.status === 'Delivered' ? '#10b981' : '#f59e0b',
+        text: `Placed order #${order.id} — ${order.item_name} (Qty: ${order.quantity}, Total: ₹${Number(order.total_price).toLocaleString('en-IN')}) on ${new Date(order.order_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+      });
+    });
+    return activities.reverse(); // Newest first
+  }, [c.created_at, orders]);
 
   return (
     <div className="cd">
@@ -97,13 +169,15 @@ const CustomerDetails = ({ customer, onBack }) => {
       <div className="cd__header">
         <button className="cd__back-btn" onClick={onBack}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           Customer Details
         </button>
         <div className="cd__header-meta">
-          <span className="cd__header-date">Placed on 11 May 2026 at 3:42 PM</span>
-          <StatusBadge status="Blocked" />
+          <span className="cd__header-date">
+            Joined on {c.created_at ? new Date(c.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A"}
+          </span>
+          <StatusBadge status="Active" />
         </div>
       </div>
 
@@ -113,20 +187,59 @@ const CustomerDetails = ({ customer, onBack }) => {
           <div className="cd__card-title">Profile Info</div>
           <div className="cd__info-rows">
             <div className="cd__info-row"><span className="cd__info-label">Full name</span><span className="cd__info-value">{c.name}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Phone</span><span className="cd__info-value">{c.phone}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Email</span><span className="cd__info-value cd__info-value--email">{c.email}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Account created</span><span className="cd__info-value">{mockCustomer.accountCreated}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Last login</span><span className="cd__info-value">{mockCustomer.lastLogin}</span></div>
+            <div className="cd__info-row"><span className="cd__info-label">Phone</span><span className="cd__info-value">{c.phone || "N/A"}</span></div>
+            <div className="cd__info-row"><span className="cd__info-label">Email</span><span className="cd__info-value cd__info-value--email">{c.email || "N/A"}</span></div>
+            <div className="cd__info-row">
+              <span className="cd__info-label">Account created</span>
+              <span className="cd__info-value">
+                {c.created_at ? new Date(c.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+              </span>
+            </div>
           </div>
         </div>
         <div className="cd__card">
           <div className="cd__card-title">Order Summary</div>
           <div className="cd__info-rows">
-            <div className="cd__info-row"><span className="cd__info-label">Total orders</span><span className="cd__info-value">{c.orders ? `${c.orders} orders` : mockCustomer.profileInfo.totalOrders + " orders"}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Total spent</span><span className="cd__info-value">{c.totalSpent ? `₹${Number(c.totalSpent).toLocaleString("en-IN")}` : mockCustomer.profileInfo.totalSpent}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Last order</span><span className="cd__info-value">{c.joined || mockCustomer.profileInfo.lastOrder}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Returns</span><span className="cd__info-value">{mockCustomer.profileInfo.returns}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Avg. order value</span><span className="cd__info-value">{mockCustomer.profileInfo.avgOrderValue}</span></div>
+            <div className="cd__info-row">
+              <span className="cd__info-label">Total orders</span>
+              <span className="cd__info-value">
+                {ordersLoading ? (
+                  <span className="skeleton-shimmer" style={{ display: 'inline-block', width: '40px', height: '14px', borderRadius: '4px' }} />
+                ) : (
+                  `${stats.totalOrders} orders`
+                )}
+              </span>
+            </div>
+            <div className="cd__info-row">
+              <span className="cd__info-label">Total spent</span>
+              <span className="cd__info-value">
+                {ordersLoading ? (
+                  <span className="skeleton-shimmer" style={{ display: 'inline-block', width: '60px', height: '14px', borderRadius: '4px' }} />
+                ) : (
+                  `₹${stats.totalSpent.toLocaleString("en-IN")}`
+                )}
+              </span>
+            </div>
+            <div className="cd__info-row">
+              <span className="cd__info-label">Last order</span>
+              <span className="cd__info-value">
+                {ordersLoading ? (
+                  <span className="skeleton-shimmer" style={{ display: 'inline-block', width: '80px', height: '14px', borderRadius: '4px' }} />
+                ) : (
+                  stats.lastOrder
+                )}
+              </span>
+            </div>
+            <div className="cd__info-row">
+              <span className="cd__info-label">Avg. order value</span>
+              <span className="cd__info-value">
+                {ordersLoading ? (
+                  <span className="skeleton-shimmer" style={{ display: 'inline-block', width: '60px', height: '14px', borderRadius: '4px' }} />
+                ) : (
+                  `₹${Math.round(stats.avgOrderValue).toLocaleString("en-IN")}`
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -134,44 +247,142 @@ const CustomerDetails = ({ customer, onBack }) => {
       {/* ── Saved Addresses ── */}
       <div className="cd__section">
         <div className="cd__section-title">Saved Addresses</div>
-        <div className="cd__address-grid">
-          {Object.values(mockCustomer.addresses).map((addr, i) => (
-            <div key={i} className="cd__card">
-              <div className="cd__address-label">{addr.label}</div>
-              <div className="cd__address-name">{addr.name}</div>
-              <div className="cd__address-lines">
-                <span>{addr.line1}</span>
-                <span>{addr.line2}</span>
-                <span>{addr.state}</span>
-                <span>{addr.phone}</span>
+        {addressesLoading ? (
+          <div className="cd__address-grid">
+            <div className="cd__card skeleton-shimmer" style={{ height: '120px', opacity: 0.85 }} />
+            <div className="cd__card skeleton-shimmer" style={{ height: '120px', opacity: 0.85 }} />
+          </div>
+        ) : addresses.length > 0 ? (
+          <div className="cd__address-grid">
+            {addresses.map((addr, i) => (
+              <div key={i} className="cd__card">
+                <div className="cd__address-label">{addr.address_type || "Address"}{addr.is_default && " (Default)"}</div>
+                <div className="cd__address-name">{addr.full_name}</div>
+                <div className="cd__address-lines">
+                  <span>{addr.address_line1}</span>
+                  {addr.address_line2 && <span>{addr.address_line2}</span>}
+                  <span>{addr.city}, {addr.state} — {addr.postal_code}</span>
+                  <span>{addr.country}</span>
+                  <span>Phone: {addr.phone_number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="cd__card" style={{ color: 'var(--cd-text-muted)', fontStyle: 'italic', fontSize: '13.5px' }}>
+            No saved addresses found for this customer.
+          </div>
+        )}
       </div>
 
       {/* ── Order History ── */}
       <div className="cd__section">
         <div className="cd__section-title">Order History</div>
         <div className="cd__card cd__card--no-pad">
-          {mockCustomer.orderHistory.map((order, i) => (
-            <div key={i} className="cd__order-row">
-              <RingProductImage />
-              <div className="cd__order-info">
-                <div className="cd__order-name">{order.product}</div>
-                <div className="cd__order-meta">
-                  <span>Order ID: {order.id}</span>
-                  <span className="cd__order-meta-sep">·</span>
-                  <span>Qty: {order.qty}</span>
+          {ordersLoading ? (
+            <>
+              <div className="cd__order-row skeleton-shimmer" style={{ height: '72px', opacity: 0.85 }} />
+              <div className="cd__order-row skeleton-shimmer" style={{ height: '72px', opacity: 0.85 }} />
+            </>
+          ) : orders.length > 0 ? (
+            orders.map((order, i) => {
+              const orderItems = order.order_items && order.order_items.length > 0
+                ? order.order_items
+                : [{
+                    product_name: order.item_name,
+                    quantity: order.quantity || 1,
+                    price: order.total_price || 0,
+                    size: null,
+                    color: null,
+                    image_url: null
+                  }];
+              
+              return (
+                <div 
+                  key={order.id} 
+                  className="cd__order-block" 
+                  style={{ 
+                    borderBottom: i < orders.length - 1 ? '1px solid var(--cd-border)' : 'none', 
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  {/* Order header information */}
+                  <div className="cd__order-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <span style={{ fontWeight: '600', color: 'var(--cd-text-primary)', fontSize: '13.5px' }}>Order Ref: #{order.id?.slice(-8) || order.id}</span>
+                      <span style={{ color: '#aaa', margin: '0 8px' }}>·</span>
+                      <span style={{ fontSize: '12px', color: 'var(--cd-text-muted)' }}>
+                        {order.order_date ? new Date(order.order_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: '600', color: 'var(--cd-text-primary)' }}>₹{Number(order.total_price).toLocaleString("en-IN")}</span>
+                      <span style={{ fontSize: '11px', color: '#888', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>{order.payment}</span>
+                      <StatusBadge status={order.status} />
+                    </div>
+                  </div>
+
+                  {/* Items inside this order */}
+                  <div className="cd__order-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {orderItems.map((item, idx) => {
+                      const product = productsMap[item.product_name];
+                      const image = item.image_url || product?.image_url || (product?.images && product.images[0]) || '/src/assets/cart/bangle1.webp';
+                      const isClickable = !!product;
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="cd__order-item-row" 
+                          onClick={() => isClickable && handleItemClick(item)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            cursor: isClickable ? 'pointer' : 'default',
+                            background: '#fafafa',
+                            border: '1px solid #f0f0f0',
+                            transition: 'background-color 0.2s ease',
+                          }}
+                        >
+                          <div className="cd__product-img" style={{ width: '40px', height: '40px', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #ebebeb' }}>
+                            {image ? (
+                              <img src={image} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
+                            ) : (
+                              "✨"
+                            )}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '12.5px', fontWeight: '500', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product_name}</span>
+                              {isClickable && (
+                                <span style={{ fontSize: '10px', color: '#8b0030', marginLeft: '6px', fontWeight: 'normal' }}>(View)</span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                              Qty: {item.quantity} 
+                              {(item.size || item.color) && ` · Size: ${item.size || 'N/A'} · Color: ${item.color || 'N/A'}`}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--cd-text-primary)', textAlign: 'right' }}>
+                            ₹{Number(item.price || 0).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="cd__order-date">{order.date}</div>
-              </div>
-              <div className="cd__order-right">
-                <div className="cd__order-amount">{order.amount}</div>
-                <StatusBadge status={order.status} />
-              </div>
+              );
+            })
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--cd-text-muted)', fontStyle: 'italic', fontSize: '13.5px' }}>
+              No order history found.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -179,16 +390,10 @@ const CustomerDetails = ({ customer, onBack }) => {
       <div className="cd__section">
         <div className="cd__section-title-row">
           <div className="cd__section-title">Wishlist</div>
-          <div className="cd__wishlist-count">{mockCustomer.wishlist.length} Items Wishlisted</div>
+          <div className="cd__wishlist-count">0 Items Wishlisted</div>
         </div>
-        <div className="cd__wishlist-grid">
-          {mockCustomer.wishlist.map((item, i) => (
-            <div key={i} className="cd__wishlist-card">
-              <RingProductImage />
-              <div className="cd__wishlist-name">{item.name}</div>
-              <div className="cd__wishlist-price">{item.price}</div>
-            </div>
-          ))}
+        <div className="cd__card" style={{ color: 'var(--cd-text-muted)', fontStyle: 'italic', fontSize: '13.5px' }}>
+          No wishlisted items found (customer wishlists are kept private).
         </div>
       </div>
 
@@ -196,12 +401,20 @@ const CustomerDetails = ({ customer, onBack }) => {
       <div className="cd__section">
         <div className="cd__section-title">Recent activity</div>
         <div className="cd__card">
-          {mockCustomer.recentActivity.map((act, i) => (
-            <div key={i} className="cd__activity-row">
-              <span className="cd__activity-dot" style={{ background: act.color }} />
-              <span className="cd__activity-text">{act.text}</span>
+          {ordersLoading ? (
+            <div className="skeleton-shimmer" style={{ height: '80px', borderRadius: '6px' }} />
+          ) : recentActivity.length > 0 ? (
+            recentActivity.map((act, i) => (
+              <div key={i} className="cd__activity-row">
+                <span className="cd__activity-dot" style={{ background: act.color }} />
+                <span className="cd__activity-text">{act.text}</span>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: 'var(--cd-text-muted)', fontStyle: 'italic', fontSize: '13.5px' }}>
+              No recent activity recorded.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
