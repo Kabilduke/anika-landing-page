@@ -12,7 +12,7 @@ terraform {
   }
 
   cloud {
-    organization = "GenLabTesting"
+    organization = "genlabcc"
 
     workspaces {
       tags = ["anika-fashion-ecom"]
