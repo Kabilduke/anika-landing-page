@@ -1,7 +1,9 @@
-import React, { useState, useCallback, useMemo, memo, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useNavigate } from "react-router-dom";
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
+import Toast from './Toast';
+import { useStore } from '../hooks/useStore';
 
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
 const SiteFooter = lazy(() => import('./SiteFooter'));
@@ -11,7 +13,7 @@ const CategorySection = lazy(() => import('./CategorySection'));
 import MainBangle from '../assets/Product1.webp';
 
 import PayPalIcon from '../assets/PaymentPal.webp';
-import GPayIcon from '../assets/PaymentGpay.webp';
+import GPayIcon from '../assets/PaymentGPay.webp';
 import RazorIcon from '../assets/PaymentRazor.webp';
 
 // ── Loading Skeleton (Placeholder for better perceived speed) ─────────────────
@@ -93,31 +95,52 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
           </div>
         ))}
       </div>
-      <div className="pp-show-wrap">
-        <button className="pp-show-btn" onClick={() => setShowAll(s => !s)}>
-          {showAll ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
+      {relatedItems.length > 4 && (
+        <div className="pp-show-wrap">
+          <button className="pp-show-btn" onClick={() => setShowAll(s => !s)}>
+            {showAll ? 'Show Less' : 'Show More'}
+          </button>
+        </div>
+      )}
     </section>
   );
 });
 
-import { PRODUCTS } from './ProductSection';
-import { OFFER_PRODUCTS } from './Offers';
-
 // ═════════════════════════════════════════════════════════════════════════════
-export default function ProductPage({ onBack, product, onProductSelect }) {
+export default function ProductPage({ onBack }) {
   const [activeThumb, setActiveThumb] = useState(-1);
   const [qty, setQty] = useState(1);
   const [descOpen, setDescOpen] = useState(false);
   const [addlOpen, setAddlOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastType, setToastType] = useState("success");
+
+  const showToast = (message, type = "success") => {
+    setToastMsg("");
+    setToastType(type);
+    setTimeout(() => setToastMsg(message), 10);
+  };
+
+  // Zustand Store
+  const selectedProduct = useStore(state => state.selectedProduct);
+  const setSelectedProduct = useStore(state => state.setSelectedProduct);
+  const addToCart = useStore(state => state.addToCart);
+  const toggleWishlist = useStore(state => state.toggleWishlist);
+  const wishlistItems = useStore(state => state.wishlistItems);
+  const fetchProductsByCategory = useStore(state => state.fetchProductsByCategory);
+  const productsCache = useStore(state => state.products);
+
+  const isWishlisted = useMemo(() => {
+    const currentId = selectedProduct?.productId || selectedProduct?.id;
+    return wishlistItems.some(w => w.id === currentId);
+  }, [wishlistItems, selectedProduct]);
 
   // Determine which image to show in gallery
-  const displayImage = product?.img || MainBangle;
-  const displayName = product?.name || 'Antique Bangle set';
-  const displayPrice = product?.price || '₹1,299.00';
-  const displayOriginal = product?.original || '₹2,800.00';
+  const displayImage = selectedProduct?.img || MainBangle;
+  const displayName = selectedProduct?.name || 'Antique Bangle set';
+  const displayPrice = selectedProduct?.price || '₹1,299.00';
+  const displayOriginal = selectedProduct?.original || '₹2,800.00';
 
   const navigate = useNavigate();
 
@@ -128,22 +151,43 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
     alt: `${displayName} view ${i + 1}`
   })), [displayImage, displayName]);
 
-  const cat = product?.category || 'Bangles';
+  const cat = selectedProduct?.category || 'Bangles';
 
-  // Dynamic Related Items from Catalog
+  // Fetch related products from DB when category changes
+  useEffect(() => {
+    fetchProductsByCategory(cat);
+  }, [cat, fetchProductsByCategory]);
+
+  // Scroll to top when selected product changes (resets window scroll and desktop column scroll)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const infoCol = document.querySelector('.pp-info');
+    if (infoCol) {
+      infoCol.scrollTop = 0;
+    }
+  }, [selectedProduct]);
+
+  // Dynamic Related Items from DB catalog
   const dynamicRelated = useMemo(() => {
-    // Determine which catalog to use
-    const catalog = cat === 'Bangles' ? PRODUCTS : OFFER_PRODUCTS;
+    const dbProducts = productsCache[cat] || [];
+    const currentId = selectedProduct?.productId || selectedProduct?.id;
 
-    // Filter out the current product by ID (if available) or by image
-    const filtered = catalog.filter(item =>
-      item.id !== product?.id || item.img !== product?.img
-    );
+    // Map DB products to the shape RelatedProducts expects
+    const mapped = dbProducts
+      .filter(p => p.id !== currentId && p.productId !== currentId)
+      .map(p => ({
+        ...p,
+        sub: p.desc || p.category || cat,
+        price: typeof p.price === 'number' ? `₹${p.price}.00` : p.price,
+        original: p.originalPrice
+          ? (typeof p.originalPrice === 'number' ? `₹${p.originalPrice}.00` : p.originalPrice)
+          : p.original || '',
+        badge: '',
+        category: p.category || cat,
+      }));
 
-    // If we filtered out the current item, we might have fewer than 5.
-    // We'll take what's left, and if it's empty, we fallback to a generic list.
-    return filtered.length > 0 ? filtered : catalog.slice(0, 5);
-  }, [cat, product, displayImage]);
+    return mapped.length > 0 ? mapped : [];
+  }, [cat, productsCache, selectedProduct]);
 
   // Dynamic Info Rows
   const dynamicInfo = useMemo(() => [
@@ -168,14 +212,31 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
   const toggleShowAll = useCallback(() => setShowAll(s => !s), []);
 
   const handleHeaderLinkClick = (link) => {
-    // Navigate back to home for any header link
-    onBack();
+    if (link === "Home") {
+      navigate("/");
+    } else {
+      navigate(`/${link.toLowerCase()}`);
+    }
   };
+
+  const handleRelatedProductClick = useCallback((product) => {
+    const formattedProduct = {
+      ...product,
+      price: typeof product.price === 'number' ? `₹${product.price}.00` : product.price,
+      original: product.originalPrice
+        ? (typeof product.originalPrice === 'number' ? `₹${product.originalPrice}.00` : product.originalPrice)
+        : product.original || '',
+      category: product.category || cat,
+    };
+    setSelectedProduct(formattedProduct);
+    navigate("/product");
+  }, [cat, setSelectedProduct, navigate]);
 
   const handleBuyNow = useCallback(() => {
   navigate("/shipping", {
     state: {
       product: {
+        productId: selectedProduct?.productId || selectedProduct?.id,
         name: displayName,
         price: displayPrice,
         qty: qty,
@@ -184,7 +245,7 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
       }
     }
   });
-}, [displayName, displayPrice, qty, displayImage, cat]);
+}, [displayName, displayPrice, qty, displayImage, cat, selectedProduct]);
 
   const handleShareWhatsApp = useCallback(() => {
     const message = `Check out this beautiful ${displayName} from Anika: ${window.location.href}`;
@@ -232,9 +293,27 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
                 <span>{qty}</span>
                 <button onClick={() => handleQtyChange(1)} aria-label="Increase quantity">+</button>
               </div>
-              <button className="pp-cart-btn">Add to Cart</button>
-              <button className="pp-wish-btn" aria-label="Add to wishlist">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5" aria-hidden="true">
+              <button 
+                className="pp-cart-btn"
+                onClick={async () => {
+                  if (selectedProduct) {
+                    await addToCart(selectedProduct, qty, null);
+                    showToast(`Added "${displayName}" to cart!`);
+                  }
+                }}
+              >
+                Add to Cart
+              </button>
+              <button 
+                className="pp-wish-btn" 
+                aria-label="Add to wishlist"
+                onClick={async () => {
+                  if (selectedProduct) {
+                    await toggleWishlist(selectedProduct);
+                  }
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isWishlisted ? "#C42049" : "none"} stroke={isWishlisted ? "#C42049" : "#888"} strokeWidth="1.5" aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </button>
@@ -362,7 +441,7 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
         showAll={showAll}
         setShowAll={setShowAll}
         relatedItems={dynamicRelated}
-        onProductClick={onProductSelect}
+        onProductClick={handleRelatedProductClick}
       />
 
 
@@ -378,6 +457,13 @@ export default function ProductPage({ onBack, product, onProductSelect }) {
       <Suspense fallback={<LoadingSkeleton height="300px" />}>
         <SiteFooter />
       </Suspense>
+
+      {/* ── TOAST ── */}
+      <Toast
+        message={toastMsg}
+        type={toastType}
+        onClose={() => setToastMsg("")}
+      />
     </div>
   );
 }

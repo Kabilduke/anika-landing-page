@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { authService } from "../services/authService";
+import { orderService } from "../services/orderService";
 import "./AnikaAddresses.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -20,30 +21,28 @@ export default function AnikaAddresses() {
     pinCode: "", state: "Tamil Nadu", isDefault: false,
   });
 
-  // ── Fetch addresses from Supabase ──
-  const fetchAddresses = async (userId) => {
-    const { data, error } = await supabase
-      .from("addresses")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+  const handleFormChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-    if (error) {
-      alert(error.message);
-    } else {
-      setAddresses(data);
+  const fetchAddresses = async (userId) => {
+    try {
+      const data = await orderService.getAddresses(userId);
+      setAddresses(data || []);
+    } catch (err) {
+      console.error("Error loading addresses:", err);
     }
   };
 
   // ── Load user + addresses on mount ──
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    authService.getSession().then((session) => {
       if (!session) {
         navigate("/account/login");
         return;
       }
       setUser(session.user);
-      fetchAddresses(session.user.id); // ← load from Supabase
+      fetchAddresses(session.user.id);
     });
   }, []);
 
@@ -51,7 +50,8 @@ export default function AnikaAddresses() {
     if (tab === "Profile")        navigate("/profile");
     else if (tab === "Orders")    navigate("/profile/orders");
     else if (tab === "Addresses") setActiveTab("Addresses");
-    else navigate(`/profile/${tab.toLowerCase()}`);
+    else if (tab === "Wishlists") navigate("/profile/wishlists");
+    else if (tab === "Account")   navigate("/profile/account");
   };
 
   const handleNavClick = (link) => {
@@ -59,25 +59,24 @@ export default function AnikaAddresses() {
     else navigate(`/${link.toLowerCase()}`);
   };
 
-  const handleFormChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // ── Add new address to Supabase ──
   const handleAddNew = async () => {
-    if (!form.name.trim()) { alert("Please enter a name."); return; }
+    if (!form.name.trim()) {
+      alert("Please enter a name.");
+      return;
+    }
     if (!form.flat.trim() || !form.city.trim() || !form.pinCode.trim()) {
       alert("Please fill in address, city and pin code.");
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+    try {
+      if (form.isDefault) {
+        // Unset defaults first
+        await orderService.resetAddressDefaults(user.id);
+      }
 
-    const { error } = await supabase
-      .from("addresses")
-      .insert({
-        user_id: userId,
+      await orderService.createAddress({
+        user_id: user.id,
         full_name: form.name,
         phone_number: form.mobile,
         address_line1: form.flat,
@@ -88,49 +87,32 @@ export default function AnikaAddresses() {
         is_default: form.isDefault,
       });
 
-    if (error) {
-      alert(error.message);
-    } else {
-      fetchAddresses(userId); // ← refresh list
+      await fetchAddresses(user.id);
       setForm({
         name: "", email: "", mobile: "", flat: "", area: "",
         city: "", pinCode: "", state: "Tamil Nadu", isDefault: false,
       });
+    } catch (err) {
+      alert("Failed to add address: " + err.message);
     }
   };
 
-  // ── Delete address from Supabase ──
   const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from("addresses")
-      .delete()
-      .eq("address_id", id);
-
-    if (error) {
-      alert(error.message);
-    } else {
+    try {
+      await orderService.deleteAddress(id, user.id);
       setAddresses((prev) => prev.filter((a) => a.address_id !== id));
+    } catch (err) {
+      alert("Failed to delete address: " + err.message);
     }
   };
 
-  // ── Set default address ──
   const handleSetDefault = async (id) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
-
-    // Unset all defaults first
-    await supabase
-      .from("addresses")
-      .update({ is_default: false })
-      .eq("user_id", userId);
-
-    // Set new default
-    await supabase
-      .from("addresses")
-      .update({ is_default: true })
-      .eq("address_id", id);
-
-    fetchAddresses(userId); // ← refresh list
+    try {
+      await orderService.setAddressDefault(id, user.id);
+      await fetchAddresses(user.id);
+    } catch (err) {
+      alert("Failed to update default address: " + err.message);
+    }
   };
 
   return (

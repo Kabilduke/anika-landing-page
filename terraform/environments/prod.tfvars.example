@@ -1,0 +1,16 @@
+# Production Environment Configuration Example
+# Copy this file to prod.tfvars and fill in the values. Do NOT commit the copy!
+
+supabase_access_token    = "sbp_yourprodaccesstokenhere"
+supabase_organization_id = "org_yourprodorgidhere"
+environment              = "prod"
+region                   = "us-east-1"
+db_password              = "YourSuperStrongProdDbPassword456!"
+site_url                 = "https://www.anikajewelry.gideonjacob.in"
+
+# AWS Deployment and Custom Domains
+aws_region               = "ap-south-1"
+domain_name              = "anikajewelry.gideonjacob.in"
+route53_zone_name        = "gideonjacob.in"
+use_custom_domain        = true
+create_dns_records       = true

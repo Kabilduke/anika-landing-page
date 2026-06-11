@@ -1,14 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./Toast.css";
 
 
 export default function Toast({ message, type = "info", onClose, duration = 4000 }) {
   const [visible, setVisible] = useState(false);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const dismiss = useCallback(() => {
     setVisible(false);
-    setTimeout(() => onClose?.(), 320); // wait for fade-out animation
-  }, [onClose]);
+    setTimeout(() => onCloseRef.current?.(), 320); // wait for fade-out animation
+  }, []);
 
   useEffect(() => {
     if (!message) {

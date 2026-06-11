@@ -1,16 +1,23 @@
 import { useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";    
+import { authService } from "../services/authService";    
 import "./OtpVerify.css";
 import otpImg from "../assets/sign/welcome.png";
+import Toast from "../components/Toast"
 
 export default function OtpVerify() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [toast, setToast] = useState({message: "", type: ""});
   const inputRefs = useRef([]);
 
   const location = useLocation();         
   const email = location.state?.email;
   const navigate = useNavigate();
+
+  const showToast = (message, type = "info") => {
+    setToast({ message: "", type: ""});
+    setTimeout(() => setToast({ message, type}), 10);
+  }
 
   const handleChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -41,22 +48,17 @@ export default function OtpVerify() {
   const handleVerify = async () => {
     const code = otp.join("");
     if (code.length < 6) {
-      alert("Please enter all 6 digits.");
+      showToast("Please enter all 6 digits.", "error");
       return;
     }
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: "email",
-    });
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Login successful!");
+    try {
+      const data = await authService.verifyOtp(email, code, "email");
+      showToast("Login successful!", "success");
       console.log(data);
-      navigate("/profile");
+      setTimeout(() => navigate("/profile"), 1200);
+    } catch (error) {
+      showToast(error.message, "error");
     }
   };
 
@@ -64,11 +66,11 @@ export default function OtpVerify() {
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0]?.focus();
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("OTP resent!");
+    try {
+      await authService.signInWithOtp(email);
+      showToast("OTP resent!", "success");
+    } catch (error) {
+      showToast(error.message, "error");
     }
   };
 
@@ -120,7 +122,11 @@ export default function OtpVerify() {
 
         </div>
       </div>
-
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: ""})}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AnikaHome from './AnikaHome';
 import './HomePage.css';
+import { useStore } from '../hooks/useStore';
 
 const ProductSection = lazy(() => import('./ProductSection'));
 const BannerSection = lazy(() => import('./BannerSection'));
@@ -18,32 +19,18 @@ const SectionLoader = () => (
   </div>
 );
 
-export default function HomePage({ onProductClick }) {
+export default function HomePage() {
   const navigate = useNavigate();
+  const setSelectedProduct = useStore(state => state.setSelectedProduct);
 
-  // Wrap onProductClick to also navigate
+  // Wrap setSelectedProduct to also navigate
   const handleProductClick = (product) => {
-    onProductClick(product);      // saves product to App state
+    setSelectedProduct(product);      // saves product to Zustand state
     navigate('/product');         // then go to product page
   };
 
   const handleCategoryClick = (name) => {
-    let sectionId = '';
-
-    if (name === 'Necklaces') {
-      sectionId = 'necklaces';
-    } else if (name === 'Bangles') {
-      sectionId = 'shop';
-    } else if (name === 'Earrings') {
-      sectionId = 'offers';
-    } else {
-      return;
-    }
-
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    navigate(`/${name.toLowerCase()}`);
   };
 
   return (

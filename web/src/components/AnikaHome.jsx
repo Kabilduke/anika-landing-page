@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import "./AnikaHome.css";
 import HeroImage from "../assets/HomeImage.webp";
 import HeroMobile from "../assets/hero image mobile.webp";
@@ -7,25 +8,13 @@ import SiteHeader from "./SiteHeader";
 const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces"];
 
 export default function AnikaHome() {
-  const scrollToSection = (id) => {
-    if (id === 'Home') {
+  const navigate = useNavigate();
+
+  const handleNavClick = (link) => {
+    if (link === 'Home') {
       window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    
-    const mapping = {
-      'Rings': 'shop',
-      'Earrings': 'offers',
-      'Bracelets': 'shop',
-      'Bangles': 'shop',
-      'Necklaces': 'necklaces'
-    };
-    
-    const targetId = mapping[id] || id.toLowerCase();
-    const element = document.getElementById(targetId);
-    
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(`/${link.toLowerCase()}`);
     }
   };
 
@@ -33,12 +22,12 @@ export default function AnikaHome() {
     <div className="page">
 
       {/* ── Header ── */}
-      <SiteHeader activeLink="Home" onLinkClick={scrollToSection} />
+      <SiteHeader activeLink="Home" onLinkClick={handleNavClick} />
 
 
-      {/* ── Mobile Category Row (Above Hero) ── */}
+      {/* ── Mobile Category Row  ── */}
       <div className="mobile-top-categories mobile-only">
-        <CategorySection onCategoryClick={(name) => scrollToSection(name)} />
+        <CategorySection onCategoryClick={(name) => navigate(`/${name.toLowerCase()}`)} />
       </div>
 
       {/* ── Hero ── */}
@@ -64,7 +53,12 @@ export default function AnikaHome() {
             <p className="hero-subtitle">
               Discover handcrafted fashion jewellery <br/>for every occasion
             </p>
-            <button className="explore-btn" onClick={() => scrollToSection('shop')}>
+            <button className="explore-btn" onClick={() => {
+              const element = document.getElementById('shop');
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+              }
+            }}>
               Explore Now
             </button>
           </div>
