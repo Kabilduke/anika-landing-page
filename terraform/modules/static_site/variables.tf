@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "domain_name" {
-  description = "The parent domain name (e.g., anikajewelry.gideonjacob.in)."
+  description = "The parent domain name (e.g., anikajewelry.in)."
   type        = string
 }
 
@@ -31,9 +31,9 @@ variable "environment" {
 }
 
 variable "route53_zone_name" {
-  description = "The primary Route 53 Hosted Zone domain name (e.g. gideonjacob.in)."
+  description = "The primary Route 53 Hosted Zone domain name (e.g. in)."
   type        = string
-  default     = "gideonjacob.in"
+  default     = "in"
 }
 
 variable "additional_aliases" {

@@ -6,11 +6,11 @@ supabase_organization_id = "org_yourprodorgidhere"
 environment              = "prod"
 region                   = "us-east-1"
 db_password              = "YourSuperStrongProdDbPassword456!"
-site_url                 = "https://www.anikajewelry.gideonjacob.in"
+site_url                 = "https://www.anikajewelry.in"
 
 # AWS Deployment and Custom Domains
 aws_region               = "ap-south-1"
-domain_name              = "anikajewelry.gideonjacob.in"
-route53_zone_name        = "gideonjacob.in"
+domain_name              = "anikajewelry.in"
+route53_zone_name        = "in"
 use_custom_domain        = true
 create_dns_records       = true

@@ -49,13 +49,13 @@ variable "aws_region" {
 variable "domain_name" {
   description = "The root domain name for the landing page project."
   type        = string
-  default     = "anikajewelry.gideonjacob.in"
+  default     = "anikajewelry.in"
 }
 
 variable "route53_zone_name" {
   description = "The Route 53 Hosted Zone domain name where DNS records should be created."
   type        = string
-  default     = "gideonjacob.in"
+  default     = "in"
 }
 
 variable "use_custom_domain" {
