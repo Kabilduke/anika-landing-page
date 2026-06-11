@@ -161,28 +161,35 @@
   color: #fff;
 }
 
-.db__avatar-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 50%;
+.db__profile-btn {
   display: flex;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0 10px;
+  height: 34px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.db__avatar-img {
-  width: 32px;
-  height: 32px;
+.db__profile-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.db__profile-avatar-img {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.12);
   display: block;
-  transition: border-color 0.15s ease;
-}
-
-.db__avatar-btn:hover .db__avatar-img {
-  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

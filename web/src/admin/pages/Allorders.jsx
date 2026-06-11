@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import "./Allorders.css";
 
 const STATUS_STYLE = {
@@ -17,8 +17,7 @@ const PAYMENT_STYLE = {
 };
 
 const CATEGORIES = ["All Category", "Necklaces", "Earrings", "Rings", "Bracelets"];
-const STATUSES   = ["All Status",   "Pending", "Confirmed", "Shipped", "Delivered", "Cancelled", "Return", "Returned"];
-const TYPES      = ["All Types",    "Regular", "Return"];
+const STATUSES   = ["All Status",   "Pending", "Confirmed", "Shipped", "Delivered", "Cancelled", "Returned"];
 const PER_PAGE   = 6;
 
 /* ── Icons ── */
@@ -88,8 +87,25 @@ const SkeletonRow = () => (
 /* ── Dropdown ── */
 const FilterDropdown = ({ value, options, onChange }) => {
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
+
   return (
-    <div className="ao__dd" tabIndex={0} onBlur={() => setTimeout(() => setOpen(false), 120)}>
+    <div className="ao__dd" ref={dropdownRef}>
       <button className="ao__dd-btn" onClick={() => setOpen((o) => !o)}>
         <span>{value}</span>
         <ChevronDownIcon />
@@ -100,7 +116,10 @@ const FilterDropdown = ({ value, options, onChange }) => {
             <div
               key={opt}
               className={`ao__dd-item${value === opt ? " ao__dd-item--active" : ""}`}
-              onMouseDown={() => { onChange(opt); setOpen(false); }}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
             >
               {opt}
             </div>
@@ -112,36 +131,66 @@ const FilterDropdown = ({ value, options, onChange }) => {
 };
 
 /* ── Main Component ── */
-const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
+const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDetail }) => {
   const [category, setCategory] = useState("All Category");
   const [status,   setStatus]   = useState("All Status");
-  const [type,     setType]     = useState("All Types");
   const [search,   setSearch]   = useState("");
   const [selected, setSelected] = useState([]);
   const [page,     setPage]     = useState(1);
   const [activeTab, setActiveTab] = useState("all");
 
+  const categoryOptions = useMemo(() => {
+    const staticCats = ["All Category", "Necklaces", "Earrings", "Rings", "Bracelets", "Bangles"];
+    const unique = new Set([
+      ...staticCats,
+      ...products
+        .map((p) => p.category)
+        .filter((c) => c && typeof c === "string" && c.trim() !== "")
+    ]);
+    return Array.from(unique);
+  }, [products]);
+
   /* ── Derived lists ── */
   const displayOrders = activeTab === "return"
-    ? orders.filter((o) => o.type === "Return")
+    ? orders.filter((o) => o.type?.toLowerCase() === "return")
     : orders;
 
   const filtered = displayOrders.filter((o) => {
-    const matchStatus = status === "All Status" || o.status === status;
-    const matchType   = type   === "All Types"  || o.type   === type;
+    const matchCategory = (() => {
+      if (category === "All Category") return true;
+      const baseItemName = o.item_name?.split(" + ")[0] || "";
+      const product = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
+      const categoryName = product?.category || "Uncategorized";
+      return categoryName.toLowerCase() === category.toLowerCase();
+    })();
+
+    const matchStatus = (() => {
+      if (status === "All Status") return true;
+      if (status.toLowerCase() === "returned") {
+        return o.status?.toLowerCase() === "return" || o.status?.toLowerCase() === "returned";
+      }
+      return o.status?.toLowerCase() === status.toLowerCase();
+    })();
     const matchSearch =
       !search ||
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
+      (o.id || "").toLowerCase().includes(search.toLowerCase()) ||
       (o.customer?.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (o.customer?.email || "").toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchType && matchSearch;
+      (o.customer?.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (o.item_name || "").toLowerCase().includes(search.toLowerCase());
+
+    return matchCategory && matchStatus && matchSearch;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const safePage   = Math.min(page, totalPages);
   const paginated  = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
-  const count = (s) => orders.filter((o) => o.status === s).length;
+  const count = (s) => {
+    if (s.toLowerCase() === "return" || s.toLowerCase() === "returned") {
+      return orders.filter((o) => o.status?.toLowerCase() === "return" || o.status?.toLowerCase() === "returned").length;
+    }
+    return orders.filter((o) => o.status?.toLowerCase() === s.toLowerCase()).length;
+  };
 
   /* ── Selection ── */
   const toggleRow = (id) =>
@@ -178,12 +227,21 @@ const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
     ? Math.round((count('Delivered') / orders.length) * 100)
     : 0;
 
-  const codCount  = orders.filter(o => o.payment === 'COD').length;
-  const paidCount = orders.filter(o => o.payment === 'Paid').length;
+  const codCount  = orders.filter(o => o.payment?.toUpperCase() === 'COD').length;
+  const paidCount = orders.filter(o => o.payment?.toUpperCase() === 'PAID').length;
 
   const actionNeeded = count('Pending') + count('Confirmed');
   const inTransit    = count('Shipped');
-  const problems     = count('Cancelled') + count('Returned') + count('Return');
+  const problems     = count('Cancelled') + count('Returned');
+
+  const hasActiveFilters = category !== "All Category" || status !== "All Status" || search !== "";
+
+  const handleResetFilters = () => {
+    setCategory("All Category");
+    setStatus("All Status");
+    setSearch("");
+    setPage(1);
+  };
 
 
   const renderBody = () => {
@@ -294,20 +352,6 @@ const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
             {loading ? "Loading…" : `${filtered.length} Orders`}
           </p>
         </div>
-        <div className="ao__header-tabs">
-          <button
-            className={`ao__tab${activeTab === "all" ? " ao__tab--active" : ""}`}
-            onClick={() => { setActiveTab("all"); setPage(1); }}
-          >
-            All Orders
-          </button>
-          <button
-            className={`ao__tab${activeTab === "return" ? " ao__tab--active" : ""}`}
-            onClick={() => { setActiveTab("return"); setPage(1); }}
-          >
-            Return Order
-          </button>
-        </div>
       </div>
 
       {/* ── Stats grid ── */}
@@ -406,7 +450,7 @@ const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
             { label: 'Shipped',   val: count('Shipped'),   color: '#2563eb', bg: '#eff6ff' },
             { label: 'Delivered', val: count('Delivered'), color: '#16a34a', bg: '#f0fdf4' },
             { label: 'Cancelled', val: count('Cancelled'), color: '#dc2626', bg: '#fef2f2' },
-            { label: 'Returned',  val: count('Returned') + count('Return'), color: '#dc2626', bg: '#fef2f2' },
+            { label: 'Returned',  val: count('Returned'), color: '#dc2626', bg: '#fef2f2' },
           ].map(({ label, val, color, bg }) => (
             <div key={label} className="ao__pill" style={{ '--pill-color': color, '--pill-bg': bg }}>
               <span className="ao__pill-dot" />
@@ -423,13 +467,18 @@ const AllOrders = ({ orders = [], loading, error = null, onViewDetail }) => {
 
       {/* ── Toolbar ── */}
       <div className="ao__toolbar">
-        <FilterDropdown value={category} options={CATEGORIES} onChange={(v) => { setCategory(v); setPage(1); }} />
+        <FilterDropdown value={category} options={categoryOptions} onChange={(v) => { setCategory(v); setPage(1); }} />
         <FilterDropdown value={status}   options={STATUSES}   onChange={(v) => { setStatus(v);   setPage(1); }} />
-        <FilterDropdown value={type}     options={TYPES}      onChange={(v) => { setType(v);     setPage(1); }} />
-        <button className="ao__filter-btn">
-          <FilterIcon />
-          Filter
-        </button>
+        {hasActiveFilters ? (
+          <button className="ao__filter-btn" onClick={handleResetFilters} style={{ background: '#fef2f2', color: '#ef4444', borderColor: '#fca5a5' }}>
+            Clear Filters
+          </button>
+        ) : (
+          <button className="ao__filter-btn" onClick={handleResetFilters}>
+            <FilterIcon />
+            Filter
+          </button>
+        )}
         <div className="ao__search">
           <SearchIcon />
           <input

@@ -265,8 +265,7 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
 /* ── Main Component ────────────────────────────────────────────── */
 const AllCustomers = ({ customers = [], loading, onViewDetail }) => {
   const [selectedIds, setSelectedIds]   = useState([]);
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [typeFilter, setTypeFilter]     = useState("All Customers");
+  const [customerFilter, setCustomerFilter] = useState("All Customers");
   const [searchQuery, setSearchQuery]   = useState("");
   const [currentPage, setCurrentPage]   = useState(1);
   const [showFilters, setShowFilters]   = useState(false);
@@ -282,12 +281,31 @@ const AllCustomers = ({ customers = [], loading, onViewDetail }) => {
 
   /* Filtering */
   const filtered = allCustomers.filter((c) => {
-    const matchStatus = statusFilter === "All Status" || (c.status || "Confirmed") === statusFilter;
     const matchSearch = !searchQuery ||
       (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.phone || "").includes(searchQuery);
-    return matchStatus && matchSearch;
+
+    if (!matchSearch) return false;
+
+    if (customerFilter === "New this month") {
+      const now = new Date();
+      if (c.created_at) {
+        const d = new Date(c.created_at);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      return c.joined?.includes("2026");
+    }
+
+    if (customerFilter === "Active Accounts") {
+      return (c.status || "Confirmed") === "Confirmed";
+    }
+
+    if (customerFilter === "Disabled Accounts") {
+      return c.status === "Disabled";
+    }
+
+    return true; // "All Customers"
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
@@ -409,13 +427,6 @@ const AllCustomers = ({ customers = [], loading, onViewDetail }) => {
           <h1 className="ac__title">All Customers</h1>
           <span className="ac__subtitle">{loading ? "Loading…" : `${filtered.length} customers`}</span>
         </div>
-        <div className="ac__header-actions">
-          <button className="ac__link-btn">All Orders</button>
-          <button className="ac__link-btn">Return Order</button>
-          <button className="ac__add-btn" onClick={() => setShowModal(true)}>
-            + Add Customer
-          </button>
-        </div>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -469,35 +480,17 @@ const AllCustomers = ({ customers = [], loading, onViewDetail }) => {
             <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" />
           </svg>
           Filters
-          {statusFilter !== "All Status" && <span className="ac__filter-dot" />}
+          {customerFilter !== "All Customers" && <span className="ac__filter-dot" />}
         </button>
 
         <div className={`ac__filters${showFilters ? " ac__filters--open" : ""}`}>
           <div className="ac__select-wrapper">
-            <select className="ac__select" value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
-              <option>All Status</option>
-              <option>Confirmed</option>
-              <option>Disabled</option>
-            </select>
-            <ChevronDown />
-          </div>
-
-          <div className="ac__select-wrapper">
-            <select className="ac__select" value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}>
+            <select className="ac__select" value={customerFilter}
+              onChange={(e) => { setCustomerFilter(e.target.value); setCurrentPage(1); }}>
               <option>All Customers</option>
-              <option>New Customers</option>
-              <option>Returning</option>
-            </select>
-            <ChevronDown />
-          </div>
-
-          <div className="ac__select-wrapper">
-            <select className="ac__select">
-              <option>Filter</option>
-              <option>By Amount</option>
-              <option>By Orders</option>
+              <option>New this month</option>
+              <option>Active Accounts</option>
+              <option>Disabled Accounts</option>
             </select>
             <ChevronDown />
           </div>

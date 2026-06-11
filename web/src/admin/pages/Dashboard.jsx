@@ -5,14 +5,13 @@ import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-r
 import { useStore } from "../../hooks/useStore";
 import "./Dashboard.css";
 
-import profile from "../../assets/admin/Pro.png"
+
 import logo from "../../assets/admin/AnikaLogo.png";
 import dashboardIcon from "../../assets/admin/Home.png";
 import productIcon from "../../assets/admin/product.png";
 import categoryIcon from "../../assets/admin/category.png";
 import orderIcon from "../../assets/admin/order.png";
 import customerIcon from "../../assets/admin/customer.png";
-import discountIcon from "../../assets/admin/discount.png";
 import bannerIcon from "../../assets/admin/banner.png";
 import analyticsIcon from "../../assets/admin/analytics.png";
 import settingsIcon from "../../assets/admin/settings.png";
@@ -97,7 +96,6 @@ const menuItems = [
   ]},
   { id: "order",     label: "Orders", path: "/admin/orders" },
   { id: "customer",  label: "Customers", path: "/admin/customers" },
-  { id: "discount",  label: "Discount", path: "/admin/discount" },
   { id: "banner",    label: "Banner & Content", path: "/admin/banners", children: [
     { label: "All Banners", path: "/admin/banners" },
     { label: "Add Banner", path: "/admin/banners/add" },
@@ -121,7 +119,6 @@ const sidebarIcons = {
   category:  <img src={categoryIcon}  alt="category"  className="db__menu-icon-img" />,
   order:     <img src={orderIcon}     alt="order"     className="db__menu-icon-img" />,
   customer:  <img src={customerIcon}  alt="customer"  className="db__menu-icon-img" />,
-  discount:  <img src={discountIcon}  alt="discount"  className="db__menu-icon-img" />,
   banner:    <img src={bannerIcon}    alt="banner"    className="db__menu-icon-img" />,
   analytics: <img src={analyticsIcon} alt="analytics" className="db__menu-icon-img" />,
   settings:  <img src={settingsIcon}  alt="settings"  className="db__menu-icon-img" />,
@@ -132,7 +129,7 @@ const HIDE_ADD_PRODUCT_PATHS = [
   "/admin/orders", "/admin/orders/detail", "/admin/customers", "/admin/customers/detail",
   "/admin/banners", "/admin/banners/add", "/admin/analytics",
   "/admin/store", "/admin/contact", "/admin/shipping", "/admin/payment",
-  "/admin/account", "/admin/notification", "/admin/policies", "/admin/danger", "/admin/discount"
+  "/admin/account", "/admin/notification", "/admin/policies", "/admin/danger"
 ];
 
 // ── Sub-Components ──────────────────────────────────────────────
@@ -533,14 +530,7 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
   );
 };
 
-const NavbarSearchBar = ({ className = "" }) => (
-  <div className={`db__navbar-search ${className}`}>
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" placeholder="Search or type a command" className="db__navbar-search-input" />
-  </div>
-);
+
 
 // ── Main Dashboard Layout ───────────────────────────────────────
 const Dashboard = () => {
@@ -806,7 +796,7 @@ const Dashboard = () => {
         <div className="db__navbar-logo">
           <img src={logo} alt="Anika" className="db__logo-img" />
         </div>
-        <NavbarSearchBar className={showSearchNavbar ? "db__navbar-search--force-show" : ""} />
+
         <div className="db__navbar-actions">
           {!hideAddProduct && (
             <button className="db__add-btn" onClick={goToAddProduct}>
@@ -816,15 +806,10 @@ const Dashboard = () => {
               <span>Add product</span>
             </button>
           )}
-          <button className="db__icon-btn" aria-label="Notifications">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
-          <Link to="/profile">
-            <button className="db__avatar-btn" aria-label="Profile">
-              <img src={profile} alt="Avatar" className="db__avatar-img" />
+
+          <Link to="/profile" style={{ textDecoration: 'none' }}>
+            <button className="db__profile-btn" aria-label="Go Home Profile">
+              <span>Go Home Profile</span>
             </button>
           </Link>
         </div>
@@ -895,7 +880,7 @@ const Dashboard = () => {
             <Route path="/categories/add" element={<AddCategory initialData={editingCategory} onBack={() => { setEditingCategory(null); navigate("/admin/categories"); }} onPublish={handlePublishCategory} onSaveDraft={handleSaveDraftCategory} />} />
 
             {/* Orders */}
-            <Route path="/orders" element={<AllOrders orders={orders} loading={adminDataLoading} onViewDetail={handleViewOrderDetail} />} />
+            <Route path="/orders" element={<AllOrders orders={orders} products={products} loading={adminDataLoading} onViewDetail={handleViewOrderDetail} />} />
             <Route path="/orders/detail" element={<OrderDetails order={selectedOrderObj} onStatusChange={updateOrderStatus} onBack={() => navigate("/admin/orders")} />} />
 
             {/* Customers */}
