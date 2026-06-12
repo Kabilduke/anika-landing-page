@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "domain_name" {
-  description = "The parent domain name (e.g., anikajewelry.in)."
+  description = "The parent domain name (e.g., anikafashion.in)."
   type        = string
 }
 

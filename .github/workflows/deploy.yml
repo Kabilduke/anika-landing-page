@@ -40,14 +40,14 @@ jobs:
             echo "ENV_NAME=prod" >> $GITHUB_ENV
             echo "TF_WORKSPACE=anika-fashion-ecom-prod" >> $GITHUB_ENV
             echo "DB_PASS=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
-            echo "SITE_URL=https://www.anikajewelry.in" >> $GITHUB_ENV
+            echo "SITE_URL=https://www.anikafashion.in" >> $GITHUB_ENV
             echo "db_pass=${{ secrets.PROD_DB_PASSWORD }}" >> "$GITHUB_OUTPUT"
             echo "env_name=prod" >> "$GITHUB_OUTPUT"
           else
             echo "ENV_NAME=dev" >> $GITHUB_ENV
             echo "TF_WORKSPACE=anika-fashion-ecom-dev" >> $GITHUB_ENV
             echo "DB_PASS=AnikaDevSecureDbPass2026" >> $GITHUB_ENV
-            echo "SITE_URL=https://dev.anikajewelry.in" >> $GITHUB_ENV
+            echo "SITE_URL=https://dev.anikafashion.in" >> $GITHUB_ENV
             echo "db_pass=AnikaDevSecureDbPass2026" >> "$GITHUB_OUTPUT"
             echo "env_name=dev" >> "$GITHUB_OUTPUT"
           fi

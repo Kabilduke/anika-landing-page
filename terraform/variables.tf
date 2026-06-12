@@ -49,7 +49,7 @@ variable "aws_region" {
 variable "domain_name" {
   description = "The root domain name for the landing page project."
   type        = string
-  default     = "anikajewelry.in"
+  default     = "anikafashion.in"
 }
 
 variable "route53_zone_name" {

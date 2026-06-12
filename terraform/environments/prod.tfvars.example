@@ -6,16 +6,16 @@ supabase_organization_id = "org_yourprodorgidhere"
 environment              = "prod"
 region                   = "us-east-1"
 db_password              = "YourSuperStrongProdDbPassword456!"
-site_url                 = "https://www.anikajewelry.in"
+site_url                 = "https://www.anikafashion.in"
 
 # AWS Deployment and Custom Domains
 aws_region               = "ap-south-1"
-domain_name              = "anikajewelry.in"
+domain_name              = "anikafashion.in"
 route53_zone_name        = "in"
 use_custom_domain        = true
 create_dns_records       = true
 
 # SMTP Settings
 smtp_pass                = "re_your_prod_api_key_here"
-smtp_admin_email         = "noreply@anikajewelry.in"
+smtp_admin_email         = "noreply@anikafashion.in"
 
