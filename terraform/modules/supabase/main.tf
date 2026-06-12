@@ -63,7 +63,7 @@ resource "supabase_settings" "main" {
     mailer_subjects_magic_link          = "Confirm Your Login - Anika Fashion"
     mailer_templates_magic_link_content = file("${path.module}/../../../supabase/templates/magic_link.html")
     smtp_host                           = "smtp.resend.com"
-    smtp_port                           = 587
+    smtp_port                           = "587"
     smtp_user                           = "resend"
     smtp_pass                           = var.smtp_pass
     smtp_sender_name                    = "Anika Fashion"
