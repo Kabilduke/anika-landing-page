@@ -60,6 +60,11 @@ resource "supabase_settings" "main" {
     additional_redirect_urls            = local.additional_redirect_urls
     mailer_otp_exp                      = 3600 # 1 hour
     mailer_signup_enabled               = true
+    rate_limit_email_sent               = 1000
+    rate_limit_otp                      = 100
+    rate_limit_verify                   = 100
+    rate_limit_token_refresh            = 500
+    rate_limit_anonymous_users          = 100
     mailer_subjects_magic_link          = "Confirm Your Login - Anika Fashion"
     mailer_templates_magic_link_content = file("${path.module}/../../../supabase/templates/magic_link.html")
     smtp_host                           = "smtp.resend.com"
