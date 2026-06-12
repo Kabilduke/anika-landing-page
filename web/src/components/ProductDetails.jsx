@@ -4,6 +4,7 @@ import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
 import Toast from './Toast';
 import { useStore } from '../hooks/useStore';
+import SizeChart from '../assets/Size_bangle.png';
 
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
 const SiteFooter = lazy(() => import('./SiteFooter'));
@@ -115,6 +116,10 @@ export default function ProductPage({ onBack }) {
   const [showAll, setShowAll] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastType, setToastType] = useState("success");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
+  const size = ['2.4', '2.6', '2.8', '2.10'];
 
   const showToast = (message, type = "success") => {
     setToastMsg("");
@@ -233,19 +238,19 @@ export default function ProductPage({ onBack }) {
   }, [cat, setSelectedProduct, navigate]);
 
   const handleBuyNow = useCallback(() => {
-  navigate("/shipping", {
-    state: {
-      product: {
-        productId: selectedProduct?.productId || selectedProduct?.id,
-        name: displayName,
-        price: displayPrice,
-        qty: qty,
-        img: displayImage,
-        category: cat,
+    navigate("/shipping", {
+      state: {
+        product: {
+          productId: selectedProduct?.productId || selectedProduct?.id,
+          name: displayName,
+          price: displayPrice,
+          qty: qty,
+          img: displayImage,
+          category: cat,
+        }
       }
-    }
-  });
-}, [displayName, displayPrice, qty, displayImage, cat, selectedProduct]);
+    });
+  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct]);
 
   const handleShareWhatsApp = useCallback(() => {
     const message = `Check out this beautiful ${displayName} from Anika: ${window.location.href}`;
@@ -287,13 +292,46 @@ export default function ProductPage({ onBack }) {
               Elevate your traditional look with this exquisitely crafted gold bangle, designed to reflect timeless elegance and heritage artistry. Featuring intricate antique detailing with vibrant red and green stone embellishments, this bangle blends classic South Indian craftsmanship with a luxurious royal finish.
             </p>
 
+            {cat == 'Bangles' && (
+              <div className='pp-size'>
+                <div className='pp-size-row'>
+                  <h4>Size: {selectedSize}</h4>
+                  <a href="#" className="pp-size-link"
+                    onClick={(e) => { e.preventDefault(); setShowSizeChart(true) }}
+                  >Size Chart</a>
+                </div>
+
+                {showSizeChart && (
+                  <div className='pp-size-chart-overlay' onClick={() => setShowSizeChart(false)}>
+                    <div className='pp-size-chart-modal' onClick={(e) => e.stopPropagation()}>
+                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>
+                        x
+                      </button>
+                      <img src={SizeChart} alt="Size Chart" />
+                    </div>
+                  </div>
+                )}
+                <div className='pp-size-buttons'>
+                  {size.map((size) => (
+                    <button
+                      key={size}
+                      className={`pp-size-btn ${selectedSize === size ? 'active' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="pp-cart-row">
               <div className="pp-qty">
                 <button onClick={() => handleQtyChange(-1)} aria-label="Decrease quantity">−</button>
                 <span>{qty}</span>
                 <button onClick={() => handleQtyChange(1)} aria-label="Increase quantity">+</button>
               </div>
-              <button 
+              <button
                 className="pp-cart-btn"
                 onClick={async () => {
                   if (selectedProduct) {
@@ -304,8 +342,8 @@ export default function ProductPage({ onBack }) {
               >
                 Add to Cart
               </button>
-              <button 
-                className="pp-wish-btn" 
+              <button
+                className="pp-wish-btn"
                 aria-label="Add to wishlist"
                 onClick={async () => {
                   if (selectedProduct) {
@@ -324,9 +362,9 @@ export default function ProductPage({ onBack }) {
             <div className='pp-opay'>
               <p>Guaranteed Safe Checkout</p>
               <div className='pp-opay-icons'>
-                <img src = {PayPalIcon} alt = "Paypal"/>
-                <img src = {RazorIcon} alt = "Razor Pay"/>
-                <img src = {GPayIcon} alt = "Google Pay"/>
+                <img src={PayPalIcon} alt="Paypal" />
+                <img src={RazorIcon} alt="Razor Pay" />
+                <img src={GPayIcon} alt="Google Pay" />
               </div>
             </div>
 
@@ -353,25 +391,25 @@ export default function ProductPage({ onBack }) {
 
             <div className="pp-share">
               <span>Share</span>
-                <a
-                  href='https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1'
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pp-share-btn fb"
-                  aria-label="Share on Facebook"
-                >
-                  <FacebookIcon />
-                </a>
+              <a
+                href='https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1'
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pp-share-btn fb"
+                aria-label="Share on Facebook"
+              >
+                <FacebookIcon />
+              </a>
 
-                <a
-                  href="https://www.instagram.com/anikafashionstore.jewellery/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pp-share-btn ins"
-                  aria-label="Instagram"
-                >
-                  <InstagramIcon />
-                </a>
+              <a
+                href="https://www.instagram.com/anikafashionstore.jewellery/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pp-share-btn ins"
+                aria-label="Instagram"
+              >
+                <InstagramIcon />
+              </a>
               <button
                 className="pp-share-btn wa"
                 aria-label="Share on WhatsApp"
