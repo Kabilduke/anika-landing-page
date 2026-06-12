@@ -61,6 +61,7 @@ resource "supabase_settings" "main" {
     mailer_otp_exp                      = 3600 # 1 hour
     mailer_otp_length                   = 6
     mailer_signup_enabled               = true
+    mailer_autoconfirm                  = true
     rate_limit_email_sent               = 1000
     rate_limit_otp                      = 100
     rate_limit_verify                   = 100
