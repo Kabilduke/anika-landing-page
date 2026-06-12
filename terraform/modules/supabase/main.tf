@@ -59,6 +59,7 @@ resource "supabase_settings" "main" {
     site_url                            = var.site_url
     additional_redirect_urls            = local.additional_redirect_urls
     mailer_otp_exp                      = 3600 # 1 hour
+    mailer_otp_length                   = 6
     mailer_signup_enabled               = true
     rate_limit_email_sent               = 1000
     rate_limit_otp                      = 100
@@ -73,6 +74,7 @@ resource "supabase_settings" "main" {
     smtp_pass                           = var.smtp_pass
     smtp_sender_name                    = "Anika Fashion"
     smtp_admin_email                    = var.smtp_admin_email
+    smtp_max_frequency                  = 1
   })
 
   # Configure API gateway settings (can be customized if needed)
