@@ -56,10 +56,18 @@ resource "supabase_settings" "main" {
 
   # Configure authentication settings (e.g. redirect URL)
   auth = jsonencode({
-    site_url                 = var.site_url
-    additional_redirect_urls = local.additional_redirect_urls
-    mailer_otp_exp           = 3600 # 1 hour
-    mailer_signup_enabled    = true
+    site_url                            = var.site_url
+    additional_redirect_urls            = local.additional_redirect_urls
+    mailer_otp_exp                      = 3600 # 1 hour
+    mailer_signup_enabled               = true
+    mailer_subjects_magic_link          = "Confirm Your Login - Anika Fashion"
+    mailer_templates_magic_link_content = file("${path.module}/../../../supabase/templates/magic_link.html")
+    smtp_host                           = "smtp.resend.com"
+    smtp_port                           = 587
+    smtp_user                           = "resend"
+    smtp_pass                           = var.smtp_pass
+    smtp_sender_name                    = "Anika Fashion"
+    smtp_admin_email                    = var.smtp_admin_email
   })
 
   # Configure API gateway settings (can be customized if needed)

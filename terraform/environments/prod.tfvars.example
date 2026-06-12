@@ -14,3 +14,8 @@ domain_name              = "anikajewelry.in"
 route53_zone_name        = "in"
 use_custom_domain        = true
 create_dns_records       = true
+
+# SMTP Settings
+smtp_pass                = "re_your_prod_api_key_here"
+smtp_admin_email         = "noreply@anikajewelry.in"
+

@@ -90,7 +90,9 @@ jobs:
             -var="supabase_project_ref=${{ secrets.SUPABASE_PROJECT_REF }}" \
             -var="db_password=${{ env.DB_PASS }}" \
             -var="environment=${{ env.ENV_NAME }}" \
-            -var="site_url=${{ env.SITE_URL }}"
+            -var="site_url=${{ env.SITE_URL }}" \
+            -var="smtp_pass=${{ secrets.SMTP_PASS }}" \
+            -var="smtp_admin_email=${{ vars.SMTP_ADMIN_EMAIL }}"
 
 #      - name: Export AWS Deployment Outputs
 #        id: aws_outputs

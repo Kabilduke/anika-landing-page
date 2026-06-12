@@ -16,6 +16,8 @@ module "supabase" {
   supabase_project_ref     = var.supabase_project_ref
   domain_name              = var.domain_name
   use_branching            = var.use_branching
+  smtp_pass                = var.smtp_pass
+  smtp_admin_email         = var.smtp_admin_email
 }
 
 

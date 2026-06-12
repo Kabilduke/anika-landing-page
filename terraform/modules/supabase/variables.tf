@@ -45,3 +45,15 @@ variable "supabase_project_ref" {
   }
 }
 
+variable "smtp_pass" {
+  description = "SMTP password (API key) for the email service"
+  type        = string
+  sensitive   = true
+}
+
+variable "smtp_admin_email" {
+  description = "The sender email address for auth emails (e.g., noreply@yourdomain.com)"
+  type        = string
+}
+
+
