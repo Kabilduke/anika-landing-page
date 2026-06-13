@@ -7,7 +7,7 @@
     "dev": "npm run dev --prefix web",
     "supabase:login": "supabase login",
     "supabase:init": "supabase init",
-    "supabase:start": "supabase start",
+    "supabase:start": "supabase start && supabase db reset && supabase db query --local -f supabase/seed.sql",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:db:push": "supabase db push",
