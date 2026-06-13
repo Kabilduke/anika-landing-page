@@ -164,5 +164,21 @@ export const orderService = {
       .select();
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Cancels a specific order.
+   * @param {string} orderId 
+   * @returns {Promise<any>}
+   */
+  async cancelOrder(orderId) {
+    const { data, error } = await supabase.functions.invoke('ekart', {
+      body: {
+        action: "cancel_order",
+        orderId: orderId,
+      }
+    });
+    if (error) throw error;
+    return data;
   }
 };

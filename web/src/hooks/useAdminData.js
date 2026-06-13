@@ -88,7 +88,11 @@ export function useAdminData() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await orderService.updateOrderStatus(orderId, newStatus);
+      if (newStatus === "Cancelled") {
+        await orderService.cancelOrder(orderId);
+      } else {
+        await orderService.updateOrderStatus(orderId, newStatus);
+      }
       // Optimistically update order status locally
       setOrders((currentOrders) =>
         currentOrders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))

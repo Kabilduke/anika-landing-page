@@ -300,6 +300,43 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
           </div>
         </div>
 
+        {/* Logistics & Delivery */}
+        <div className="od__card">
+          <div className="od__card-title">Logistics & Delivery</div>
+          <div className="od__info-grid">
+            <span className="od__info-label">Carrier</span>
+            <span className="od__info-value">{o.delivery_provider || "Ekart"}</span>
+            <span className="od__info-label">Status</span>
+            <span className="od__info-value" style={{ fontWeight: '600', color: o.delivery_status === 'Booked' ? '#27ae60' : '#d35400' }}>
+              {o.delivery_status || "Pending Booking"}
+            </span>
+            {o.waybill && (
+              <>
+                <span className="od__info-label">Waybill</span>
+                <span className="od__info-value">
+                  <a href={`https://ekartlogistics.com/ekartlogistics-web/shipmenttrack/${o.waybill}`} target="_blank" rel="noopener noreferrer" style={{ color: '#8b0030', textDecoration: 'underline', fontWeight: '500' }}>
+                    {o.waybill}
+                  </a>
+                </span>
+              </>
+            )}
+            {o.shipment_id && (
+              <>
+                <span className="od__info-label">Shipment ID</span>
+                <span className="od__info-value">{o.shipment_id}</span>
+              </>
+            )}
+            {o.estimated_delivery_date && (
+              <>
+                <span className="od__info-label">Est. Delivery</span>
+                <span className="od__info-value">
+                  {new Date(o.estimated_delivery_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Update Order Status */}
         <div className="od__card">
           <div className="od__card-title">Update Order Status</div>

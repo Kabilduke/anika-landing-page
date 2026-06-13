@@ -46,7 +46,7 @@ The storefront checkout page SHALL load the external Razorpay Checkout SDK dynam
 - **THEN** the Razorpay SDK fires the `handler` callback returning `razorpay_payment_id`, `razorpay_order_id`, and `razorpay_signature`
 
 ### Requirement: Secure Payment Verification & Order Placement
-The Supabase Deno Edge Function (`/razorpay`) SHALL expose a POST endpoint to verify the Razorpay payment signature. If the signature is verified, the function SHALL insert the order record into the database `public.orders` table with a status of `'Paid'` and payment method of `'Razorpay'`.
+The Supabase Deno Edge Function (`/razorpay`) SHALL expose a POST endpoint to verify the Razorpay payment signature. If the signature is verified, the function SHALL insert the order record into the database `public.orders` table with a status of `'Paid'` and payment method of `'Razorpay'`, AND SHALL automatically trigger the Ekart shipment booking.
 - Verification logic:
   - Compute SHA256 HMAC of `razorpay_order_id + "|" + razorpay_payment_id` using the secret `RAZORPAY_KEY_SECRET`.
   - Compare computed signature with `razorpay_signature`.
@@ -56,7 +56,7 @@ The Supabase Deno Edge Function (`/razorpay`) SHALL expose a POST endpoint to ve
 
 #### Scenario: Successful Payment Signature Verification
 - **WHEN** the frontend sends a verification request with a valid signature and transaction IDs
-- **THEN** the edge function successfully verifies the signature, inserts the order into the database, and returns success to the client
+- **THEN** the edge function successfully verifies the signature, inserts the order into the database, triggers the Ekart shipment booking to retrieve the waybill number, and returns the completed order details to the client
 
 #### Scenario: Failed Payment Signature Verification
 - **WHEN** the frontend sends a verification request with a mismatched signature
