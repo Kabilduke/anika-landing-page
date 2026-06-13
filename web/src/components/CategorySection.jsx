@@ -5,6 +5,7 @@ import Earrings from '../assets/Earrings.webp';
 import Bracelets1 from '../assets/Bracelets1.webp';
 import Bangles from '../assets/Bangles.webp';
 import Necklaces from '../assets/Necklaces.webp';
+import Anklets from '../assets/Anklets.avif';
 
 export default function CategorySection({ onCategoryClick }) {
   const categories = [
@@ -13,6 +14,7 @@ export default function CategorySection({ onCategoryClick }) {
     { name: 'Bracelets', img: Bracelets1 },
     { name: 'Bangles', img: Bangles },
     { name: 'Necklaces', img: Necklaces },
+    { name: 'Anklets', img: Anklets }
   ];
 
   return (

@@ -27,7 +27,8 @@
   border-bottom: 1px solid var(--border-color);
   padding: 16px 24px;
   position: sticky;
-  top: 80px; /* Header height is 80px */
+  top: 80px;
+  /* Header height is 80px */
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
@@ -151,6 +152,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  gap: 10px;
 }
 
 .search-view-cart-btn:hover {
@@ -294,7 +296,7 @@
 }
 
 /* When checkbox checked, add red/maroon bg */
-.filter-checkbox-input:checked ~ .checkbox-custom-box {
+.filter-checkbox-input:checked~.checkbox-custom-box {
   background-color: var(--brand-crimson);
   border-color: var(--brand-crimson);
 }
@@ -314,7 +316,7 @@
 }
 
 /* Show checkmark when checked */
-.filter-checkbox-input:checked ~ .checkbox-custom-box:after {
+.filter-checkbox-input:checked~.checkbox-custom-box:after {
   display: block;
 }
 
@@ -474,7 +476,7 @@
 
 .price-tag-was {
   font-size: 13px;
- text-decoration: line-through;
+  text-decoration: line-through;
   color: var(--text-light);
 }
 
@@ -666,7 +668,8 @@
 /* Tablet screen styles */
 @media (max-width: 992px) {
   .search-bar-container {
-    top: 64px; /* Mobile header height is 64px */
+    top: 64px;
+    /* Mobile header height is 64px */
   }
 
   .categorypage-main-layout {

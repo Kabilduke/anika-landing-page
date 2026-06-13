@@ -57,6 +57,7 @@ function App() {
         <Route path="/bracelets" element={<CategoryPage category="Bracelets" />} />
         <Route path="/bangles" element={<CategoryPage category="Bangles" />} />
         <Route path="/necklaces" element={<CategoryPage category="Necklaces" />} />
+        <Route path="/anklets" element={<CategoryPage category="Anklets" />} />
         <Route path="/account/login" element={<Login />} />
         <Route path="/account/signup" element={<Signup />} />
         <Route path="/account/otp-verify" element={<OtpVerify />} />

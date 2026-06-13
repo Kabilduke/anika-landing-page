@@ -11,6 +11,7 @@ const getCategoryStyle = (category) => {
     Bangles: { background: "#dcfce7", color: "#15803d" },
     Necklaces: { background: "#fff7ed", color: "#c2410c" },
     Bracelets: { background: "#e0f2fe", color: "#0369a1" },
+    Anklets: { background: "#FFF0D9", color: "#FF6A1C" },
   };
   return styles[category] || { background: "#f0e6ff", color: "#7c3aed" };
 };

@@ -63,6 +63,7 @@ export default function CategoryPage({ category }) {
   const sizeOptions = useMemo(() => {
     if (category === "Rings") return [5, 6, 7, 8, 9, 10, 11];
     if (category === "Bangles" || category === "Bracelets") return [2.4, 2.6, 2.8];
+    if (category == "Anklets") return [8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5];
     return [];
   }, [category]);
 
@@ -194,6 +195,7 @@ export default function CategoryPage({ category }) {
               <option value="Bracelets">Bracelets</option>
               <option value="Bangles">Bangles</option>
               <option value="Necklaces">Necklaces</option>
+              <option value="Anklets">Anklets</option>
             </select>
           </div>
 
@@ -291,7 +293,7 @@ export default function CategoryPage({ category }) {
           {loading ? (
             // ─── Loading Skeleton Grid ─────────────────────────────
             <div className="product-results-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 7 }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
             </div>

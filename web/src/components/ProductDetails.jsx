@@ -1,10 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useNavigate } from "react-router-dom";
+import { supabase } from '../lib/supabase';
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
 import Toast from './Toast';
 import { useStore } from '../hooks/useStore';
 import SizeChart from '../assets/Size_bangle.png';
+import LengthChart from '../assets/Anklet_length.jpeg'
+
 
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
 const SiteFooter = lazy(() => import('./SiteFooter'));
@@ -109,23 +112,7 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ProductPage({ onBack }) {
-  const [activeThumb, setActiveThumb] = useState(-1);
-  const [qty, setQty] = useState(1);
-  const [descOpen, setDescOpen] = useState(false);
-  const [addlOpen, setAddlOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastType, setToastType] = useState("success");
-  const [selectedSize, setSelectedSize] = useState("");
-  const [showSizeChart, setShowSizeChart] = useState(false);
-
-  const size = ['2.4', '2.6', '2.8', '2.10'];
-
-  const showToast = (message, type = "success") => {
-    setToastMsg("");
-    setToastType(type);
-    setTimeout(() => setToastMsg(message), 10);
-  };
+  const navigate = useNavigate();
 
   // Zustand Store
   const selectedProduct = useStore(state => state.selectedProduct);
@@ -135,6 +122,59 @@ export default function ProductPage({ onBack }) {
   const wishlistItems = useStore(state => state.wishlistItems);
   const fetchProductsByCategory = useStore(state => state.fetchProductsByCategory);
   const productsCache = useStore(state => state.products);
+
+  const cat = selectedProduct?.category || 'Bangles';
+
+  // React State Hooks
+  const [activeThumb, setActiveThumb] = useState(-1);
+  const [qty, setQty] = useState(1);
+  const [descOpen, setDescOpen] = useState(false);
+  const [addlOpen, setAddlOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedLength, setSelectedLength] = useState("");
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
+  // Dynamic sizes/lengths fetched from database
+  const [size, setSize] = useState([]);
+  const [length, setLength] = useState([]);
+
+  useEffect(() => {
+    const productId = selectedProduct?.productId || selectedProduct?.id;
+    if (!productId) return;
+
+    const fetchSizes = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('sizes')
+        .eq('product_id', productId)
+        .single();
+
+      if (error || !data?.sizes?.length) return;
+
+      if (cat === 'Bangles') {
+        setSize(data.sizes);
+        setSelectedSize(data.sizes[0] || "");
+      } else if (cat === 'Anklets') {
+        setLength(data.sizes);
+        setSelectedLength(data.sizes[0] || "");
+      }
+    };
+
+    // Reset sizes/lengths before fetching new ones
+    setSize([]);
+    setLength([]);
+
+    fetchSizes();
+  }, [selectedProduct, cat]);
+
+  const showToast = (message, type = "success") => {
+    setToastMsg("");
+    setToastType(type);
+    setTimeout(() => setToastMsg(message), 10);
+  };
 
   const isWishlisted = useMemo(() => {
     const currentId = selectedProduct?.productId || selectedProduct?.id;
@@ -147,16 +187,12 @@ export default function ProductPage({ onBack }) {
   const displayPrice = selectedProduct?.price || '₹1,299.00';
   const displayOriginal = selectedProduct?.original || '₹2,800.00';
 
-  const navigate = useNavigate();
-
   // Generate dynamic thumbnails based on the selected product
   const dynamicThumbs = useMemo(() => Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
     img: displayImage,
     alt: `${displayName} view ${i + 1}`
   })), [displayImage, displayName]);
-
-  const cat = selectedProduct?.category || 'Bangles';
 
   // Fetch related products from DB when category changes
   useEffect(() => {
@@ -238,6 +274,7 @@ export default function ProductPage({ onBack }) {
   }, [cat, setSelectedProduct, navigate]);
 
   const handleBuyNow = useCallback(() => {
+    const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
     navigate("/shipping", {
       state: {
         product: {
@@ -247,10 +284,11 @@ export default function ProductPage({ onBack }) {
           qty: qty,
           img: displayImage,
           category: cat,
+          size: sizeParam,
         }
       }
     });
-  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct]);
+  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct, selectedSize, selectedLength]);
 
   const handleShareWhatsApp = useCallback(() => {
     const message = `Check out this beautiful ${displayName} from Anika: ${window.location.href}`;
@@ -325,6 +363,39 @@ export default function ProductPage({ onBack }) {
               </div>
             )}
 
+            {cat == 'Anklets' && (
+              <div className='pp-size'>
+                <div className='pp-size-row'>
+                  <h4>Size: {selectedLength}</h4>
+                  <a href="#" className="pp-size-link"
+                    onClick={(e) => { e.preventDefault(); setShowSizeChart(true) }}
+                  >Size Chart</a>
+                </div>
+
+                {showSizeChart && (
+                  <div className='pp-size-chart-overlay' onClick={() => setShowSizeChart(false)}>
+                    <div className='pp-size-chart-modal' onClick={(e) => e.stopPropagation()}>
+                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>
+                        x
+                      </button>
+                      <img src={LengthChart} alt="Size Chart" />
+                    </div>
+                  </div>
+                )}
+                <div className='pp-size-buttons'>
+                  {length.map((size) => (
+                    <button
+                      key={size}
+                      className={`pp-size-btn ${selectedLength === size ? 'active' : ''}`}
+                      onClick={() => setSelectedLength(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="pp-cart-row">
               <div className="pp-qty">
                 <button onClick={() => handleQtyChange(-1)} aria-label="Decrease quantity">−</button>
@@ -335,7 +406,8 @@ export default function ProductPage({ onBack }) {
                 className="pp-cart-btn"
                 onClick={async () => {
                   if (selectedProduct) {
-                    await addToCart(selectedProduct, qty, null);
+                    const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
+                    await addToCart(selectedProduct, qty, sizeParam);
                     showToast(`Added "${displayName}" to cart!`);
                   }
                 }}
