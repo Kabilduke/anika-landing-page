@@ -270,6 +270,16 @@ button {
   transform: scale(1.04);
 }
 
+.pp-discount-badge {
+  background: #fff0f3;
+  color: #c42049;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-left: 6px;
+}
+
 /* Info panel */
 .pp-info {
   flex: 1;

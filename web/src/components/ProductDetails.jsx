@@ -44,7 +44,7 @@ const WhatsappIcon = memo(() => (
 
 // ── Memoized sub-components ──────────────────────────────────────────────────
 
-const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs }) => (
+const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => (
   <div className="pp-gallery">
     <div className="pp-thumbs-col">
       {thumbs.map((item, i) => (
@@ -59,7 +59,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
       ))}
     </div>
     <div className="pp-main-wrap">
-      <div className="pp-main-badge">25% Off</div>
+      <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}</div>
       <img
         src={activeThumb === -1 ? displayImage : thumbs[activeThumb].img}
         alt={displayName}
@@ -131,6 +131,7 @@ export default function ProductPage({ onBack }) {
   const [descOpen, setDescOpen] = useState(false);
   const [addlOpen, setAddlOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [productPrices, setProductPrice] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const [toastType, setToastType] = useState("success");
   const [selectedSize, setSelectedSize] = useState("");
@@ -144,6 +145,17 @@ export default function ProductPage({ onBack }) {
   useEffect(() => {
     const productId = selectedProduct?.productId || selectedProduct?.id;
     if (!productId) return;
+
+    const fetchPrices = async () => {
+      const { data, error} = await supabase
+      .from('products')
+      .select('price, compare_price, discount_price')
+      .eq('product_id', productId)
+      .single();
+
+      if (error || !data) return;
+      setProductPrice(data)
+    };
 
     const fetchSizes = async () => {
       const { data, error } = await supabase
@@ -163,10 +175,11 @@ export default function ProductPage({ onBack }) {
       }
     };
 
-    // Reset sizes/lengths before fetching new ones
     setSize([]);
     setLength([]);
 
+    setProductPrice(null);
+    fetchPrices();
     fetchSizes();
   }, [selectedProduct, cat]);
 
@@ -182,12 +195,25 @@ export default function ProductPage({ onBack }) {
   }, [wishlistItems, selectedProduct]);
 
   // Determine which image to show in gallery
-  const displayImage = selectedProduct?.img || MainBangle;
+  const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
+  const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
+  const rawDiscount = productPrices?.discount_price ?? null; 
+  const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
-  const displayPrice = selectedProduct?.price || '₹1,299.00';
-  const displayOriginal = selectedProduct?.original || '₹2,800.00';
 
-  // Generate dynamic thumbnails based on the selected product
+  const payPrice = rawDiscount && rawPrice
+    ? Number(rawPrice) - Number(rawDiscount)
+    : Number(rawPrice) ?? 0;
+
+  const strikePrice = rawCompare ?? null;
+
+  const displayPrice = payPrice ?`₹${Number(payPrice).toLocaleString('en-IN')}`:'';
+  const displayOriginal = strikePrice ?`₹${Number(strikePrice).toLocaleString('en-IN')}` : '';
+
+  const discountPct = strikePrice && payPrice && strikePrice > payPrice
+    ? Math.round(((strikePrice - payPrice) / strikePrice) * 100)
+    : 0;
+
   const dynamicThumbs = useMemo(() => Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
     img: displayImage,
@@ -273,7 +299,13 @@ export default function ProductPage({ onBack }) {
     navigate("/product");
   }, [cat, setSelectedProduct, navigate]);
 
-  const handleBuyNow = useCallback(() => {
+  const handleBuyNow = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session){
+      navigate("/account/signup");
+      return;
+    }
+
     const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
     navigate("/shipping", {
       state: {
@@ -311,6 +343,7 @@ export default function ProductPage({ onBack }) {
             displayImage={displayImage}
             displayName={displayName}
             thumbs={dynamicThumbs}
+            discountPct={discountPct}
           />
 
           <div className="pp-info">
@@ -324,6 +357,9 @@ export default function ProductPage({ onBack }) {
             <div className="pp-prices">
               <span className="pp-price">{displayPrice}</span>
               <span className="pp-strike">{displayOriginal}</span>
+              {discountPct > 0 && (
+                <span className='pp-discount-badge'>{discountPct}% Off</span>
+              )}
             </div>
 
             <p className="pp-blurb">
@@ -405,6 +441,11 @@ export default function ProductPage({ onBack }) {
               <button
                 className="pp-cart-btn"
                 onClick={async () => {
+                  const { data: { session }} = await supabase.auth.getSession();
+                  if (!session){
+                    navigate("/account/signup");
+                    return;
+                  }
                   if (selectedProduct) {
                     const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
                     await addToCart(selectedProduct, qty, sizeParam);

@@ -5,6 +5,7 @@ import editIcon from "../../assets/admin/Edit.png";
 import trashIcon from "../../assets/admin/Trash.png";
 
 const getCategoryStyle = (category) => {
+
   const styles = {
     Rings: { background: "#f0e6ff", color: "#7c3aed" },
     Earrings: { background: "#fce7f3", color: "#be185d" },
@@ -65,6 +66,17 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 8;
 
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [selectedStock, setSelectedStock] = useState("All");
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
+
+  const CATEGORIES = ["All", "Rings", "Earrings", "Bangles", "Necklaces", "Bracelets", "Anklets"];
+  const STATUSES = ["All", "Visible", "Draft"];
+  const STOCKS = ["All", "In Stock", "Low Stock", "Out of Stock"];
+
   // Detect mobile card breakpoint
   const [isMobileCard, setIsMobileCard] = useState(window.innerWidth <= 540);
   React.useEffect(() => {
@@ -73,16 +85,21 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  // Search filter
-  const filteredProducts = searchQuery.trim()
-    ? products.filter((p) => {
-      const q = searchQuery.toLowerCase();
-      return (
-        p.name?.toLowerCase().includes(q) ||
-        p.sku?.toLowerCase().includes(q)
-      );
-    })
-    : products;
+  const filteredProducts = products.filter((p) => {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !searchQuery.trim() ||
+      p.name?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q);
+
+    const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
+    const matchStatus   = selectedStatus === "All"   || p.status === selectedStatus;
+    const matchStock    = selectedStock === "All"    ||
+      (selectedStock === "In Stock"    && p.stock > 5)  ||
+      (selectedStock === "Low Stock"   && p.stock > 0 && p.stock <= 5) ||
+      (selectedStock === "Out of Stock" && p.stock === 0);
+
+    return matchSearch && matchCategory && matchStatus && matchStock;
+  });
 
   const totalItems = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -165,22 +182,65 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
       {/* Filters + Search */}
       <div className="pl-filters">
         <div className="pl-filter-group">
-          <div className="pl-dropdown">
+        {/* Category Dropdown */}
+        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+          <div className="pl-dropdown" onClick={() => { setCategoryOpen(o => !o); setStatusOpen(false); setStockOpen(false); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-            <span>All categories</span>
+            <span>{selectedCategory === "All" ? "All categories" : selectedCategory}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
           </div>
-          <div className="pl-dropdown">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-            <span>All Status</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
-          <div className="pl-dropdown">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
-            <span>All Stock</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
+          {categoryOpen && (
+            <div className="pl-dropdown-menu">
+              {CATEGORIES.map(c => (
+                <div key={c} className={`pl-dropdown-item ${selectedCategory === c ? 'active' : ''}`}
+                  onClick={() => { setSelectedCategory(c); setCategoryOpen(false); setCurrentPage(1); }}>
+                  {c}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Status Dropdown */}
+        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+          <div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setStockOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <span>{selectedStatus === "All" ? "All Status" : selectedStatus}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </div>
+          {statusOpen && (
+            <div className="pl-dropdown-menu">
+              {STATUSES.map(s => (
+                <div key={s} className={`pl-dropdown-item ${selectedStatus === s ? 'active' : ''}`}
+                  onClick={() => { setSelectedStatus(s); setStatusOpen(false); setCurrentPage(1); }}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Stock Dropdown */}
+        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+          <div className="pl-dropdown" onClick={() => { setStockOpen(o => !o); setCategoryOpen(false); setStatusOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+            <span>{selectedStock === "All" ? "All Stock" : selectedStock}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </div>
+          {stockOpen && (
+            <div className="pl-dropdown-menu">
+              {STOCKS.map(s => (
+                <div key={s} className={`pl-dropdown-item ${selectedStock === s ? 'active' : ''}`}
+                  onClick={() => { setSelectedStock(s); setStockOpen(false); setCurrentPage(1); }}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+
 
         <div className="pl-search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

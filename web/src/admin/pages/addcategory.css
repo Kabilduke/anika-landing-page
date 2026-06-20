@@ -31,6 +31,7 @@
   cursor: pointer;
   flex-shrink: 0;
 }
+
 .ap-back-btn img {
   width: 16px;
   height: 16px;
@@ -172,6 +173,127 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+/* -- Filter -- */
+.ap-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 15px;
+}
+
+.ap-filter > h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.ap-filter-op,
+.ap-filter-cus {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fff;
+}
+
+.ap-filter-cus > p {
+  font-size: 13px;
+  color: #888;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.ap-filter-mat,
+.ap-filter-stone {
+  border: 0.5px solid #ebebeb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  background: #fafafa;
+}
+
+.ap-filter-mat h5,
+.ap-filter-stone h5 {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ap-filter-mat p,
+.ap-filter-stone p {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 3px;
+}
+
+.ap-filter-in {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ap-filter-in input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 13px;
+  outline: none;
+}
+
+.ap-filter-in input:focus {
+  border-color: #bbb;
+}
+
+.ap-filter-in button {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ap-filter-in button:hover {
+  background: #f5f5f5;
+}
+
+.ap-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ap-filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ap-filter-tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #888;
+  padding: 0;
+  line-height: 1;
+}
+
+.ap-filter-tag button:hover {
+  color: #e00;
 }
 
 /* ─── Visibility Toggles ─── */

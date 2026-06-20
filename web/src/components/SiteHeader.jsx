@@ -137,14 +137,6 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
           <div className="header-actions">
 
-            {/* Search */}
-            <button className="icon-btn" aria-label="Search">
-              <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
-                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M15.5 15.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-
             {/* Wishlist — navigates to /wishlist on click */}
             <button className="icon-btn" aria-label="Wishlist" onClick={() => navigate("/wishlist")} style={{ position: "relative" }}>
               <svg viewBox="0 0 24 24" fill="none" width="22" height="22">

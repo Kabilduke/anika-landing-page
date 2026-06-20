@@ -134,8 +134,8 @@ export default function CategoryPage({ category }) {
     return products.filter(product => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchesName = product.name.toLowerCase().includes(q);
-        const matchesDesc = product.desc.toLowerCase().includes(q);
+        const matchesName = product.name?.toLowerCase().includes(q);
+        const matchesDesc = product.desc?.toLowerCase().includes(q);
         if (!matchesName && !matchesDesc) return false;
       }
 
@@ -146,7 +146,7 @@ export default function CategoryPage({ category }) {
       if (!stockStatus.inStock && stockStatus.outOfStock && !outOfStockMatch) return false;
 
       if (selectedSizes.length > 0) {
-        const hasMatchingSize = product.sizes.some(size => selectedSizes.includes(size));
+        const hasMatchingSize = product.sizes?.some(size => selectedSizes.includes(size));
         if (!hasMatchingSize) return false;
       }
 
@@ -204,7 +204,11 @@ export default function CategoryPage({ category }) {
               type="text"
               placeholder={`Search ${category.toLowerCase()}...`}
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               onKeyDown={handleSearchKeyDown}
               className="search-input-field"
             />
