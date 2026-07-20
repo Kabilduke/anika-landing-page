@@ -126,17 +126,23 @@ export const useStore = create((set, get) => ({
     set({ loadingProducts: true });
     try {
       const productsData = await productService.getProductsByCategoryName(categoryName);
-      const mapped = (productsData || []).map(p => ({
-        id: p.product_id || p.id,
-        productId: p.product_id || p.id,
-        img: p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
-        name: p.name,
-        desc: p.description,
-        price: p.price,
-        originalPrice: p.compare_price || Math.round(p.price * 1.3),
-        sizes: p.sizes || [],
-        stock: p.stock > 0 ? 'in-stock' : 'out-of-stock'
-      }));
+      const mapped = (productsData || []).map(p => {
+        const rawPrice = Number(p.price) || 0;
+        const rawDiscount = Number(p.discount_price) || 0;
+        const finalPrice = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+
+        return {
+          id: p.product_id || p.id,
+          productId: p.product_id || p.id,
+          img: p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
+          name: p.name,
+          desc: p.description,
+          price: finalPrice,
+          originalPrice: p.compare_price || Math.round(rawPrice * 1.3),
+          sizes: p.sizes || [],
+          stock: p.stock > 0 ? 'in-stock' : 'out-of-stock'
+        };
+      });
       set(state => ({
         products: {
           ...state.products,

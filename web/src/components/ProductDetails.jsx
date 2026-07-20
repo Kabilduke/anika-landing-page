@@ -351,7 +351,7 @@ export default function ProductPage({ onBack }) {
 
             <div className="pp-rating">
               {'★★★★★'.split('').map((s, i) => <span key={i} className="pp-star">{s}</span>)}
-              <span className="pp-rating-count">5.0 (20 Reviews)</span>
+              <span className="pp-rating-count">5.0 (25 Reviews)</span>
             </div>
 
             <div className="pp-prices">

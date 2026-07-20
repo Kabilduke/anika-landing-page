@@ -80,9 +80,9 @@ export default function CartPage() {
   };
 
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const taxes = 350;
-  const gst = 300;
-  const platformFee = 150;
+  const taxes = 0;
+  const gst = 0;
+  const platformFee = 0;
   const grandTotal = subtotal + taxes + gst + platformFee;
 
   if (showWishlist) {
