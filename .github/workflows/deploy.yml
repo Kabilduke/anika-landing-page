@@ -194,6 +194,88 @@ jobs:
           echo "::add-mask::$db_url"
           supabase db push --db-url "$db_url"
 
+  deploy_functions:
+    name: Deploy Edge Functions
+    needs: [terraform, db_migration]
+    if: |
+      always() &&
+      needs.terraform.result == 'success' &&
+      (needs.db_migration.result == 'success' || needs.db_migration.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Credentials Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: supabase-credentials
+          path: .
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Generate Env File & Deploy Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # Dev Secrets
+          DEV_RAZORPAY_KEY_ID: ${{ secrets.DEV_RAZORPAY_KEY_ID }}
+          DEV_RAZORPAY_KEY_SECRET: ${{ secrets.DEV_RAZORPAY_KEY_SECRET }}
+          # Prod Secrets
+          PROD_RAZORPAY_KEY_ID: ${{ secrets.PROD_RAZORPAY_KEY_ID }}
+          PROD_RAZORPAY_KEY_SECRET: ${{ secrets.PROD_RAZORPAY_KEY_SECRET }}
+          PROD_EKART_BASE_URL: ${{ secrets.PROD_EKART_BASE_URL }}
+          PROD_EKART_CLIENT_ID: ${{ secrets.PROD_EKART_CLIENT_ID }}
+          PROD_EKART_USERNAME: ${{ secrets.PROD_EKART_USERNAME }}
+          PROD_EKART_PASSWORD: ${{ secrets.PROD_EKART_PASSWORD }}
+          # Seller Details Actions Variables
+          SELLER_NAME: ${{ vars.SELLER_NAME }}
+          SELLER_ADDRESS: ${{ vars.SELLER_ADDRESS }}
+          SELLER_GST_TIN: ${{ vars.SELLER_GST_TIN }}
+          SELLER_PHONE: ${{ vars.SELLER_PHONE }}
+          SELLER_PIN: ${{ vars.SELLER_PIN }}
+        run: |
+          # Read project ref from credentials artifact
+          supabase_ref=$(jq -r '.supabase_ref' supabase_outputs.json)
+          echo "Supabase Project Ref: $supabase_ref"
+          
+          # Create the environment-specific env file
+          if [ "${{ github.ref_name == 'main' }}" = "true" ]; then
+            echo "Building production environment secret payload..."
+            echo "RAZORPAY_KEY_ID=$PROD_RAZORPAY_KEY_ID" > .env.deploy
+            echo "RAZORPAY_KEY_SECRET=$PROD_RAZORPAY_KEY_SECRET" >> .env.deploy
+            echo "EKART_BASE_URL=$PROD_EKART_BASE_URL" >> .env.deploy
+            echo "EKART_CLIENT_ID=$PROD_EKART_CLIENT_ID" >> .env.deploy
+            echo "EKART_USERNAME=$PROD_EKART_USERNAME" >> .env.deploy
+            echo "EKART_PASSWORD=$PROD_EKART_PASSWORD" >> .env.deploy
+            echo "EKART_SANDBOX=false" >> .env.deploy
+          else
+            echo "Building development/staging environment secret payload..."
+            echo "RAZORPAY_KEY_ID=$DEV_RAZORPAY_KEY_ID" > .env.deploy
+            echo "RAZORPAY_KEY_SECRET=$DEV_RAZORPAY_KEY_SECRET" >> .env.deploy
+            echo "EKART_SANDBOX=true" >> .env.deploy
+          fi
+
+          # Append seller details actions variables
+          echo "SELLER_NAME=$SELLER_NAME" >> .env.deploy
+          echo "SELLER_ADDRESS=$SELLER_ADDRESS" >> .env.deploy
+          echo "SELLER_GST_TIN=$SELLER_GST_TIN" >> .env.deploy
+          echo "SELLER_PHONE=$SELLER_PHONE" >> .env.deploy
+          echo "SELLER_PIN=$SELLER_PIN" >> .env.deploy
+
+          # Apply secrets to the remote Supabase project
+          echo "Setting secrets for project ref: $supabase_ref"
+          supabase secrets set --project-ref "$supabase_ref" --env-file .env.deploy
+
+          # Deploy functions
+          echo "Deploying ekart function..."
+          supabase functions deploy ekart --project-ref "$supabase_ref"
+
+          echo "Deploying razorpay function..."
+          supabase functions deploy razorpay --project-ref "$supabase_ref"
+
   # deploy_storefront:
   #   name: Deploy Storefront Portal
   #   needs: [terraform, db_migration]

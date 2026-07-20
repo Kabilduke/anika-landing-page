@@ -440,7 +440,7 @@ const CategoryList = ({
           )}
 
           {isEmpty
-            ? <EmptyState />
+            ? EmptyState()
             : paginated.map((cat) => (
                 <MobileCard
                   key={cat.id}
@@ -478,7 +478,7 @@ const CategoryList = ({
           </div>
 
           {isEmpty
-            ? <EmptyState />
+            ? EmptyState()
             : paginated.map((cat) => (
                 <ListRow
                   key={cat.id}
@@ -539,7 +539,7 @@ const CategoryList = ({
       <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{filtered.length} categories</div>
 
       {isEmpty
-        ? <EmptyState />
+        ? EmptyState()
         : (
           <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: isXS ? 12 : 16 }}>
             {filtered.map((cat) => (
@@ -556,8 +556,8 @@ const CategoryList = ({
       background: "#f2f2f0",
       minHeight: "100vh",
     }}>
-      <Header />
-      {view === "list" ? <ListView /> : <GridView />}
+      {Header()}
+      {view === "list" ? ListView() : GridView()}
     </div>
   );
 };

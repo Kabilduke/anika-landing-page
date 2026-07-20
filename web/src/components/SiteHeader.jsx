@@ -8,7 +8,7 @@ import LogoImg from "../assets/offers/logo.svg";
 import UserIcon from "../assets/header/User.png";
 import CartIcon from "../assets/header/cards.png";
 
-const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces"];
+const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
 const LoginDropdown = () => {
   const [open, setOpen] = useState(false);
@@ -87,7 +87,7 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const navigate = useNavigate();
   const cartItems = useStore(state => state.cartItems);
   const wishlistItems = useStore(state => state.wishlistItems);
-  
+
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
   const wishlistCount = wishlistItems.length;
 
@@ -137,14 +137,6 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
           <div className="header-actions">
 
-            {/* Search */}
-            <button className="icon-btn" aria-label="Search">
-              <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
-                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M15.5 15.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-
             {/* Wishlist — navigates to /wishlist on click */}
             <button className="icon-btn" aria-label="Wishlist" onClick={() => navigate("/wishlist")} style={{ position: "relative" }}>
               <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
@@ -173,29 +165,29 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
             {/* Cart — PNG icon */}
             <button
-             className="icon-btn"
+              className="icon-btn"
               aria-label="Cart"
-               onClick={() => navigate("/cart")}
-               style={{ position: "relative" }}
+              onClick={() => navigate("/cart")}
+              style={{ position: "relative" }}
             >
-               <img src={CartIcon} alt="Cart" className="header-icon" />
-               {cartCount > 0 && (
-                 <span style={{
-                   position: "absolute",
-                   top: "2px",
-                   right: "2px",
-                   background: "#fff",
-                   color: "#C42049",
-                   borderRadius: "50%",
-                   padding: "1px 5px",
-                   fontSize: "10px",
-                   fontWeight: "bold",
-                   minWidth: "16px",
-                   textAlign: "center",
-                   boxShadow: "0 1px 4px rgba(0,0,0,0.2)"
-                 }}>{cartCount}</span>
-               )}
-             </button>
+              <img src={CartIcon} alt="Cart" className="header-icon" />
+              {cartCount > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "2px",
+                  right: "2px",
+                  background: "#fff",
+                  color: "#C42049",
+                  borderRadius: "50%",
+                  padding: "1px 5px",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  minWidth: "16px",
+                  textAlign: "center",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.2)"
+                }}>{cartCount}</span>
+              )}
+            </button>
 
             {/* Account — PNG icon */}
             <LoginDropdown />

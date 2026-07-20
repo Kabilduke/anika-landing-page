@@ -5,7 +5,7 @@ import HeroMobile from "../assets/hero image mobile.webp";
 import CategorySection from "./CategorySection";
 import SiteHeader from "./SiteHeader";
 
-const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces"];
+const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
 export default function AnikaHome() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function AnikaHome() {
           <div className="hero-content">
             <h1 className="hero-title">Draped in Elegance</h1>
             <p className="hero-subtitle">
-              Discover handcrafted fashion jewellery <br/>for every occasion
+              Discover handcrafted fashion jewellery <br />for every occasion
             </p>
             <button className="explore-btn" onClick={() => {
               const element = document.getElementById('shop');

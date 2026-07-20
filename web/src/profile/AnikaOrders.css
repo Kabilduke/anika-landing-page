@@ -313,3 +313,32 @@ body {
     gap: 12px;
   }
 }
+
+.ao-cancel-order-btn {
+  background-color: #fff;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.ao-cancel-order-btn:hover:not(:disabled) {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.05);
+}
+
+.ao-cancel-order-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ao-cancel-order-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

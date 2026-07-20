@@ -8,10 +8,13 @@ export const productService = {
   async getCategories() {
     const { data, error } = await supabase
       .from('categories')
-      .select('*')
+      .select(`*, products(count)`)
       .order('sort_order', { ascending: true });
     if (error) throw error;
-    return data;
+    return data.map(c => ({
+      ...c,
+      productCount: c.products?.[0]?.count ?? 0
+    }));
   },
 
   /**
@@ -190,5 +193,27 @@ export const productService = {
 
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Searches active products by name.
+   * @param {string} query
+   * @param {number} limit
+   * @returns {Promise<any[]>}
+   */
+  async searchProductsByName(query, limit = 5) {
+    const normalizedQuery = String(query || '').trim();
+    if (!normalizedQuery) return [];
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .eq('is_active', true)
+      .ilike('name', `%${normalizedQuery}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
   }
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom"; 
 import { authService } from "../services/authService"; 
 import { orderService } from "../services/orderService";
 import { productService } from "../services/productService";
@@ -17,7 +17,18 @@ export default function AnikaOrders() {
   const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
   const [productsMap, setProductsMap] = useState({});
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.redirectToEkartUrl) {
+      const timer = setTimeout(() => {
+        window.location.href = location.state.redirectToEkartUrl;
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
 
@@ -76,12 +87,40 @@ export default function AnikaOrders() {
           qty: item.quantity,
           price: "₹" + parseFloat(item.total_price).toLocaleString("en-IN"),
           status: item.status,
-          order_items: item.order_items || []
+          order_items: item.order_items || [],
+          deliveryProvider: item.delivery_provider,
+          waybill: item.waybill,
+          shipmentId: item.shipment_id,
+          deliveryStatus: item.delivery_status,
+          estimatedDeliveryDate: item.estimated_delivery_date
+            ? new Date(item.estimated_delivery_date).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+              })
+            : null
         }));
         setOrders(formatted);
       }
     } catch (err) {
       console.error("Error loading orders:", err);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+    try {
+      setCancellingOrderId(orderId);
+      await orderService.cancelOrder(orderId);
+      if (user) {
+        await loadOrders(user.id);
+      }
+    } catch (err) {
+      alert("Failed to cancel order: " + err.message);
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -260,6 +299,64 @@ export default function AnikaOrders() {
                       );
                     })}
                   </div>
+                  {/* Shipping / Delivery Details */}
+                  {order.waybill && (
+                    <div 
+                      className="ao-delivery-details" 
+                      style={{ 
+                        fontSize: '11.5px', 
+                        background: '#fcfcfc', 
+                        padding: '10px 14px', 
+                        borderRadius: '6px', 
+                        border: '1px dashed #e0e0e0', 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}
+                    >
+                      <div>
+                        <span style={{ color: '#777' }}>Delivery by:</span>{' '}
+                        <strong style={{ color: '#111' }}>{order.deliveryProvider || 'Ekart'}</strong>
+                        <span style={{ color: '#aaa', margin: '0 6px' }}>·</span>
+                        <span style={{ color: '#777' }}>Waybill:</span>{' '}
+                        <a 
+                          href={`https://ekartlogistics.com/ekartlogistics-web/shipmenttrack/${order.waybill}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: '#8b0030', textDecoration: 'underline', fontWeight: '500' }}
+                        >
+                          {order.waybill}
+                        </a>
+                      </div>
+                      <div>
+                        {order.estimatedDeliveryDate && (
+                          <>
+                            <span style={{ color: '#777' }}>Est. Delivery:</span>{' '}
+                            <strong style={{ color: '#111' }}>{order.estimatedDeliveryDate}</strong>
+                            <span style={{ color: '#aaa', margin: '0 6px' }}>·</span>
+                          </>
+                        )}
+                        <span style={{ color: '#777' }}>Delivery Status:</span>{' '}
+                        <span style={{ fontWeight: '600', color: order.deliveryStatus === 'Booked' ? '#27ae60' : '#d35400' }}>
+                          {order.deliveryStatus || 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {/* Cancel Order Button */}
+                  {(order.status === "Pending" || order.status === "Confirmed") && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                      <button
+                        className="ao-cancel-order-btn"
+                        onClick={() => handleCancelOrder(order.id)}
+                        disabled={cancellingOrderId === order.id}
+                      >
+                        {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

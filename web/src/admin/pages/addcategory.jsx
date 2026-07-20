@@ -73,6 +73,10 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
   const [rawFile, setRawFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
+  const [materialOptions, setMaterialOptions] = useState([]);
+  const [stoneOptions, setStoneOptions] = useState([]);
+  const [materialInput, setMaterialInput] = useState("");
+  const [stoneInput, setStoneInput] = useState("");
 
   const fileRef = useRef();
 
@@ -87,13 +91,37 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       setImageUrl(initialData.image_url || null);
       setRawFile(null);
       setIsActive(initialData.is_active ?? true);
+      setMaterialOptions([]);
+      setStoneOptions([]);
+      setMaterialInput("");
+      setStoneInput("");
     } else {
       setForm(EMPTY_FORM);
       setImageUrl(null);
       setRawFile(null);
       setIsActive(true);
+      setMaterialOptions([]);
+      setStoneOptions([]);
+      setMaterialInput("");
+      setStoneInput("");
     }
   }, [initialData]);
+
+  const handleAddMaterial = () => {
+    const nextValue = materialInput.trim();
+    if (nextValue && !materialOptions.includes(nextValue)) {
+      setMaterialOptions((prev) => [...prev, nextValue]);
+      setMaterialInput("");
+    }
+  };
+
+  const handleAddStone = () => {
+    const nextValue = stoneInput.trim();
+    if (nextValue && !stoneOptions.includes(nextValue)) {
+      setStoneOptions((prev) => [...prev, nextValue]);
+      setStoneInput("");
+    }
+  };
 
   const set = (k) => (e) => {
     const value = e.target.value;
@@ -295,6 +323,64 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
             </div>
           </div>
         )}
+      </div>
+      {/* --- Filter -- */}
+      <div className="ap-filter">
+        <h3>Filter attributes</h3>
+        <div className="ap-filter-op">
+          <h5>Filters</h5>
+        </div>
+        <div className="ap-filter-cus">
+          <h5>Custom filter groups</h5>
+          <p>Create your own filter groups and add options inside each one. Shopper will see these as filters on the category page</p>
+          <div className="ap-filter-mat">
+            <h5>Material Color</h5>
+            <p>Select one after adding option</p>
+            <div className="ap-filter-in">
+              <input placeholder="Add a option e.g. Gold"
+                value={materialInput}
+                onChange={(e) => setMaterialInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddMaterial()}
+              />
+              <button onClick={handleAddMaterial}>Confirm</button>
+            </div>
+            {materialOptions.length > 0 && (
+              <div className="ap-filter-tags">
+                {materialOptions.map((opt) => (
+                  <span key={opt} className="ap-filter-tag">
+                    {opt}
+                    <button onClick={() => setMaterialOptions(prev => prev.filter(o => o !== opt))}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+
+          <div className="ap-filter-stone">
+            <h5>Stone Type</h5>
+            <p>Select one after adding option</p>
+            <div className="ap-filter-in">
+              <input placeholder="Add a option e.g. Diamond"
+                value={stoneInput}
+                onChange={(e) => setStoneInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddStone()}
+              />
+              <button onClick={handleAddStone}>Confirm</button>
+            </div>
+              {stoneOptions.length > 0 && (
+                <div className="ap-filter-tags">
+                  {stoneOptions.map((opt) => (
+                    <span key={opt} className="ap-filter-tag">
+                      {opt}
+                      <button onClick={() => setStoneOptions(prev => prev.filter(o => o !== opt))}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+          </div>
+
+        </div>
       </div>
 
       {/* ── Visibility ── */}

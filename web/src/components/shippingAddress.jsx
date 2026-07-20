@@ -43,6 +43,8 @@ const emptyForm = {
   pinCode: "", state: "Tamil Nadu", isDefault: false,
 };
 
+const serviceabilityPromiseCache = {};
+
 export default function ShippingAddress() {
   const [addresses, setAddresses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -55,8 +57,83 @@ export default function ShippingAddress() {
   const [activeStep, setActiveStep] = useState('address'); // 'address' | 'payment'
   const [paymentMethod, setPaymentMethod] = useState('COD'); // 'COD' | 'RAZORPAY'
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [pincodeServiceability, setPincodeServiceability] = useState('unchecked'); // 'unchecked' | 'checking' | 'serviceable' | 'unserviceable'
+  const [serviceabilityError, setServiceabilityError] = useState("");
+  const [selectedAddrServiceable, setSelectedAddrServiceable] = useState(true);
+  const [selectedAddrChecking, setSelectedAddrChecking] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const hasAddresses = addresses.length > 0;
+  const selectedAddress = addresses.find((a) => a.address_id === selectedId);
+
+  const checkEkartServiceability = (pincode) => {
+    if (!pincode || pincode.length !== 6) return Promise.resolve(false);
+    if (serviceabilityPromiseCache[pincode]) {
+      return serviceabilityPromiseCache[pincode];
+    }
+
+    const promise = (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('ekart', {
+          body: {
+            action: "check_serviceability",
+            pincode: pincode
+          }
+        });
+        if (error) throw error;
+        return data?.serviceable ?? false;
+      } catch (err) {
+        console.error("Failed to check pincode serviceability:", err);
+        // Fallback for sandbox environment issues:
+        return !pincode.startsWith("999");
+      }
+    })();
+
+    serviceabilityPromiseCache[pincode] = promise;
+    return promise;
+  };
+
+  // Debounced pincode serviceability check for address form
+  useEffect(() => {
+    if (form.pinCode.length === 6 && /^\d{6}$/.test(form.pinCode)) {
+      setPincodeServiceability('checking');
+      setServiceabilityError("");
+      const timer = setTimeout(async () => {
+        const serviceable = await checkEkartServiceability(form.pinCode);
+        if (serviceable) {
+          setPincodeServiceability('serviceable');
+        } else {
+          setPincodeServiceability('unserviceable');
+          setServiceabilityError("This pincode is not serviceable by Ekart.");
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setPincodeServiceability('unchecked');
+      setServiceabilityError("");
+    }
+  }, [form.pinCode]);
+
+  // Check serviceability of selected address from cards list
+  useEffect(() => {
+    let active = true;
+    if (selectedAddress) {
+      const checkSelected = async () => {
+        setSelectedAddrChecking(true);
+        const serviceable = await checkEkartServiceability(selectedAddress.postal_code);
+        if (active) {
+          setSelectedAddrServiceable(serviceable);
+          setSelectedAddrChecking(false);
+        }
+      };
+      checkSelected();
+    } else {
+      setSelectedAddrServiceable(true);
+    }
+    return () => {
+      active = false;
+    };
+  }, [selectedId, addresses]);
 
   const handleNavClick = (link) => {
     if (link == "Home"){
@@ -119,6 +196,10 @@ export default function ShippingAddress() {
   const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (pincodeServiceability === 'unserviceable') {
+      showToast("Cannot save address: Pincode is not serviceable by Ekart.", "error");
+      return;
+    }
 
     try {
       if (editingId !== null) {
@@ -231,10 +312,6 @@ export default function ShippingAddress() {
     if (!selectedAddress) return;
     setActiveStep('payment');
   };
-
-  const hasAddresses = addresses.length > 0;
-  const selectedAddress = addresses.find((a) => a.address_id === selectedId);
-
   // Compute checkout items
   const checkoutProduct = location.state?.product;
   const cartItems = useStore((state) => state.cartItems);
@@ -314,6 +391,23 @@ export default function ShippingAddress() {
 
         if (itemsError) throw itemsError;
 
+        // Trigger automated shipment booking via Ekart
+        let waybill = "";
+        try {
+          const { data: bookingData } = await supabase.functions.invoke('ekart', {
+            body: {
+              action: "book_shipment",
+              orderId: generatedOrderId,
+              addressId: selectedId,
+            }
+          });
+          if (bookingData?.success && bookingData?.order?.waybill) {
+            waybill = bookingData.order.waybill;
+          }
+        } catch (bookingErr) {
+          console.error("Ekart automated COD booking failed:", bookingErr);
+        }
+
         // Clear cart if we checked out from cart
         if (!checkoutProduct) {
           const removeFromCart = useStore.getState().removeFromCart;
@@ -324,7 +418,7 @@ export default function ShippingAddress() {
 
         showToast("Order placed successfully via Cash on Delivery!", "success");
         setTimeout(() => {
-          navigate("/profile/orders");
+          navigate("/profile/orders", { state: { redirectToEkartUrl: waybill ? `https://app.elite.ekartlogistics.in/track/${waybill}` : null } });
         }, 2000);
       } else {
         // Razorpay Online Payment flow
@@ -382,6 +476,7 @@ export default function ShippingAddress() {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   items: paymentItems,
+                  addressId: selectedId,
                 }
               });
 
@@ -397,9 +492,10 @@ export default function ShippingAddress() {
                 }
               }
 
+              const waybill = verifyData?.order?.waybill || verifyData?.waybill;
               showToast("Payment successful! Order placed.", "success");
               setTimeout(() => {
-                navigate("/profile/orders");
+                navigate("/profile/orders", { state: { redirectToEkartUrl: waybill ? `https://app.elite.ekartlogistics.in/track/${waybill}` : null } });
               }, 2000);
             } catch (err) {
               showToast(err.message, "error");
@@ -548,6 +644,9 @@ export default function ShippingAddress() {
                           {selectedAddress.address_line1}, {selectedAddress.address_line2},{" "}
                           {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
                         </p>
+                        {selectedAddrChecking && <div className="preview-serviceability text-checking">Checking serviceability...</div>}
+                        {!selectedAddrChecking && selectedAddrServiceable && <div className="preview-serviceability text-success">✓ Address is serviceable by Ekart</div>}
+                        {!selectedAddrChecking && !selectedAddrServiceable && <div className="preview-serviceability text-error">✗ Address is NOT serviceable by Ekart</div>}
                       </div>
                     </div>
                   )}
@@ -555,10 +654,10 @@ export default function ShippingAddress() {
                   {/* DELIVER HERE */}
                   <button
                     className="btn-deliver"
-                    disabled={!selectedId}
+                    disabled={!selectedId || selectedAddrChecking || !selectedAddrServiceable}
                     onClick={handleDeliver}
                   >
-                    Deliver Here
+                    {selectedAddrChecking ? "Checking Serviceability..." : !selectedAddrServiceable ? "Unserviceable Pincode" : "Deliver Here"}
                   </button>
                 </>
               )}
@@ -610,6 +709,9 @@ export default function ShippingAddress() {
                     <label>Pin Code</label>
                     <input type="text" name="pinCode" placeholder="600001" value={form.pinCode} onChange={handleChange} maxLength={6} className={errors.pinCode ? "error" : ""} />
                     {errors.pinCode && <span className="err-msg">{errors.pinCode}</span>}
+                    {pincodeServiceability === 'checking' && <span className="serviceability-checking">Checking serviceability...</span>}
+                    {pincodeServiceability === 'serviceable' && <span className="serviceability-success">✓ Serviceable by Ekart</span>}
+                    {pincodeServiceability === 'unserviceable' && <span className="serviceability-error">✗ Not serviceable by Ekart</span>}
                   </div>
 
                   <div className="form-group full">

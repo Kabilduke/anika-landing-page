@@ -63,6 +63,7 @@ export default function CategoryPage({ category }) {
   const sizeOptions = useMemo(() => {
     if (category === "Rings") return [5, 6, 7, 8, 9, 10, 11];
     if (category === "Bangles" || category === "Bracelets") return [2.4, 2.6, 2.8];
+    if (category == "Anklets") return [8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5];
     return [];
   }, [category]);
 
@@ -133,8 +134,8 @@ export default function CategoryPage({ category }) {
     return products.filter(product => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchesName = product.name.toLowerCase().includes(q);
-        const matchesDesc = product.desc.toLowerCase().includes(q);
+        const matchesName = product.name?.toLowerCase().includes(q);
+        const matchesDesc = product.desc?.toLowerCase().includes(q);
         if (!matchesName && !matchesDesc) return false;
       }
 
@@ -145,7 +146,7 @@ export default function CategoryPage({ category }) {
       if (!stockStatus.inStock && stockStatus.outOfStock && !outOfStockMatch) return false;
 
       if (selectedSizes.length > 0) {
-        const hasMatchingSize = product.sizes.some(size => selectedSizes.includes(size));
+        const hasMatchingSize = product.sizes?.some(size => selectedSizes.includes(size));
         if (!hasMatchingSize) return false;
       }
 
@@ -194,6 +195,7 @@ export default function CategoryPage({ category }) {
               <option value="Bracelets">Bracelets</option>
               <option value="Bangles">Bangles</option>
               <option value="Necklaces">Necklaces</option>
+              <option value="Anklets">Anklets</option>
             </select>
           </div>
 
@@ -202,7 +204,11 @@ export default function CategoryPage({ category }) {
               type="text"
               placeholder={`Search ${category.toLowerCase()}...`}
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               onKeyDown={handleSearchKeyDown}
               className="search-input-field"
             />
@@ -291,7 +297,7 @@ export default function CategoryPage({ category }) {
           {loading ? (
             // ─── Loading Skeleton Grid ─────────────────────────────
             <div className="product-results-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 7 }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
             </div>
