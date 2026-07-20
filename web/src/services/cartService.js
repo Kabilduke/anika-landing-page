@@ -23,19 +23,25 @@ export const cartService = {
 
     if (error) throw error;
 
-    return (data || []).map(item => ({
-      id: item.id, // DB primary key
-      productId: item.product_id,
-      name: item.products.name,
-      price: parsePrice(item.products.price),
-      originalPrice: parsePrice(item.products.compare_price || Math.round(parsePrice(item.products.price) * 1.3)),
-      category: item.products.categories?.name || '',
-      qty: item.qty,
-      size: item.size,
-      color: item.color,
-      image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
-      deliveryDate: 'Sep 12, 2025' // mock matching storefront expectation
-    }));
+    return (data || []).map(item => {
+      const rawPrice = parsePrice(item.products.price);
+      const rawDiscount = parsePrice(item.products.discount_price);
+      const finalPrice = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+
+      return {
+        id: item.id,
+        productId: item.product_id,
+        name: item.products.name,
+        price: finalPrice,
+        originalPrice: parsePrice(item.products.compare_price || Math.round(rawPrice * 1.3)),
+        category: item.products.categories?.name || '',
+        qty: item.qty,
+        size: item.size,
+        color: item.color,
+        image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
+        deliveryDate: "2 - 3 days"
+      };
+    });
   },
 
   /**
@@ -53,8 +59,8 @@ export const cartService = {
         user_id: userId,
         product_id: productId,
         qty,
-        size,
-        color
+        size: size || '',
+        color: color || ''
       }, { onConflict: 'user_id,product_id,size,color' })
       .select();
 

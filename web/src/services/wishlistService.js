@@ -14,18 +14,25 @@ export const wishlistService = {
       .eq('user_id', userId);
 
     if (error) throw error;
-    return (data || []).map(item => ({
-      id: item.products.product_id, // client uses product_id or simple id as identifier
-      dbId: item.id, // DB primary key
-      name: item.products.name,
-      price: Number(item.products.price),
-      originalPrice: Number(item.products.compare_price || Math.round(item.products.price * 1.3)),
-      category: item.products.categories?.name || '',
-      qty: 1, // default qty for wishlist items
-      image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
-      deliveryDate: 'Sep 12, 2025' // mock matching storefront expectation
-    }));
+    return (data || []).map(item => {
+      const rawPrice = Number(item.products.price) || 0;
+      const rawDiscount = Number(item.products.discount_price) || 0;
+      const finalPrice = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+
+      return {
+        id: item.products.product_id,
+        dbId: item.id,
+        name: item.products.name,
+        price: finalPrice,
+        originalPrice: Number(item.products.compare_price || Math.round(rawPrice * 1.3)),
+        category: item.products.categories?.name || '',
+        qty: 1,
+        image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
+        deliveryDate: '2 - 3 Days'
+      };
+    });
   },
+
 
   /**
    * Adds a single product to user's wishlist.
