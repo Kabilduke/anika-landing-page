@@ -6,7 +6,7 @@ import { wishlistService } from '../services/wishlistService';
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
 
-/** Strip currency symbols & commas so "₹1,299" → 1299 */
+/** Strip currency symbols & commas so */
 const parsePrice = (v) => {
   if (v == null) return 0;
   if (typeof v === 'number') return v;
@@ -19,6 +19,10 @@ export const useStore = create((set, get) => ({
   session: null,
   user: null,
   sessionLoading: true,
+
+  // --- Admin ---
+  isAdmin: false,
+  adminChecked: false,
 
   // --- Addresses ---
   addresses: [],
@@ -81,6 +85,7 @@ export const useStore = create((set, get) => ({
       if (session) {
         set({ session, user: session.user });
         await get().syncCartAndWishlist(session.user.id);
+        get().checkAdminStatus(session.user.id);
       } else {
         // Load guest cart & wishlist from localStorage
         const localCart = localStorage.getItem('anika_guest_cart');
@@ -114,15 +119,36 @@ export const useStore = create((set, get) => ({
         set({
           session: null,
           user: null,
+          isAdmin: false,
+          adminChecked: false,
           cartItems: [],
           wishlistItems: [],
           orders: [],
-          ordersFetchedFor: null
+          ordersFetchedFor: null,
+          addresses: [],
+          addressesFetchedFor: null
         });
         localStorage.removeItem('anika_guest_cart');
         localStorage.removeItem('anika_guest_wishlist');
       }
     });
+  },
+
+  checkAdminStatus: async (userId) => {
+    if (!userId) {
+      set({ isAdmin: false, adminChecked: true });
+      return false;
+    }
+    try {
+      const data = await authService.checkAdminUser(userId);
+      const isAdmin = data?.role === "admin";
+      set({ isAdmin, adminChecked: true });
+      return isAdmin;
+    } catch (err) {
+      console.error('Admin check error:', err.message);
+      set({ isAdmin: false, adminChecked: true });
+      return false;
+    }
   },
 
   // Caching Addresses

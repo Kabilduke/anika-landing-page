@@ -196,14 +196,16 @@ export default function ProductPage({ onBack }) {
 
   // Determine which image to show in gallery
   const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
-  const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
+  // const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
+  const rawCompare = productPrices?.compare_price ?? selectedProduct?.originalPrice ?? null;
   const rawDiscount = productPrices?.discount_price ?? null; 
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
 
   const payPrice = rawDiscount && rawPrice
     ? Number(rawPrice) - Number(rawDiscount)
-    : Number(rawPrice) ?? 0;
+    : (rawPrice != null ? Number(rawPrice) : 0);
+    // : Number(rawPrice) ?? 0;
 
   const strikePrice = rawCompare ?? null;
 

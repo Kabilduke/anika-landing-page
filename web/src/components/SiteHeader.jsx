@@ -12,22 +12,11 @@ const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklac
 
 const LoginDropdown = () => {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const { isAdmin } = useAdmin();
   const ref = useRef(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    authService.getSession().then((session) => {
-      setUser(session?.user ?? null);
-    });
-
-    const subscription = authService.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  
+  const user = useStore((s) => s.user);
+  const isAdmin = useStore((s) => s.isAdmin);
 
   useEffect(() => {
     const handler = (e) => {

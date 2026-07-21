@@ -4,6 +4,12 @@ import searchEmpty from "../../assets/admin/search.png";
 import editIcon from "../../assets/admin/Edit.png";
 import trashIcon from "../../assets/admin/Trash.png";
 
+const getFinalPrice = (product) => {
+  const rawPrice = parseFloat(product.price) || 0;
+  const rawDiscount = parseFloat(product.discount_price) || 0;
+  return rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+};
+
 const getCategoryStyle = (category) => {
 
   const styles = {
@@ -53,7 +59,7 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
         <span className="pl-category-badge" style={getCategoryStyle(product.category)}>{product.category}</span>
         <span className="pl-stock-low">{product.stock} left</span>
         <span className={`pl-status-badge ${product.status === "Visible" ? "pl-status-visible" : product.status === "Draft" ? "pl-status-draft" : ""}`}>{product.status}</span>
-        <span className="pl-mobile-card__price">{"Rs." + parseFloat(product.price || 0).toLocaleString()}</span>
+        <span className="pl-mobile-card__price">{"Rs." + getFinalPrice(product).toLocaleString()}</span>
       </div>
     </div>
   );
@@ -367,7 +373,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                       </span>
                     </td>
                     <td className="pl-price-col">
-                      {"Rs." + parseFloat(product.price || 0).toLocaleString()}
+                      {"Rs." + getFinalPrice(product).toLocaleString()}
                     </td>
                     <td className="pl-stock-col">
                       <span className="pl-stock-low">{product.stock} left</span>
