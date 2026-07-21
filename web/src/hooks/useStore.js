@@ -4,6 +4,7 @@ import { productService } from '../services/productService';
 import { cartService } from '../services/cartService';
 import { wishlistService } from '../services/wishlistService';
 import { authService } from '../services/authService';
+import { orderService } from '../services/orderService';
 
 /** Strip currency symbols & commas so "₹1,299" → 1299 */
 const parsePrice = (v) => {
@@ -17,6 +18,12 @@ export const useStore = create((set, get) => ({
   // --- Authentication State ---
   session: null,
   user: null,
+  sessionLoading: true,
+
+  // --- Addresses ---
+  addresses: [],
+  loadingAddresses: false,
+  addressesFetchedFor: null,
 
   // --- Catalog Caching ---
   categories: [],
@@ -29,6 +36,11 @@ export const useStore = create((set, get) => ({
   wishlistItems: [],
   loadingCart: false,
   loadingWishlist: false,
+
+  // --- Orders ---
+  orders: [],
+  loadingOrders: false,
+  ordersFetchedFor: null,
 
   // --- Selected Product ---
   selectedProduct: (() => {
@@ -80,16 +92,22 @@ export const useStore = create((set, get) => ({
       }
     } catch (err) {
       console.error('Failed to initialize auth in store:', err);
+    } finally {
+      set({ sessionLoading: false });
     }
 
     // Subscribe to auth state changes
     supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event in Zustand store:', event, session?.user?.id);
+      // console.log('Auth event in Zustand store:', event, session?.user?.id);
       if (session) {
         const currentUser = get().user;
         if (!currentUser || currentUser.id !== session.user.id) {
+          // New sign-in (or first load) — set user and sync guest cart/wishlist
           set({ session, user: session.user });
           await get().syncCartAndWishlist(session.user.id);
+        } else {
+          // Same user, but metadata may have changed (e.g. profile edit) — keep it fresh
+          set({ session, user: session.user });
         }
       } else {
         // Sign out / Clear session
@@ -97,12 +115,32 @@ export const useStore = create((set, get) => ({
           session: null,
           user: null,
           cartItems: [],
-          wishlistItems: []
+          wishlistItems: [],
+          orders: [],
+          ordersFetchedFor: null
         });
         localStorage.removeItem('anika_guest_cart');
         localStorage.removeItem('anika_guest_wishlist');
       }
     });
+  },
+
+  // Caching Addresses
+  fetchAddresses: async (userId, { force = false } = {}) => {
+    if (!userId) return [];
+    const { addressesFetchedFor, addresses } = get();
+    if (!force && addressesFetchedFor === userId) return addresses;
+
+    set({ loadingAddresses: true });
+    try {
+      const data = await orderService.getAddresses(userId);
+      set({ addresses: data || [], loadingAddresses: false, addressesFetchedFor: userId });
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching addresses in store:', err);
+      set({ loadingAddresses: false });
+      return [];
+    }
   },
 
   // Caching Categories
@@ -154,6 +192,24 @@ export const useStore = create((set, get) => ({
     } catch (err) {
       console.error(`Error fetching products for category ${categoryName}:`, err);
       set({ loadingProducts: false });
+      return [];
+    }
+  },
+
+  // Caching Orders
+  fetchOrders: async (userId, { force = false } = {}) => {
+    if (!userId) return [];
+    const { ordersFetchedFor, orders } = get();
+    if (!force && ordersFetchedFor === userId) return orders;
+
+    set({ loadingOrders: true });
+    try {
+      const data = await orderService.getOrders(userId);
+      set({ orders: data || [], loadingOrders: false, ordersFetchedFor: userId });
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching orders in store:', err);
+      set({ loadingOrders: false });
       return [];
     }
   },
@@ -407,7 +463,7 @@ export const useStore = create((set, get) => ({
 
       // Merge items. If exists in both, use larger qty
       const mergedCart = [];
-      
+
       // Add DB cart items first
       dbCart.forEach(dbItem => {
         mergedCart.push({

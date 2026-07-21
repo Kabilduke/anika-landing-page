@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useStore } from "../hooks/useStore";
 import { authService } from "../services/authService";
 import { orderService } from "../services/orderService";
 import "./AnikaAccount.css";
@@ -7,34 +8,30 @@ import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
 
 const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
+const ACTIVE_STATUSES = ["Pending", "Confirmed", "Shipped"];
 
 export default function AnikaAccount() {
   const [activeTab] = useState("Account");
-  const [user, setUser] = useState(null);
-  const [orders, setOrders] = useState([]);
+  const navigate = useNavigate();
+
+  const user = useStore((s) => s.user);
+  const orders = useStore((s) => s.orders);
+  const fetchOrders = useStore((s) => s.fetchOrders);
+
+  // const [user, setUser] = useState(null);
+  // const [orders, setOrders] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    authService.getSession().then(async (session) => {
-      if (!session) {
-        navigate("/account/login");
-        return;
-      }
-      setUser(session.user);
-
-      // Fetch orders to check for pending ones
-      try {
-        const data = await orderService.getOrders(session.user.id);
-        setOrders(data || []);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-      }
-    });
-  }, []);
+  useEffect(() =>{
+    if (!user) {
+      navigate("/account/login");
+      return;
+    }
+    fetchOrders(user.id);
+  }, [user]);
 
   const handleTabClick = (tab) => {
     if (tab === "Profile") navigate("/profile");
@@ -58,11 +55,7 @@ export default function AnikaAccount() {
     }
   };
 
-  // Check for orders that are in an active (non-terminal) state
-  const ACTIVE_STATUSES = ["Pending", "Confirmed", "Shipped"];
-  const activeOrders = orders.filter((o) =>
-    ACTIVE_STATUSES.includes(o.status)
-  );
+  const activeOrders = orders.filter((o) => ACTIVE_STATUSES.includes(o.status));
   const hasActiveOrders = activeOrders.length > 0;
 
   const handleDeleteRequest = () => {

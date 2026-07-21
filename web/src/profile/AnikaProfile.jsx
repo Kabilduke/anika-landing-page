@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { authService } from "../services/authService";
 import { useStore } from "../hooks/useStore";
-import { orderService } from "../services/orderService";
 import { productService } from "../services/productService";
 import "./AnikaProfile.css";
 import Navbar from "../components/SiteHeader";
@@ -25,7 +24,11 @@ export default function AnikaProfile() {
   const removeFromWishlist = useStore((state) => state.removeFromWishlist);
   const setSelectedProduct = useStore((state) => state.setSelectedProduct);
 
-  const [userOrders, setUserOrders] = useState([]);
+  const user = useStore((s) => s.user);
+  const sessionLoading = useStore((s) => s.sessionLoading);
+  const orders = useStore((s) => s.orders);
+  const fetchOrders = useStore((s) => s.fetchOrders);
+
   const [productsMap, setProductsMap] = useState({});
   const [customerDetails, setCustomerDetails] = useState({
     name: "",
@@ -36,54 +39,44 @@ export default function AnikaProfile() {
   });
   const [tempDetails, setTempDetails] = useState({ ...customerDetails });
 
-  // Fetch real user data, orders, and products map
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const session = await authService.getSession();
-        const user = session?.user;
+    if (sessionLoading) return;
+    if (!user) {
+      navigate("/account/login");
+      return;
+    }
+    fetchOrders(user.id);
+  }, [user, sessionLoading]);
 
-        if (!user) {
-          navigate("/account/login");
-          return;
-        }
+  useEffect(() => {
+  if (!user) return;
 
-        const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
-          month: "short",
-          year: "numeric",
-        });
+    const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
+      month: "short",
+      year: "numeric",
+    });
+    const orderCountStr = `${orders.length} order${orders.length !== 1 ? "s" : ""}`;
 
-        // Fetch user's orders from database
-        const ordersData = await orderService.getOrders(user.id);
-        setUserOrders(ordersData || []);
-        const orderCountStr = `${ordersData?.length || 0} order${ordersData?.length !== 1 ? 's' : ''}`;
-
-        const details = {
-          name: user.user_metadata?.name || "No name set",
-          phone: user.user_metadata?.phone || "No phone set",
-          email: user.email,
-          customerSince: joinedDate,
-          totalOrders: orderCountStr,
-        };
-
-        setCustomerDetails(details);
-        setTempDetails(details);
-
-        // Fetch products to map item names to full product rows
-        const productsData = await productService.getProducts();
-        const map = {};
-        if (productsData) {
-          productsData.forEach((p) => {
-            map[p.name] = p;
-          });
-        }
-        setProductsMap(map);
-      } catch (err) {
-        console.error("Error fetching profile data:", err);
-      }
+    const details = {
+      name: user.user_metadata?.name || "No name set",
+      phone: user.user_metadata?.phone || "No phone set",
+      email: user.email,
+      customerSince: joinedDate,
+      totalOrders: orderCountStr,
     };
 
-    fetchProfileData();
+    setCustomerDetails(details);
+    setTempDetails(details);
+  }, [user, orders]);
+
+  useEffect(() => {
+    productService.getProducts().then((productsData) => {
+      const map = {};
+      (productsData || []).forEach((p) => {
+        map[p.name] = p;
+      });
+      setProductsMap(map);
+    }).catch((err) => console.error("Error fetching products:", err));
   }, []);
 
   const handleEdit = () => {
@@ -101,7 +94,11 @@ export default function AnikaProfile() {
         },
       });
 
-      await authService.refreshSession();
+      const { session } = await authService.refreshSession();
+      if (session?.user) {
+        useStore.setState({ user: session.user });
+      }
+      
       setCustomerDetails({ ...tempDetails });
       setIsEditing(false);
     } catch (error) {

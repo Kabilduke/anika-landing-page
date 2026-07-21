@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
 import { useStore } from "../hooks/useStore";
 import "./AnikaWishlist.css";
 import Navbar from "../components/SiteHeader";
@@ -10,23 +9,23 @@ const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 
 export default function AnikaWishlist() {
   const [activeTab] = useState("Wishlists");
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
+  const user = useStore((s) => s.user);
+  const sessionLoading = useStore((s) => s.sessionLoading);
   const wishlistItems = useStore((state) => state.wishlistItems);
+
   const removeFromWishlist = useStore((state) => state.removeFromWishlist);
   const addToCart = useStore((state) => state.addToCart);
   const setSelectedProduct = useStore((state) => state.setSelectedProduct);
 
   useEffect(() => {
-    authService.getSession().then((session) => {
-      if (!session) {
-        navigate("/account/login");
-        return;
-      }
-      setUser(session.user);
-    });
-  }, []);
+    if (sessionLoading) return;
+    if (!user){
+      navigate("/account/login");
+      return;
+    }
+  }, [user, sessionLoading]);
 
   const handleTabClick = (tab) => {
     if (tab === "Profile") navigate("/profile");

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
 import { orderService } from "../services/orderService";
+import { useStore } from "../hooks/useStore";
 import "./AnikaAddresses.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -11,9 +11,14 @@ const STATES = ["Gujarat", "Tamil Nadu", "Maharashtra", "Delhi", "Karnataka", "T
 
 export default function AnikaAddresses() {
   const [activeTab, setActiveTab] = useState("Addresses");
-  const [addresses, setAddresses] = useState([]);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  const user = useStore((s) => s.user);
+  const sessionLoading = useStore((s) => s.sessionLoading);
+
+  const addresses = useStore((s) => s.addresses);
+  const loadingAddresses = useStore((s) => s.loadingAddresses);
+  const fetchAddresses = useStore((s) => s.fetchAddresses); 
 
   const [form, setForm] = useState({
     name: "", email: "", mobile: "",
@@ -25,26 +30,15 @@ export default function AnikaAddresses() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const fetchAddresses = async (userId) => {
-    try {
-      const data = await orderService.getAddresses(userId);
-      setAddresses(data || []);
-    } catch (err) {
-      console.error("Error loading addresses:", err);
-    }
-  };
-
   // ── Load user + addresses on mount ──
   useEffect(() => {
-    authService.getSession().then((session) => {
-      if (!session) {
-        navigate("/account/login");
-        return;
-      }
-      setUser(session.user);
-      fetchAddresses(session.user.id);
-    });
-  }, []);
+    if (sessionLoading) return;
+    if (!user) {
+      navigate("/account/login");
+      return;
+    }
+    fetchAddresses(user.id)
+  }, [user, sessionLoading]);
 
   const handleTabClick = (tab) => {
     if (tab === "Profile")        navigate("/profile");
@@ -87,7 +81,7 @@ export default function AnikaAddresses() {
         is_default: form.isDefault,
       });
 
-      await fetchAddresses(user.id);
+      await fetchAddresses(user.id, {force: true});
       setForm({
         name: "", email: "", mobile: "", flat: "", area: "",
         city: "", pinCode: "", state: "Tamil Nadu", isDefault: false,
@@ -100,7 +94,7 @@ export default function AnikaAddresses() {
   const handleDelete = async (id) => {
     try {
       await orderService.deleteAddress(id, user.id);
-      setAddresses((prev) => prev.filter((a) => a.address_id !== id));
+      await fetchAddresses(user.id, { force: true });
     } catch (err) {
       alert("Failed to delete address: " + err.message);
     }
@@ -109,7 +103,7 @@ export default function AnikaAddresses() {
   const handleSetDefault = async (id) => {
     try {
       await orderService.setAddressDefault(id, user.id);
-      await fetchAddresses(user.id);
+      await fetchAddresses(user.id, { force: true });
     } catch (err) {
       alert("Failed to update default address: " + err.message);
     }

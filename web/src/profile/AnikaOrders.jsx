@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom"; 
-import { authService } from "../services/authService"; 
 import { orderService } from "../services/orderService";
 import { productService } from "../services/productService";
 import { useStore } from "../hooks/useStore";
@@ -14,12 +13,16 @@ const PAGE_SIZE = 5;
 export default function AnikaOrders() {
   const [activeTab, setActiveTab] = useState("Orders");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [orders, setOrders] = useState([]);
-  const [user, setUser] = useState(null);
   const [productsMap, setProductsMap] = useState({});
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const user = useStore((s) => s.user);
+  const sessionLoading = useStore((s) => s.sessionLoading);
+  const rawOrders = useStore((s) => s.orders);
+  const fetchOrders = useStore((s) => s.fetchOrders);
+  const setSelectedProduct = useStore((s) => s.setSelectedProduct);
 
   useEffect(() => {
     if (location.state?.redirectToEkartUrl) {
@@ -30,24 +33,12 @@ export default function AnikaOrders() {
     }
   }, [location]);
 
-  const setSelectedProduct = useStore(state => state.setSelectedProduct);
-
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await productService.getProducts();
-        const map = {};
-        if (data) {
-          data.forEach(p => {
-            map[p.name] = p;
-          });
-        }
-        setProductsMap(map);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      }
-    };
-    fetchProducts();
+    productService.getProducts().then((data) =>{
+      const map = {};
+      (data || []).forEach((p) => { map[p.name] = p;});
+      setProductsMap(map);
+    }).catch((err) => console.error("Error fetching Product:", err));
   }, []);
 
   const handleItemClick = (item) => {
@@ -71,41 +62,42 @@ export default function AnikaOrders() {
     }
   };
 
-  const loadOrders = async (userId) => {
-    try {
-      const data = await orderService.getOrders(userId);
+  useEffect(() => {
+    if (sessionLoading) return;
+    if (!user) {
+      navigate("/account/login");
+      return
+    }
+    fetchOrders(user.id); 
+  }, [user, sessionLoading]);
 
-      if (data) {
-        const formatted = data.map(item => ({
-          id: item.id,
-          date: new Date(item.order_date).toLocaleDateString("en-IN", {
+
+  const orders = useMemo(() => {
+    return rawOrders.map((item) => ({
+      id: item.id,
+      date: new Date(item.order_date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      }),
+      item: item.item_name,
+      qty: item.quantity,
+      price: "₹" + parseFloat(item.total_price).toLocaleString("en-IN"),
+      status: item.status,
+      order_items: item.order_items || [],
+      deliveryProvider: item.delivery_provider,
+      waybill: item.waybill,
+      shipmentId: item.shipment_id,
+      deliveryStatus: item.delivery_status,
+      estimatedDeliveryDate: item.estimated_delivery_date
+        ? new Date(item.estimated_delivery_date).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "short",
             year: "numeric"
-          }),
-          item: item.item_name,
-          qty: item.quantity,
-          price: "₹" + parseFloat(item.total_price).toLocaleString("en-IN"),
-          status: item.status,
-          order_items: item.order_items || [],
-          deliveryProvider: item.delivery_provider,
-          waybill: item.waybill,
-          shipmentId: item.shipment_id,
-          deliveryStatus: item.delivery_status,
-          estimatedDeliveryDate: item.estimated_delivery_date
-            ? new Date(item.estimated_delivery_date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-              })
-            : null
-        }));
-        setOrders(formatted);
-      }
-    } catch (err) {
-      console.error("Error loading orders:", err);
-    }
-  };
+          })
+        : null
+    }));
+  }, [rawOrders]);
 
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to cancel this order?")) {
@@ -115,7 +107,7 @@ export default function AnikaOrders() {
       setCancellingOrderId(orderId);
       await orderService.cancelOrder(orderId);
       if (user) {
-        await loadOrders(user.id);
+        await fetchOrders(user.id, {force: true});
       }
     } catch (err) {
       alert("Failed to cancel order: " + err.message);
@@ -124,17 +116,6 @@ export default function AnikaOrders() {
     }
   };
 
-  // ← fetch real user
-  useEffect(() => {
-    authService.getSession().then((session) => {
-      if (!session) {
-        navigate("/account/login");
-        return;
-      }
-      setUser(session.user);
-      loadOrders(session.user.id);
-    });
-  }, []);
 
   // ← handle tab navigation
   const handleTabClick = (tab) => {

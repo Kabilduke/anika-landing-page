@@ -10,19 +10,13 @@ export function useAdmin() {
     const checkAdmin = async () => {
       try {
         const user = await authService.getUser();
-        
-        console.log("Current user:", user?.id, user?.email); // DEBUG
 
         if (!user) {
-          console.log("No user logged in"); // DEBUG
           setLoading(false);
           return;
         }
 
         const data = await authService.checkAdminUser(user.id);
-        console.log("Query result:", { data }); // DEBUG
-
-        console.log("Is admin?", data?.role === "admin"); // DEBUG
         setIsAdmin(data?.role === "admin");
       } catch (error) {
         console.error("Admin check error:", error.message);
