@@ -198,7 +198,7 @@ export default function ProductPage({ onBack }) {
   const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
   // const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
   const rawCompare = productPrices?.compare_price ?? selectedProduct?.originalPrice ?? null;
-  const rawDiscount = productPrices?.discount_price ?? null; 
+  const rawDiscount = productPrices?.discount_price ?? 0; 
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
 
@@ -363,10 +363,7 @@ export default function ProductPage({ onBack }) {
                 <span className='pp-discount-badge'>{discountPct}% Off</span>
               )}
             </div>
-
-            <p className="pp-blurb">
-              Elevate your traditional look with this exquisitely crafted gold bangle, designed to reflect timeless elegance and heritage artistry. Featuring intricate antique detailing with vibrant red and green stone embellishments, this bangle blends classic South Indian craftsmanship with a luxurious royal finish.
-            </p>
+            <p className="pp-tax-note">All Taxes Included.</p>
 
             {cat == 'Bangles' && (
               <div className='pp-size'>
@@ -502,6 +499,20 @@ export default function ProductPage({ onBack }) {
                   <button className="pp-ship-link">Shipping &amp; Return</button>
                 </span>
               </div>
+              <div className='pp-ship-row'>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
+                  <path d="M12 2 1 21h22L12 2z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                
+                <span>
+                  <ul style={{ margin: 0, paddingLeft: "1rem", display: "flex", flexDirection: "column", gap: "6px" }}></ul>
+                    <li>We do not accept returns for products delivered in good condition.</li>
+                    <li>Returns are accepted only for items that arrive damaged or defective.</li>
+                    <li>A claim must include a clear, unedited unboxing video showing the damage — claims filed without this video cannot be processed.</li>
+                  </span>
+              </div>
             </div>
 
             <div className="pp-share">
@@ -543,23 +554,19 @@ export default function ProductPage({ onBack }) {
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
                 </button>
-                {descOpen && (
-                  <div className="pp-acc-body">
-                    {cat === 'Earrings' ? (
-                      <>
-                        <p>Elevate your ensemble with the timeless elegance of our Antique Earring collection. Meticulously handcrafted, these earrings feature intricate jhumka and stud patterns inspired by traditional Indian temple jewelry. Each piece is adorned with premium stones that catch the light beautifully against the rich matte gold finish.</p>
-                        <p>Designed for both grandeur and comfort, these earrings are lightweight enough for all-day wear at weddings, festivals, or special celebrations. The antique plating ensures a long-lasting vintage glow that complements any ethnic attire, from silk sarees to designer lehengas.</p>
-                        <p>Our commitment to quality ensures that every earring set is a masterpiece of detail. Let Veluno's antique earrings frame your face with grace and become a cherished addition to your jewelry treasure chest.</p>
-                      </>
-                    ) : (
-                      <>
-                        <p>Adorn your wrists with the regal charm of our Antique Bangle Set, a masterpiece of traditional craftsmanship. This exquisite piece is meticulously designed with intricate floral motifs and ancient patterns that evoke the grandeur of royal heritage. The bangle features high-quality red and green stone embellishments that add a vibrant touch to the matte antique gold finish.</p>
-                        <p>Perfect for weddings, festive occasions, and cultural celebrations, these bangles are crafted to be both durable and lightweight for all-day comfort. The antique gold plating is treated to maintain its rich luster over time, ensuring that this piece remains a treasured part of your jewelry collection for years to come.</p>
-                        <p>Each set is carefully inspected to ensure the highest standards of quality and detail. Whether paired with a traditional saree or a modern lehenga, Veluno's Antique Bangle Set is the ultimate accessory to enhance your grace and elegance.</p>
-                      </>
+                {descOpen &&  (
+                  <div className='pp-acc-body'>
+                    {selectedProduct?.desc ? (
+                      selectedProduct.desc
+                        .split("\n")
+                        .filter((para) => para.trim())
+                        .map((para, i) => <p key={i}>{para}</p>)
+                    ):(
+                      <p>No description available for this product yet.</p>
                     )}
                   </div>
                 )}
+                
               </div>
 
               <div className="pp-acc-item">
