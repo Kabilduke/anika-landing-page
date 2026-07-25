@@ -86,6 +86,7 @@ export const useStore = create((set, get) => ({
         set({ session, user: session.user });
         await get().syncCartAndWishlist(session.user.id);
         get().checkAdminStatus(session.user.id);
+        await get().syncProfileFromMetadata(session.user);
       } else {
         // Load guest cart & wishlist from localStorage
         const localCart = localStorage.getItem('anika_guest_cart');
@@ -110,9 +111,11 @@ export const useStore = create((set, get) => ({
           // New sign-in (or first load) — set user and sync guest cart/wishlist
           set({ session, user: session.user });
           await get().syncCartAndWishlist(session.user.id);
+          await get().syncProfileFromMetadata(session.user);
         } else {
           // Same user, but metadata may have changed (e.g. profile edit) — keep it fresh
-          set({ session, user: session.user });
+          set({ session, sessionUser: session.user });
+          await get().syncProfileFromMetadata(session.user);
         }
       } else {
         // Sign out / Clear session
@@ -132,6 +135,46 @@ export const useStore = create((set, get) => ({
         localStorage.removeItem('anika_guest_wishlist');
       }
     });
+  },
+
+  syncProfileFromMetadata: async (user) => {
+    if (!user) return;
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, phone')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const metadataName = user.user_metadata?.name;
+      const metadataPhone = user.user_metadata?.phone;
+
+      if (!profile) {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          name: metadataName || 'No name set',
+          phone: metadataPhone || 'No phone set',
+          email: user.email,
+          created_at: user.created_at || new Date().toISOString()
+        });
+      } else {
+        const needsSyncName = (!profile.name || profile.name === 'No name set') && metadataName && metadataName !== 'No name set';
+        const needsSyncPhone = (!profile.phone || profile.phone === 'No phone set') && metadataPhone && metadataPhone !== 'No phone set';
+
+        if (needsSyncName || needsSyncPhone) {
+          await supabase
+            .from('profiles')
+            .update({
+              name: needsSyncName ? metadataName : profile.name,
+              phone: needsSyncPhone ? metadataPhone : profile.phone,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync profile from metadata:', err);
+    }
   },
 
   checkAdminStatus: async (userId) => {

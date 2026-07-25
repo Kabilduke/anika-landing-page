@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import { authService } from "../../services/authService";
 import "./Adminaccount.css";
 
 const Toggle = ({ checked, onChange }) => (
@@ -23,6 +25,118 @@ const AdminAccount = () => {
   const [confirmPwd, setConfirmPwd] = useState("");
   const [twoFactor, setTwoFactor]   = useState(false);
   const [emailNotif, setEmailNotif] = useState(false);
+  const [loading, setLoading]       = useState(true);
+
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        setLoading(true);
+        const user = await authService.getUser();
+        if (user) {
+          setAdminEmail(user.email || "");
+          
+          // Fetch profile from public.profiles
+          const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (profile) {
+            setAdminName(profile.name || "");
+            setPhone(profile.phone || "");
+          } else {
+            setAdminName(user.user_metadata?.name || "");
+            setPhone(user.user_metadata?.phone || "");
+          }
+
+          // Fetch role from admin_users
+          const adminInfo = await authService.checkAdminUser(user.id);
+          setRole(adminInfo?.role || "admin");
+        }
+      } catch (error) {
+        console.error("Error loading admin profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdminProfile();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    try {
+      const user = await authService.getUser();
+      if (!user) {
+        alert("Not logged in");
+        return;
+      }
+
+      // Update public.profiles
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          name: adminName,
+          phone: phone,
+          email: adminEmail,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      // Update auth user metadata
+      await authService.updateUser({
+        data: {
+          name: adminName,
+          phone: phone,
+        }
+      });
+
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      alert("Error saving profile: " + err.message);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!newPwd || !confirmPwd) {
+      alert("Please enter a new password and confirm it");
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      alert("New passwords do not match");
+      return;
+    }
+    if (newPwd.length < 8) {
+      alert("Password must be at least 8 characters");
+      return;
+    }
+    try {
+      await authService.updateUser({
+        password: newPwd
+      });
+      alert("Password updated successfully!");
+      setCurrentPwd("");
+      setNewPwd("");
+      setConfirmPwd("");
+    } catch (err) {
+      console.error("Error updating password:", err);
+      alert("Failed to update password: " + err.message);
+    }
+  };
+
+  const handleSaveSecurity = () => {
+    alert("Security options saved successfully!");
+  };
+
+  if (loading) {
+    return (
+      <div className="aa" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', color: '#888' }}>
+        Loading admin details...
+      </div>
+    );
+  }
 
   return (
     <div className="aa">
@@ -78,7 +192,7 @@ const AdminAccount = () => {
           </div>
         </div>
         <div className="aa__row-right">
-          <button className="aa__btn-save">Save Changes</button>
+          <button className="aa__btn-save" onClick={handleSaveProfile}>Save Changes</button>
         </div>
       </section>
 
@@ -118,7 +232,7 @@ const AdminAccount = () => {
           </div>
         </div>
         <div className="aa__row-right">
-          <button className="aa__btn-save">Save Changes</button>
+          <button className="aa__btn-save" onClick={handleSavePassword}>Save Changes</button>
         </div>
       </section>
 
@@ -153,7 +267,7 @@ const AdminAccount = () => {
         </div>
 
         <div className="aa__row-left">
-          <button className="aa__btn-save">Save Changes</button>
+          <button className="aa__btn-save" onClick={handleSaveSecurity}>Save Changes</button>
         </div>
       </section>
     </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { useStore } from "../hooks/useStore";
 import { productService } from "../services/productService";
+import { supabase } from "../lib/supabase";
 import "./AnikaProfile.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -49,24 +50,38 @@ export default function AnikaProfile() {
   }, [user, sessionLoading]);
 
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-    const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
-      month: "short",
-      year: "numeric",
-    });
-    const orderCountStr = `${orders.length} order${orders.length !== 1 ? "s" : ""}`;
+    const fetchProfile = async () => {
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
 
-    const details = {
-      name: user.user_metadata?.name || "No name set",
-      phone: user.user_metadata?.phone || "No phone set",
-      email: user.email,
-      customerSince: joinedDate,
-      totalOrders: orderCountStr,
+        const joinedDate = new Date(user.created_at).toLocaleDateString("en-IN", {
+          month: "short",
+          year: "numeric",
+        });
+        const orderCountStr = `${orders.length} order${orders.length !== 1 ? "s" : ""}`;
+
+        const details = {
+          name: profile?.name || user.user_metadata?.name || "No name set",
+          phone: profile?.phone || user.user_metadata?.phone || "No phone set",
+          email: user.email,
+          customerSince: joinedDate,
+          totalOrders: orderCountStr,
+        };
+
+        setCustomerDetails(details);
+        setTempDetails(details);
+      } catch (err) {
+        console.error("Error fetching profile from database:", err);
+      }
     };
 
-    setCustomerDetails(details);
-    setTempDetails(details);
+    fetchProfile();
   }, [user, orders]);
 
   useEffect(() => {
@@ -86,7 +101,20 @@ export default function AnikaProfile() {
 
   const handleSave = async () => {
     try {
-      // ← save name and phone back to Supabase metadata
+      // 1. Save to profiles database table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          name: tempDetails.name,
+          phone: tempDetails.phone,
+          email: user.email,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      // 2. Also save to metadata to keep it in sync
       await authService.updateUser({
         data: {
           name: tempDetails.name,
@@ -102,7 +130,7 @@ export default function AnikaProfile() {
       setCustomerDetails({ ...tempDetails });
       setIsEditing(false);
     } catch (error) {
-      alert(error.message);
+      alert("Failed to save profile: " + error.message);
     }
   };
 

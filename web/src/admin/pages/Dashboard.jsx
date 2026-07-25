@@ -547,6 +547,7 @@ const Dashboard = () => {
   const setSelectedOrder = useStore((state) => state.setSelectedAdminOrder);
   const selectedCustomer = useStore((state) => state.selectedAdminCustomer);
   const setSelectedCustomer = useStore((state) => state.setSelectedAdminCustomer);
+  const currentUser = useStore((state) => state.user);
   const [banners, setBanners] = useState([]);
   const [editingBanner, setEditingBanner] = useState(null);
 
@@ -557,6 +558,13 @@ const Dashboard = () => {
     error: adminDataError,
     updateOrderStatus: updateOrderStatusRaw
   } = useAdminData();
+
+  const currentAdminProfile = useMemo(() => {
+    if (!currentUser || !customers) return null;
+    return customers.find((c) => c.id === currentUser.id);
+  }, [currentUser, customers]);
+
+  const adminName = currentAdminProfile?.name || currentUser?.user_metadata?.name || "Admin";
 
   const updateOrderStatus = useCallback(async (orderId, newStatus) => {
     try {
@@ -807,9 +815,23 @@ const Dashboard = () => {
             </button>
           )}
 
-          <Link to="/profile" style={{ textDecoration: 'none' }}>
-            <button className="db__profile-btn" aria-label="Go Home Profile">
-              <span>Go Home Profile</span>
+          <Link to="/admin/account" style={{ textDecoration: 'none' }}>
+            <button className="db__profile-btn" aria-label="Admin Profile" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="db__profile-avatar-img" style={{ 
+                backgroundColor: '#c48a73', 
+                color: '#fff', 
+                borderRadius: '50%', 
+                width: '22px', 
+                height: '22px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontWeight: '600', 
+                fontSize: '11px' 
+              }}>
+                {adminName ? adminName.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <span>{adminName}</span>
             </button>
           </Link>
         </div>

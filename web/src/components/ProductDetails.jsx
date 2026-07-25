@@ -147,11 +147,11 @@ export default function ProductPage({ onBack }) {
     if (!productId) return;
 
     const fetchPrices = async () => {
-      const { data, error} = await supabase
-      .from('products')
-      .select('price, compare_price, discount_price')
-      .eq('product_id', productId)
-      .single();
+      const { data, error } = await supabase
+        .from('products')
+        .select('price, compare_price, discount_price')
+        .eq('product_id', productId)
+        .single();
 
       if (error || !data) return;
       setProductPrice(data)
@@ -198,19 +198,19 @@ export default function ProductPage({ onBack }) {
   const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
   // const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
   const rawCompare = productPrices?.compare_price ?? selectedProduct?.originalPrice ?? null;
-  const rawDiscount = productPrices?.discount_price ?? 0; 
+  const rawDiscount = productPrices?.discount_price ?? 0;
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
 
   const payPrice = rawDiscount && rawPrice
     ? Number(rawPrice) - Number(rawDiscount)
     : (rawPrice != null ? Number(rawPrice) : 0);
-    // : Number(rawPrice) ?? 0;
+  // : Number(rawPrice) ?? 0;
 
   const strikePrice = rawCompare ?? null;
 
-  const displayPrice = payPrice ?`₹${Number(payPrice).toLocaleString('en-IN')}`:'';
-  const displayOriginal = strikePrice ?`₹${Number(strikePrice).toLocaleString('en-IN')}` : '';
+  const displayPrice = payPrice ? `₹${Number(payPrice).toLocaleString('en-IN')}` : '';
+  const displayOriginal = strikePrice ? `₹${Number(strikePrice).toLocaleString('en-IN')}` : '';
 
   const discountPct = strikePrice && payPrice && strikePrice > payPrice
     ? Math.round(((strikePrice - payPrice) / strikePrice) * 100)
@@ -303,7 +303,7 @@ export default function ProductPage({ onBack }) {
 
   const handleBuyNow = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session){
+    if (!session) {
       navigate("/account/signup");
       return;
     }
@@ -440,8 +440,8 @@ export default function ProductPage({ onBack }) {
               <button
                 className="pp-cart-btn"
                 onClick={async () => {
-                  const { data: { session }} = await supabase.auth.getSession();
-                  if (!session){
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) {
                     navigate("/account/signup");
                     return;
                   }
@@ -499,19 +499,38 @@ export default function ProductPage({ onBack }) {
                   <button className="pp-ship-link">Shipping &amp; Return</button>
                 </span>
               </div>
-              <div className='pp-ship-row'>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
-                  <path d="M12 2 1 21h22L12 2z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                
-                <span>
-                  <ul style={{ margin: 0, paddingLeft: "1rem", display: "flex", flexDirection: "column", gap: "6px" }}></ul>
-                    <li>We do not accept returns for products delivered in good condition.</li>
-                    <li>Returns are accepted only for items that arrive damaged or defective.</li>
-                    <li>A claim must include a clear, unedited unboxing video showing the damage — claims filed without this video cannot be processed.</li>
-                  </span>
+              
+              <div className="pp-return-policy-card">
+                <div className="pp-policy-card-header">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="pp-policy-alert-icon" aria-hidden="true">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <h4>Return &amp; Refund Policy</h4>
+                </div>
+                <div className="pp-policy-card-body">
+                  <div className="pp-policy-bullet-item">
+                    <span className="pp-policy-dot"></span>
+                    <p>We do not accept returns for products delivered in good condition.</p>
+                  </div>
+                  <div className="pp-policy-bullet-item">
+                    <span className="pp-policy-dot"></span>
+                    <p>Returns are accepted only for items that arrive damaged or defective.</p>
+                  </div>
+                  <div className="pp-policy-video-warning">
+                    <div className="pp-warning-icon-wrap">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <polygon points="23 7 16 12 23 17 23 7"/>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                      </svg>
+                    </div>
+                    <div className="pp-warning-text">
+                      <strong>Mandatory Unboxing Video Claim:</strong>
+                      <span>A claim must include a clear, unedited unboxing video showing the damage — claims filed without this video cannot be processed.</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -554,19 +573,19 @@ export default function ProductPage({ onBack }) {
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
                 </button>
-                {descOpen &&  (
+                {descOpen && (
                   <div className='pp-acc-body'>
                     {selectedProduct?.desc ? (
                       selectedProduct.desc
                         .split("\n")
                         .filter((para) => para.trim())
                         .map((para, i) => <p key={i}>{para}</p>)
-                    ):(
+                    ) : (
                       <p>No description available for this product yet.</p>
                     )}
                   </div>
                 )}
-                
+
               </div>
 
               <div className="pp-acc-item">

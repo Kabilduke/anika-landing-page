@@ -1191,6 +1191,93 @@ button {
   }
 }
 
+/* Return Policy Card on Product Details Page */
+.pp-return-policy-card {
+  margin-top: 14px;
+  background-color: #fffaf9;
+  border: 1px solid #ffd3cc;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: inherit;
+}
+
+.pp-policy-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pp-policy-alert-icon {
+  color: #d4382c;
+  flex-shrink: 0;
+}
+
+.pp-policy-card-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a0e0b;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.pp-policy-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-policy-bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pp-policy-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #d4382c;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.pp-policy-bullet-item p {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4a3e3a;
+  margin: 0;
+}
+
+.pp-policy-video-warning {
+  display: flex;
+  gap: 10px;
+  background-color: #fff0ed;
+  border: 1px dashed #ffa39e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+
+.pp-warning-icon-wrap {
+  color: #d4382c;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pp-warning-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #d4382c;
+  text-align: left;
+}
+
+.pp-warning-text strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE — MOBILE  (≤ 480px)
 ══════════════════════════════════════════════════════════════ */
