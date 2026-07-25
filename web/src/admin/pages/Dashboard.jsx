@@ -815,7 +815,7 @@ const Dashboard = () => {
             </button>
           )}
 
-          <Link to="/admin/account" style={{ textDecoration: 'none' }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
             <button className="db__profile-btn" aria-label="Admin Profile" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div className="db__profile-avatar-img" style={{ 
                 backgroundColor: '#c48a73', 
