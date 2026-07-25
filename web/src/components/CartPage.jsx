@@ -81,7 +81,7 @@ export default function CartPage() {
 
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
   const taxes = 0;
-  const gst = 0;
+  const gst = Math.round(subtotal * 0.03); // 3% GST on jewelry
   const platformFee = 0;
   const grandTotal = subtotal + taxes + gst + platformFee;
 
@@ -220,11 +220,11 @@ export default function CartPage() {
                 <span>₹{taxes}</span>
               </div>
               <div className="summary-row">
-                <span>GST</span>
+                <span>GST (3%)</span>
                 <span>₹{gst}</span>
               </div>
               <div className="summary-row">
-                <span>Flatform Fee</span>
+                <span>Platform Fee</span>
                 <span>₹{platformFee}</span>
               </div>
               <div className="summary-row">
