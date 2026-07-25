@@ -321,9 +321,9 @@ export default function ShippingAddress() {
     ? (parsePrice(checkoutProduct.price) * checkoutProduct.qty)
     : cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const taxes = 0;
-  const gst = Math.round(subtotal * 0.03); // 3% GST on jewelry
+  const gst = Math.round(subtotal - (subtotal / 1.03)); // 3% inclusive GST on jewelry
   const platformFee = 0;
-  const grandTotal = subtotal + taxes + gst + platformFee;
+  const grandTotal = subtotal + taxes + platformFee;
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -782,7 +782,7 @@ export default function ShippingAddress() {
                   <span>₹{taxes}</span>
                 </div>
                 <div className="summary-item-row">
-                  <span>GST (3%)</span>
+                  <span>GST (3% Incl.)</span>
                   <span>₹{gst}</span>
                 </div>
                 <div className="summary-item-row">
