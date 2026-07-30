@@ -135,6 +135,7 @@ export const useStore = create((set, get) => ({
     });
   },
 
+
   checkAdminStatus: async (userId) => {
     if (!userId) {
       set({ isAdmin: false, adminChecked: true });
@@ -151,6 +152,8 @@ export const useStore = create((set, get) => ({
       return false;
     }
   },
+
+  
 
   // Caching Addresses
   fetchAddresses: async (userId, { force = false } = {}) => {

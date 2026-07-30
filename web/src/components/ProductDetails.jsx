@@ -31,11 +31,46 @@ const LoadingSkeleton = ({ height = '200px' }) => (
 // ── Memoized sub-components ──────────────────────────────────────────────────
 const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => {
   const currentIndex = activeThumb === -1 ? 0 : activeThumb;
+  const currentImg = activeThumb === -1 ? displayImage : thumbs[activeThumb].img;
+
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [isZoomedIn, setIsZoomedIn] = useState(false);
+
+  const handleZoomImageClick = (e) =>{
+    if (!isZoomedIn){
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      e.currentTarget.style.transformOrigin = `${x}% ${y}%`;
+    }
+    setIsZoomedIn(z => !z);
+  };
+
+  const closeZoom = () => {
+    setZoomOpen(false);
+    setIsZoomedIn(false);
+  };
+
   return(
     <div className="pp-gallery">
       <div className="pp-main-wrap">
         <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}
         </div>
+        
+
+        <button
+          className="pp-zoom-btn"
+          aria-label="Zoom image"
+          onClick={() => setZoomOpen(true)}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
+        
         <img
           src={activeThumb === -1 ? displayImage : thumbs[activeThumb].img}
           alt={displayName}
@@ -59,8 +94,21 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
           ))}
         </div>
       )}
+
+      {zoomOpen && (
+        <div className="pp-zoom-overlay" onClick={closeZoom}>
+          <button className="pp-zoom-close" onClick={closeZoom} aria-label="Close zoom">✕</button>
+          <img
+            src={currentImg}
+            alt={displayName}
+            className={`pp-zoom-img ${isZoomedIn ? 'zoomed' : ''}`}
+            onClick={(e) => { e.stopPropagation(); handleZoomImageClick(e); }}
+          />
+          <p className="pp-zoom-hint">{isZoomedIn ? 'Click to zoom out' : 'Click image to zoom in'}</p>
+        </div>
+      )}
     </div>
-  )
+  );
 });
    
 

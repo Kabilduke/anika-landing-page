@@ -87,9 +87,9 @@ const SiteFooter = () => {
           <div className="bottom-content">
             <p className="copyright-text">© 2026 Anika Jewellery · All rights reserved</p>
             <div className="legal-links">
-              <a href="/">Privacy Policy</a>
+              <a href="/Privacy">Privacy Policy</a>
               <span className="dot-sep">·</span>
-              <a href="/">Terms & Conditions</a>
+              <a href="/Terms">Terms & Conditions</a>
             </div>
           </div>
         </div>

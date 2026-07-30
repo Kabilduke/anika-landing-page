@@ -16,6 +16,10 @@ import ProductDetails from './components/ProductDetails';
 import CategoryPage from "./product/categorypage";
 import WishlistPage from './components/wishlistPage'; // ← added
 import Cartpage from './components/CartPage';
+
+import Terms from './components/Policies/Term';
+import Privacy from './components/Policies/Privacy';
+
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
 import { useStore } from './hooks/useStore';
@@ -68,8 +72,14 @@ function App() {
         <Route path="/profile/addresses" element={<AnikaAddresses />} />
         <Route path="/profile/wishlists" element={<AnikaWishlist />} />
         <Route path="/profile/account" element={<AnikaAccount />} />
+
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+
         <Route path="/cart" element={<Cartpage />} />
         <Route path="/wishlist" element={<WishlistPage />} /> {/* ← added */}
+
+
 
         <Route path='/admin/*' element={
           <AdminRoute>
