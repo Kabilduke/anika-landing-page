@@ -27,49 +27,42 @@ const LoadingSkeleton = ({ height = '200px' }) => (
   </div>
 );
 
-import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa';
-
-// ── Icon helpers (memoized) ──────────────────────────────────────────────────
-const FacebookIcon = memo(() => (
-  <FaFacebookF size={14} aria-hidden="true" />
-));
-
-const InstagramIcon = memo(() => (
-  <FaInstagram size={16} aria-hidden="true" />
-));
-
-const WhatsappIcon = memo(() => (
-  <FaWhatsapp size={16} aria-hidden="true" />
-));
 
 // ── Memoized sub-components ──────────────────────────────────────────────────
+const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => {
+  const currentIndex = activeThumb === -1 ? 0 : activeThumb;
+  return(
+    <div className="pp-gallery">
+      <div className="pp-main-wrap">
+        <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}
+        </div>
+        <img
+          src={activeThumb === -1 ? displayImage : thumbs[activeThumb].img}
+          alt={displayName}
+          className="pp-main-img"
+          loading="eager"
+          decoding="sync"
+        /> 
+      </div>
 
-const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => (
-  <div className="pp-gallery">
-    <div className="pp-thumbs-col">
-      {thumbs.map((item, i) => (
-        <button
-          key={item.id}
-          className={`pp-thumb ${activeThumb === i ? 'active' : ''}`}
-          onClick={() => setActiveThumb(i)}
-          aria-label={`View ${item.alt}`}
-        >
-          <img src={item.img} alt={item.alt} loading="lazy" decoding="async" />
-        </button>
-      ))}
+      {thumbs.length >1 && (
+        <div className="pp-dots" role="tablist" aria-label="Product images">
+          {thumbs.map((item, i) => (
+            <button
+              key={item.id}
+              className={`pp-dot ${currentIndex === i ? 'active' : ''}`}
+              onClick={() => setActiveThumb(i)}
+              aria-label={`View image ${i + 1}`}
+              aria-selected={currentIndex === i}
+              role="tab"
+            />
+          ))}
+        </div>
+      )}
     </div>
-    <div className="pp-main-wrap">
-      <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}</div>
-      <img
-        src={activeThumb === -1 ? displayImage : thumbs[activeThumb].img}
-        alt={displayName}
-        className="pp-main-img"
-        loading="eager"
-        decoding="sync"
-      />
-    </div>
-  </div>
-));
+  )
+});
+   
 
 const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClick }) => {
   const visibleRelated = showAll ? relatedItems : relatedItems.slice(0, 4);
@@ -128,8 +121,14 @@ export default function ProductPage({ onBack }) {
   // React State Hooks
   const [activeThumb, setActiveThumb] = useState(-1);
   const [qty, setQty] = useState(1);
+
   const [descOpen, setDescOpen] = useState(false);
   const [addlOpen, setAddlOpen] = useState(false);
+  const [deliveryOpen, setDeliveryOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [warrantyOpen, setWarrantyOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
   const [showAll, setShowAll] = useState(false);
   const [productPrices, setProductPrice] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
@@ -264,7 +263,7 @@ export default function ProductPage({ onBack }) {
     ['Material', 'Gold-plated alloy with synthetic stones'],
     ['Category', cat],
     ['Finish', 'Matte Antique Gold Finish'],
-    ['Shipping', 'Free shipping across India'],
+    ['Shipping', 'Shipping  available across India'],
   ], [cat]);
 
   // Memoized callbacks to prevent unnecessary re-renders
@@ -278,6 +277,11 @@ export default function ProductPage({ onBack }) {
 
   const toggleDesc = useCallback(() => setDescOpen(o => !o), []);
   const toggleAddl = useCallback(() => setAddlOpen(o => !o), []);
+  const toggleDelivery = () => setDeliveryOpen((prev) => !prev);
+  const toggleReturn = () => setReturnOpen((prev) => !prev);
+  const toggleWarranty = () => setWarrantyOpen((prev) => !prev);
+  const toggleHelp = () => setHelpOpen((prev) => !prev);
+
   const toggleShowAll = useCallback(() => setShowAll(s => !s), []);
 
   const handleHeaderLinkClick = (link) => {
@@ -324,10 +328,24 @@ export default function ProductPage({ onBack }) {
     });
   }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct, selectedSize, selectedLength]);
 
-  const handleShareWhatsApp = useCallback(() => {
-    const message = `Check out this beautiful ${displayName} from Anika: ${window.location.href}`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  const handleShare = useCallback(async () => {
+    const shareData = {
+      title: displayName,
+      text: `Check out this beautiful ${displayName} from Anika`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // user cancelled or share failed silently
+      }
+    } else {
+      // Desktop fallback: WhatsApp share
+      const message = `${shareData.text}: ${shareData.url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    }
   }, [displayName]);
 
   return (
@@ -349,7 +367,24 @@ export default function ProductPage({ onBack }) {
           />
 
           <div className="pp-info">
-            <h1 className="pp-title">{displayName}</h1>
+            <div className='pp-title-row'>
+              <h1 className="pp-title">{displayName}</h1>
+              <button 
+                className='pp-title-share-btn' 
+                aria-label='share the product'
+                onClick={handleShare}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+
+              </button>
+            </div>
+  
 
             <div className="pp-rating">
               {'★★★★★'.split('').map((s, i) => <span key={i} className="pp-star">{s}</span>)}
@@ -358,12 +393,12 @@ export default function ProductPage({ onBack }) {
 
             <div className="pp-prices">
               <span className="pp-price">{displayPrice}</span>
-              <span className="pp-strike">{displayOriginal}</span>
+              <span className="pp-strike">MRP:{displayOriginal}</span>
               {discountPct > 0 && (
                 <span className='pp-discount-badge'>{discountPct}% Off</span>
               )}
             </div>
-            <p className="pp-tax-note">All Taxes Included.</p>
+            <p className="pp-tax-note">Inclusive of all taxes</p>
 
             {cat == 'Bangles' && (
               <div className='pp-size'>
@@ -431,6 +466,22 @@ export default function ProductPage({ onBack }) {
               </div>
             )}
 
+            <div className="pp-stock">
+              <span>Hurry, Only 9 items left in stock!</span>
+            </div>
+            <div className="pp-ship-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
+                  <rect x="1" y="3" width="15" height="13" />
+                  <path d="M16 8h4l3 3v5h-7V8z" />
+                  <circle cx="5.5" cy="18.5" r="2.5" />
+                  <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+              <span>
+                Delivers in 3 – 4 business days &nbsp;
+                <button className="pp-ship-link">Shipping &amp; Return</button>
+              </span>
+            </div>
+
             <div className="pp-cart-row">
               <div className="pp-qty">
                 <button onClick={() => handleQtyChange(-1)} aria-label="Decrease quantity">−</button>
@@ -478,97 +529,13 @@ export default function ProductPage({ onBack }) {
                 <img src={RazorIcon} alt="Razor Pay" />
                 <img src={GPayIcon} alt="Google Pay" />
               </div>
-            </div>
-
-            <div className="pp-ship-info">
-              <div className="pp-ship-row">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span>Worldwide shipping on any order</span>
-              </div>
-              <div className="pp-ship-row">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
-                  <rect x="1" y="3" width="15" height="13" />
-                  <path d="M16 8h4l3 3v5h-7V8z" />
-                  <circle cx="5.5" cy="18.5" r="2.5" />
-                  <circle cx="18.5" cy="18.5" r="2.5" />
-                </svg>
-                <span>
-                  Delivers in 5–7 working days &nbsp;
-                  <button className="pp-ship-link">Shipping &amp; Return</button>
-                </span>
-              </div>
-              
-              <div className="pp-return-policy-card">
-                <div className="pp-policy-card-header">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="pp-policy-alert-icon" aria-hidden="true">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                  <h4>Return &amp; Refund Policy</h4>
-                </div>
-                <div className="pp-policy-card-body">
-                  <div className="pp-policy-bullet-item">
-                    <span className="pp-policy-dot"></span>
-                    <p>We do not accept returns for products delivered in good condition.</p>
-                  </div>
-                  <div className="pp-policy-bullet-item">
-                    <span className="pp-policy-dot"></span>
-                    <p>Returns are accepted only for items that arrive damaged or defective.</p>
-                  </div>
-                  <div className="pp-policy-video-warning">
-                    <div className="pp-warning-icon-wrap">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                        <polygon points="23 7 16 12 23 17 23 7"/>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                      </svg>
-                    </div>
-                    <div className="pp-warning-text">
-                      <strong>Mandatory Unboxing Video Claim:</strong>
-                      <span>A claim must include a clear, unedited unboxing video showing the damage — claims filed without this video cannot be processed.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pp-share">
-              <span>Share</span>
-              <a
-                href='https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1'
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pp-share-btn fb"
-                aria-label="Share on Facebook"
-              >
-                <FacebookIcon />
-              </a>
-
-              <a
-                href="https://www.instagram.com/anikafashionstore.jewellery/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pp-share-btn ins"
-                aria-label="Instagram"
-              >
-                <InstagramIcon />
-              </a>
-              <button
-                className="pp-share-btn wa"
-                aria-label="Share on WhatsApp"
-                onClick={handleShareWhatsApp}
-              >
-                <WhatsappIcon />
-              </button>
-            </div>
+            </div> 
 
             {/* ── ACCORDIONS (Moved inside pp-info for desktop side-by-side) ── */}
             <div className="pp-accordions">
               <div className="pp-acc-item">
                 <button className="pp-acc-head" onClick={toggleDesc} aria-expanded={descOpen}>
-                  <span>Descriptions</span>
+                  <span>About Product</span>
                   <svg className={`pp-chev ${descOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -583,6 +550,19 @@ export default function ProductPage({ onBack }) {
                     ) : (
                       <p>No description available for this product yet.</p>
                     )}
+                    <div className='pp-promise'>
+                      <h4 className="pp-promise-title">Our Promise to You</h4>
+                      <ul className='pp-promise-list'>
+                        <li>All our products are 100% Brand New.</li>
+                        <li>Every piece is hand checked by our team before shipping.</li>
+                        <li>What you see in photos is exactly what you get. No misleading filters or editing enhancements.</li>
+                        <li>Secure packaging to ensure damage-free delivery.</li>
+                        <li>All our products are skin friendly, made from brass/copper (except for Impon (Anti tarnished) collection).</li>
+                        <li>Dispatch time for orders: 24 hrs to 48 hrs of order confirmation; Shipping 2–3 days.</li>
+                        <li>You will get WhatsApp and e-mail updates of your order once confirmed.</li>
+                        <li>For additional images/videos: please WhatsApp <a href="tel:+919363131636">9363131636</a> (Mon–Sat, 10 AM–5 PM). Queries will be answered in order.</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
 
@@ -590,7 +570,7 @@ export default function ProductPage({ onBack }) {
 
               <div className="pp-acc-item">
                 <button className="pp-acc-head" onClick={toggleAddl} aria-expanded={addlOpen}>
-                  <span>Additional Information</span>
+                  <span>Material & Specifications</span>
                   <svg className={`pp-chev ${addlOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -610,6 +590,178 @@ export default function ProductPage({ onBack }) {
                   </div>
                 )}
               </div>
+
+              <div className='pp-acc-item'>
+                <button className='pp-acc-head' onClick={toggleDelivery} aria-expanded={deliveryOpen}>
+                  <span>Delivery Details</span>
+                  <svg className={`pp-chev ${deliveryOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {deliveryOpen && (
+                  <div className='pp-acc-body'>
+                    <p>At Anika, we ensure that your order reaches you safely and as quickly as possible. Please read our shipping policy carefully before placing your order.</p>
+
+                    <div className='pp-policy-block'>
+                      <h4 className="pp-policy-block-title">Order Processing Time</h4>
+                      <ul className="pp-policy-block-list">
+                        <li>All orders are processed within 2–3 business days (excluding Sundays and public holidays).</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className="pp-policy-block-title">Shipping Timeline</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>We ship across India through trusted courier partners (DTDC, Ekart, ST Courier).</li>
+                        <li>Delivery typically takes 3–7 business days depending on your location.</li>
+                        <li>During high-demand seasons or unforeseen delays (like weather or courier issues), delivery may take slightly longer.</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-note'>
+                      <strong>Address Accuracy – Please Note</strong>
+                      <p>Before placing your order, please double-check your shipping address, phone number, and PIN code.</p>
+                      <p>If a package is misrouted or returned due to an incorrect or incomplete address, the courier and our company will not bear any responsibility.</p>
+                      <p>In such cases, customers will have to bear any reshipping charges or product loss incurred.</p>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className="pp-policy-block-title">Non-Serviceable Areas</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>⁠If your PIN code is not serviceable by our delivery partners, we will reach out to you for an alternative address.</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className="pp-policy-block-title">Tracking Information</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>Once your order is shipped, a tracking link will be sent via email/WhatsApp number</li>
+                        <li>You can use this to track the real-time status of your delivery.</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className='pp-policy-block-title'>Please Note</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>All our orders are prepaid, and you have already paid the courier charges during checkout.</li>
+                        <li>If any delivery person asks for additional money, security deposit, or any extra payment, please do NOT pay.</li>
+                        <li>Such requests are not from us and may be a scam.</li>
+                        <li>In case this happens, kindly refuse the package and immediately contact us through WhatsApp or call.</li>
+                        <li>We use only reputed courier services, and we have never faced such issues. This message is shared purely to keep our customers aware and safe.</li>
+                        <li>Your safety and trust mean the most to us.</li>
+                      </ul>
+
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className='pp-acc-item'>
+                <button className='pp-acc-head' onClick={toggleReturn} aria-expanded={returnOpen}>
+                  <span>Return & Refund Policy</span>
+                  <svg className={`pp-chev ${returnOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {returnOpen && (
+                  <div className='pp-acc-body'>
+                    <div className='pp-policy-block pp-policy-block--reject'>
+                      <h4 className="pp-policy-block-title pp-policy-block-title--reject">We Do NOT Accept Returns for the Following Reasons</h4>
+                      <ul className="pp-policy-block-list pp-policy-block-list--reject">
+                        <li>Product doesn't suit you.</li>
+                        <li>Changed mind after ordering.</li>
+                        <li>Ordered for someone else and they didn't like it.</li>
+                        <li>Someone ordered on your behalf.</li>
+                        <li>Order placed by mistake.</li>
+                        <li>Bangle size / motif width doesn't fit.</li>
+                        <li>Delays in delivery.</li>
+                        <li>Product not received before your occasion date.</li>
+                        <li>Damage while wearing or trying after delivery.</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-block pp-policy-block--accept'>
+                      <h4 className="pp-policy-block-title pp-policy-block-title--accept">We Accept Returns Only for the Following</h4>
+                      <ul className='pp-policy-block-list pp-policy-block-list--accept'>
+                        <li>Damages</li>
+                        <li>Missing items</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-note'>
+                      <strong>Return Request Process</strong>
+                      <p>Please follow the steps below within 24 hrs of delivery.</p>
+                      <ol className='pp-policy-steps'>
+                        <li>
+                          Report the issue on WhatsApp with:
+                          <ul className='pp-policy-block-list'>
+                            <li>Name</li>
+                            <li>Order ID</li>
+                            <li>360° Unboxing Video (Compulsory – No cuts/editing)</li>
+                          </ul>
+                        </li>
+                      </ol>
+                      <p><strong>Repacked items will not be accepted.</strong></p>
+                      <p><strong>Issues reported after 24 hrs of delivery will not be accepted.</strong></p>
+                      <p><strong>Packages returned without an unboxing video will not be considered for review</strong></p>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className='pp-policy-block-title'>Approved Return Instruction</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>⁠Return the item within 48 hrs of delivery.</li>
+                        <li>You can use India Post, ST Courier, Franch Express or DTDC.</li>
+                        <li>Shipping cost of ₹80 will be reimbursed by us.</li>
+                        <li>Our team will share the return address.</li>
+                        <li>Kindly forward the tracking number on WhatsApp once dispatched.</li>
+                      </ul>
+                    </div>
+
+                    <div className='pp-policy-block'>
+                      <h4 className='pp-policy-block-title'>Refund / Replacement</h4>
+                      <ul className='pp-policy-block-list'>
+                        <li>Once the product is received and inspected, we’ll inform you of the status via WhatsApp.</li>
+                        <li>⁠Replacement will be shipped at no additional cost.</li>
+                        <li>⁠Refund, if applicable, will be processed for the product price only.</li>
+                      </ul>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+
+              <div className='pp-acc-item'>
+                <button className='pp-acc-head' onClick={toggleWarranty} aria-expanded={warrantyOpen}>
+                  <span>Authenticity & Warranty</span>
+                  <svg className={`pp-chev ${warrantyOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {warrantyOpen && (
+                  <div className="pp-acc-body">
+                    <p>This product is covered under a manufacturer warranty against defects in materials and workmanship.</p>
+                    <p>Warranty does not cover damage from misuse, accidents, or normal wear and tear.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className='pp-acc-item'>
+                <button className='pp-acc-head' onClick={toggleHelp} aria-expanded={helpOpen}>
+                  <span>Need Help?</span>
+                  <svg className={`pp-chev ${helpOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {helpOpen && (
+                  <div className='pp-acc-body'>
+                    <p>Call us at <a href="tel:+919363631636">+91 93636 31636</a>, Mon–Sat, 9:30 AM – 6:30 PM IST.</p>
+                    <p>Or write to us anytime and we'll get back within 24 hours.</p>
+                  </div>
+                )}
+              </div>
+
+
+
             </div>
           </div>
         </div>

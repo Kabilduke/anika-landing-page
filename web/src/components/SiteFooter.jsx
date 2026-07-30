@@ -48,9 +48,9 @@ const SiteFooter = () => {
           <div className="footer-column">
             <h3 className="section-title">Discover</h3>
             <ul className="footer-list">
-              <li><a href="/" className="footer-link">Rings & Collections</a></li>
+              <li><a href="/rings" className="footer-link">Rings & Collections</a></li>
               <li><a href="/" className="footer-link">Wedding Jewellery</a></li>
-              <li><a href="/" className="footer-link">Necklaces</a></li>
+              <li><a href="/necklaces" className="footer-link">Necklaces</a></li>
               <li><a href="/" className="footer-link">Special Services</a></li>
             </ul>
           </div>
@@ -63,7 +63,9 @@ const SiteFooter = () => {
                 121A, Kottar-Parvathipuram Rd, Chetti Kulam,<br />
                 Simon Nagar, Nagercoil, Tamil Nadu 629001
               </p>
-              <p className="phone-text">+91 93636 31636</p>
+              <p className="phone-text">+91 9363131636</p>
+
+              <p className='phone-time'>Mon - Sat: 9:30 AM - 6:30 PM IST <br/> Closed on Sunday and Public Holidays </p>
             </div>
           </div>
 

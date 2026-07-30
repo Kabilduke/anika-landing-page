@@ -156,7 +156,14 @@
 .phone-text {
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.phone-time{
+  font-size: 12px;
+  font-weight: 500px;
+  color: rgba(255, 255, 255, 0.8);
+  padding-top: 5px;
 }
 
 .footer-bottom {
