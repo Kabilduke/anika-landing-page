@@ -9,6 +9,13 @@ import SizeChart from '../assets/Size_bangle.png';
 import LengthChart from '../assets/Anklet_length.jpeg'
 
 
+import DescIcon from '../assets/details/ad_pro.svg';
+import SpecIcon from '../assets/details/mat.svg';
+import DeliveryIcon from '../assets/details/del.svg';
+import ReturnIcon from '../assets/details/re.svg';
+import AuthenticityIcon from '../assets/details/hand.svg';
+import HelpIcon from '../assets/details/help.svg';
+
 // ── Optimized Lazy Loading for heavy components ──────────────────────────────
 const SiteFooter = lazy(() => import('./SiteFooter'));
 const CategorySection = lazy(() => import('./CategorySection'));
@@ -196,7 +203,7 @@ export default function ProductPage({ onBack }) {
     const fetchPrices = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('price, compare_price, discount_price')
+        .select('price, compare_price, discount_price, sku')
         .eq('product_id', productId)
         .single();
 
@@ -248,6 +255,7 @@ export default function ProductPage({ onBack }) {
   const rawDiscount = productPrices?.discount_price ?? 0;
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
+  const displaySku = productPrices?.sku || selectedProduct?.sku || '';
 
   const payPrice = rawDiscount && rawPrice
     ? Number(rawPrice) - Number(rawDiscount)
@@ -417,6 +425,7 @@ export default function ProductPage({ onBack }) {
           <div className="pp-info">
             <div className='pp-title-row'>
               <h1 className="pp-title">{displayName}</h1>
+
               <button 
                 className='pp-title-share-btn' 
                 aria-label='share the product'
@@ -429,11 +438,12 @@ export default function ProductPage({ onBack }) {
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
-
               </button>
             </div>
+            {displaySku && (
+              <p className="pp-sku">SKU: {displaySku}</p>
+            )}
   
-
             <div className="pp-rating">
               {'★★★★★'.split('').map((s, i) => <span key={i} className="pp-star">{s}</span>)}
               <span className="pp-rating-count">5.0 (25 Reviews)</span>
@@ -583,7 +593,10 @@ export default function ProductPage({ onBack }) {
             <div className="pp-accordions">
               <div className="pp-acc-item">
                 <button className="pp-acc-head" onClick={toggleDesc} aria-expanded={descOpen}>
-                  <span>About Product</span>
+                  <span className='pp-acc-label'>
+                    <img src={DescIcon} alt="" className="pp-acc-icon" />
+                    About Product
+                  </span>
                   <svg className={`pp-chev ${descOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -618,7 +631,10 @@ export default function ProductPage({ onBack }) {
 
               <div className="pp-acc-item">
                 <button className="pp-acc-head" onClick={toggleAddl} aria-expanded={addlOpen}>
-                  <span>Material & Specifications</span>
+                  <span className='pp-acc-label'>
+                    <img src={SpecIcon} alt="" className="pp-acc-icon" />
+                    Material & Specifications
+                  </span>
                   <svg className={`pp-chev ${addlOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -641,7 +657,10 @@ export default function ProductPage({ onBack }) {
 
               <div className='pp-acc-item'>
                 <button className='pp-acc-head' onClick={toggleDelivery} aria-expanded={deliveryOpen}>
-                  <span>Delivery Details</span>
+                  <span className='pp-acc-label'>
+                    <img src={DeliveryIcon} alt="" className="pp-acc-icon" />
+                    Delivery Details
+                  </span>
                   <svg className={`pp-chev ${deliveryOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -706,7 +725,10 @@ export default function ProductPage({ onBack }) {
 
               <div className='pp-acc-item'>
                 <button className='pp-acc-head' onClick={toggleReturn} aria-expanded={returnOpen}>
-                  <span>Return & Refund Policy</span>
+                  <span className='pp-acc-label'>
+                    <img src={ReturnIcon} alt="" className="pp-acc-icon" />
+                    Return & Refund Policy
+                  </span>
                   <svg className={`pp-chev ${returnOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -780,7 +802,10 @@ export default function ProductPage({ onBack }) {
 
               <div className='pp-acc-item'>
                 <button className='pp-acc-head' onClick={toggleWarranty} aria-expanded={warrantyOpen}>
-                  <span>Authenticity & Warranty</span>
+                  <span className='pp-acc-label'>
+                    <img src={AuthenticityIcon} alt="" className="pp-acc-icon" />
+                    Authenticity & Warranty
+                  </span>
                   <svg className={`pp-chev ${warrantyOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>
@@ -795,7 +820,10 @@ export default function ProductPage({ onBack }) {
 
               <div className='pp-acc-item'>
                 <button className='pp-acc-head' onClick={toggleHelp} aria-expanded={helpOpen}>
-                  <span>Need Help?</span>
+                  <span className='pp-acc-label'>
+                    <img src={HelpIcon} alt="" className="pp-acc-icon" />
+                    Need Help?
+                  </span>
                   <svg className={`pp-chev ${helpOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" aria-hidden="true">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" />
                   </svg>

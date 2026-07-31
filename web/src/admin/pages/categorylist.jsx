@@ -261,6 +261,8 @@ const CategoryList = ({
   const [selectedIds, setSelectedIds] = useState([]);
   const [page, setPage]               = useState(1);
 
+  const [blockedCategory, setBlockedCategory] = useState(null);
+
   const isXS  = width <= 480;
   const isSM  = width <= 640;
   const isMD  = width <= 768;
@@ -278,6 +280,19 @@ const CategoryList = ({
   const toggleOne   = (id) => setSelectedIds((prev) =>
     prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
   );
+
+  const handleDeleteClick = (id) =>{
+    const cat = categories.find((c) => c.id === id);
+    if (!cat) return;
+
+    if ((cat.productCount ?? 0) > 0){
+      setBlockedCategory(cat)
+      return;
+    }
+    const confirmed = window.confirm(`Delete category "${cat.name}"? This cannot be undone.`);
+
+    if (confirmed) onDeleteCategory(id);
+  };
 
   const isEmpty = filtered.length === 0;
 
@@ -448,7 +463,7 @@ const CategoryList = ({
                   selected={selectedIds.includes(cat.id)}
                   onSelect={() => toggleOne(cat.id)}
                   onEdit={onEditCategory}
-                  onDelete={onDeleteCategory}
+                  onDelete={handleDeleteClick}
                 />
               ))}
         </>
@@ -487,7 +502,7 @@ const CategoryList = ({
                   selected={selectedIds.includes(cat.id)}
                   onSelect={() => toggleOne(cat.id)}
                   onEdit={onEditCategory}
-                  onDelete={onDeleteCategory}
+                  onDelete={handleDeleteClick}
                 />
               ))}
         </>
@@ -543,7 +558,7 @@ const CategoryList = ({
         : (
           <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: isXS ? 12 : 16 }}>
             {filtered.map((cat) => (
-              <GridCard key={cat.id} cat={cat} onEdit={onEditCategory} onDelete={onDeleteCategory} />
+              <GridCard key={cat.id} cat={cat} onEdit={onEditCategory} onDelete={handleDeleteClick} />
             ))}
           </div>
         )}
@@ -558,6 +573,60 @@ const CategoryList = ({
     }}>
       {Header()}
       {view === "list" ? ListView() : GridView()}
+
+      {blockedCategory && (
+        <div 
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000, padding: 16,
+          }}
+          onClick={() => setBlockedCategory(null)}
+        >
+          <div
+            style= {{
+              background: "#fff", borderRadius: 14, padding: "28px 26px",
+              maxWidth: 380, width: "100%", textAlign: "center",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 44, height: 44, borderRadius: "50%", background: "#fff0f0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                margin: "0 auto 14px",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+
+            <div style={{fontSize: 15, fontWeight: 700, color: "#1c1c1e", marginBottom: 8}}>
+              Can't delete "{blockedCategory.name}"
+            </div>
+
+            <div style={{fontSize: 13, color: "#666", lineHeight: 1.6, marginBottom: 20}}>
+              This category still has <strong>{blockedCategory.productCount}</strong> product
+              {blockedCategory.productCount > 1 ? "s" : ""} linked to it. Move or delete those
+              products first, then try again.
+            </div>
+            <button
+              onClick={() => setBlockedCategory(null)}
+              style = {{
+                background: "#1c1c1e", color: "#fff", border: "none",
+                borderRadius: 8, padding: "10px 28px", fontSize: 13.5,
+                fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
