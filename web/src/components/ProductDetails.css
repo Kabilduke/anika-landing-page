@@ -229,10 +229,24 @@ button {
   justify-content: center;
 }
 
+.pp-image-container-inner {
+  position: relative;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
 .pp-main-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   background: #E52B50;
   color: #fff;
@@ -244,9 +258,9 @@ button {
 }
 
 .pp-main-img {
-  width: 90%;
+  width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform 0.4s;
   border-radius: 20px;
@@ -646,7 +660,7 @@ button {
   color: var(--text-muted);
 }
 
-.pp-stock{
+.pp-stock {
   font-size: 15px;
   font-weight: 550;
   padding-bottom: 10px;
@@ -901,7 +915,7 @@ button {
   margin: 8px 0;
 }
 
-.pp-policy-steps > li {
+.pp-policy-steps>li {
   counter-increment: step;
   font-size: 13px;
   color: var(--text-mid);
@@ -909,7 +923,7 @@ button {
   margin-bottom: 6px;
 }
 
-.pp-policy-steps > li::before {
+.pp-policy-steps>li::before {
   content: counter(step) ". ";
   font-weight: 700;
   color: var(--maroon);
@@ -922,18 +936,18 @@ button {
 
 .pp-zoom-btn {
   position: absolute;
-  top: 2px;
+  top: 12px;
   left: 12px;
   z-index: 2;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #333;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: background 0.2s, transform 0.15s;
 }
@@ -1208,18 +1222,19 @@ button {
   }
 
   .pp-main-wrap {
-    width: 80%;
-    height: 280px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
     background: white;
     flex-shrink: unset;
     border-radius: var(--radius);
   }
 
-  .pp-main-badge{
-    top: 8px;
-    right: 20px;
-    font-size: 9px;
-    padding: 3px 8px;
+  .pp-main-badge {
+    top: 12px;
+    right: 12px;
+    font-size: 10px;
+    padding: 4px 10px;
     letter-spacing: 0.02em;
   }
 
@@ -1324,7 +1339,7 @@ button {
 
   .pp-main-wrap {
     flex: 1;
-    width: 88%;
+    width: 100%;
     height: 100%;
     background: white;
     /* Dark background to blend with product photography */
@@ -1341,7 +1356,7 @@ button {
   .pp-main-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     /* Fill the entire container */
     border-radius: 20px;
     box-shadow: none;
@@ -1442,7 +1457,9 @@ button {
   }
 
   .pp-main-wrap {
-    height: 240px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
     background: white;
   }
 
