@@ -1,20 +1,21 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { useAdmin } from "../hooks/useAdmin";
 import { useStore } from "../hooks/useStore";
+import { getNavPath } from "../services/categoryRoute";
 import "./SiteHeader.css";
 import LogoImg from "../assets/offers/logo.svg";
 import UserIcon from "../assets/header/User.png";
 import CartIcon from "../assets/header/cards.png";
 
-const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
+const DEFAULT_LINKS = ["Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
 const LoginDropdown = () => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const navigate = useNavigate();
-  
+
   const user = useStore((s) => s.user);
   const isAdmin = useStore((s) => s.isAdmin);
 
@@ -28,7 +29,6 @@ const LoginDropdown = () => {
 
   const handleLogout = async () => {
     await authService.signOut();
-    setUser(null);
     setOpen(false);
     navigate("/");
   };
@@ -76,9 +76,24 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const navigate = useNavigate();
   const cartItems = useStore(state => state.cartItems);
   const wishlistItems = useStore(state => state.wishlistItems);
+  const categories = useStore(state => state.categories);
+  const fetchCategories = useStore(state => state.fetchCategories);
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
   const wishlistCount = wishlistItems.length;
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const NAV_LINKS = useMemo(() => {
+    const customNames = (categories || [])
+      .map(c => c.name)
+      .filter(Boolean)
+      .filter(name => !DEFAULT_LINKS.some(d => d.toLowerCase() === name.toLowerCase()));
+
+    return ["Home", ...DEFAULT_LINKS, ...customNames];
+  }, [categories]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -92,7 +107,13 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
   const handleLinkClick = (link) => {
     setMenuOpen(false);
-    if (onLinkClick) onLinkClick(link);
+    if (onLinkClick) {
+      onLinkClick(link);
+    } else {
+      // Fallback: if a parent page doesn't pass its own onLinkClick,
+      // navigate directly using the shared category-aware router
+      navigate(getNavPath(link, categories));
+    }
   };
 
   return (
@@ -125,8 +146,6 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
           </nav>
 
           <div className="header-actions">
-
-            {/* Wishlist — navigates to /wishlist on click */}
             <button className="icon-btn" aria-label="Wishlist" onClick={() => navigate("/wishlist")} style={{ position: "relative" }}>
               <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
                 <path
@@ -136,51 +155,29 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
               </svg>
               {wishlistCount > 0 && (
                 <span style={{
-                  position: "absolute",
-                  top: "2px",
-                  right: "2px",
-                  background: "#fff",
-                  color: "#C42049",
-                  borderRadius: "50%",
-                  padding: "1px 5px",
-                  fontSize: "10px",
-                  fontWeight: "bold",
-                  minWidth: "16px",
-                  textAlign: "center",
+                  position: "absolute", top: "2px", right: "2px",
+                  background: "#fff", color: "#C42049", borderRadius: "50%",
+                  padding: "1px 5px", fontSize: "10px", fontWeight: "bold",
+                  minWidth: "16px", textAlign: "center",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.2)"
                 }}>{wishlistCount}</span>
               )}
             </button>
 
-            {/* Cart — PNG icon */}
-            <button
-              className="icon-btn"
-              aria-label="Cart"
-              onClick={() => navigate("/cart")}
-              style={{ position: "relative" }}
-            >
+            <button className="icon-btn" aria-label="Cart" onClick={() => navigate("/cart")} style={{ position: "relative" }}>
               <img src={CartIcon} alt="Cart" className="header-icon" />
               {cartCount > 0 && (
                 <span style={{
-                  position: "absolute",
-                  top: "2px",
-                  right: "2px",
-                  background: "#fff",
-                  color: "#C42049",
-                  borderRadius: "50%",
-                  padding: "1px 5px",
-                  fontSize: "10px",
-                  fontWeight: "bold",
-                  minWidth: "16px",
-                  textAlign: "center",
+                  position: "absolute", top: "2px", right: "2px",
+                  background: "#fff", color: "#C42049", borderRadius: "50%",
+                  padding: "1px 5px", fontSize: "10px", fontWeight: "bold",
+                  minWidth: "16px", textAlign: "center",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.2)"
                 }}>{cartCount}</span>
               )}
             </button>
 
-            {/* Account — PNG icon */}
             <LoginDropdown />
-
           </div>
         </div>
       </header>

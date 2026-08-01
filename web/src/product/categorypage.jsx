@@ -6,10 +6,12 @@ import SiteFooter from "../components/SiteFooter";
 import Toast from "../components/Toast";
 import "./categorypage.css";
 
+import { getNavPath } from "../services/categoryRoute";
+
 const ITEMS_PER_PAGE = 9;
 const EMPTY_PRODUCTS = [];
 
-// ─── Loading Skeleton ─────────────────────────────────────────
+// ─── Loading Skeleton ─────────────1────────────────────────────
 const ProductSkeleton = () => (
   <div className="grid-product-card skeleton">
     <div className="product-card-image-wrapper">
@@ -45,12 +47,29 @@ export default function CategoryPage({ category }) {
   const addToCart = useStore(state => state.addToCart);
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
 
+  const allCategories = useStore(state => state.categories)
+  const fetchCategories = useStore(state => state.fetchCategories);
   const wishlistProductIds = useMemo(() => wishlistItems.map(w => w.id), [wishlistItems]);
 
   // Fetch products from database through store (cached automatically)
   useEffect(() => {
     fetchProductsByCategory(category);
   }, [category, fetchProductsByCategory]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const DEFAULT_CATEGORIES = ["Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
+
+  const categoryOptions = useMemo(() =>{
+    const customNames = (allCategories || [])
+      .map(c => c.name)
+      .filter(Boolean)
+      .filter(name => !DEFAULT_CATEGORIES.some(d => d.toLowerCase() === name.toLowerCase()))
+    return [...DEFAULT_CATEGORIES, ...customNames];
+  }, [allCategories]);
+
 
   // Reset filters when category changes
   useEffect(() => {
@@ -68,9 +87,16 @@ export default function CategoryPage({ category }) {
   }, [category]);
 
   const handleNavClick = (link) => {
-    if (link === "Home") navigate("/");
-    else if (link === category) window.scrollTo({ top: 0, behavior: "smooth" });
-    else navigate(`/${link.toLowerCase()}`);
+
+    if (link == category){
+      window.scrollTo({ top: 0, behavior: "smooth"});
+      return;
+    }
+
+    navigate(getNavPath(link, allCategories));
+    // if (link === "Home") navigate("/");
+    // else if (link === category) window.scrollTo({ top: 0, behavior: "smooth" });
+    // else navigate(`/${link.toLowerCase()}`);
   };
 
   const showToast = (message, type = "success") => {
@@ -97,7 +123,7 @@ export default function CategoryPage({ category }) {
 
   const handleCategorySelect = (e) => {
     const value = e.target.value;
-    if (value !== category) navigate(`/${value.toLowerCase()}`);
+    if (value !== category) navigate(getNavPath(value, allCategories));
   };
 
   const handleSearchSubmit = () => {
@@ -190,12 +216,9 @@ export default function CategoryPage({ category }) {
         <div className="search-bar-wrapper">
           <div className="category-select-wrapper">
             <select value={category} onChange={handleCategorySelect} className="category-dropdown-select">
-              <option value="Rings">Rings</option>
-              <option value="Earrings">Earrings</option>
-              <option value="Bracelets">Bracelets</option>
-              <option value="Bangles">Bangles</option>
-              <option value="Necklaces">Necklaces</option>
-              <option value="Anklets">Anklets</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
             </select>
           </div>
 

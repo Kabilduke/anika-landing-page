@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from "react-router-dom";
+import { useStore } from './hooks/useStore';
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Signup from "./account/JewelrySignup";
@@ -22,7 +24,9 @@ import Privacy from './components/Policies/Privacy';
 
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./admin/pages/Dashboard";
-import { useStore } from './hooks/useStore';
+
+import { getNavPath } from "./services/categoryRoute";
+
 
 // Scrolls to top on every route change
 function ScrollToTop() {
@@ -31,6 +35,35 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+}
+
+// Custom CategoryPage
+function CategoryBySlug(){
+  const { slug } = useParams();
+  const categories = useStore(state => state.categories);
+  const fetchCategories = useStore(state => state.fetchCategories);
+
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    fetchCategories().finally(() => setChecked(true));
+  }, [fetchCategories]);
+
+  const match = categories.find(c => c.slug === slug);
+
+  if (!checked){
+    return null;
+  }
+
+  if (!match) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <h2>Page not found</h2>
+      </div>
+    );
+  }
+
+  return <CategoryPage category={match.name} />;
 }
 
 function App() {
@@ -62,6 +95,10 @@ function App() {
         <Route path="/bangles" element={<CategoryPage category="Bangles" />} />
         <Route path="/necklaces" element={<CategoryPage category="Necklaces" />} />
         <Route path="/anklets" element={<CategoryPage category="Anklets" />} />
+
+        <Route path="/category/:slug" element={<CategoryBySlug />} />
+        <Route path="/:slug" element={<CategoryBySlug />} />
+
         <Route path="/account/login" element={<Login />} />
         <Route path="/account/signup" element={<Signup />} />
         <Route path="/account/otp-verify" element={<OtpVerify />} />
