@@ -140,10 +140,10 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
             </div>
             <div className="pp-rel-info">
               <p className="pp-rel-name">{p.name}</p>
-              <p className="pp-rel-sub">{p.sub}</p>
+              {/* <p className="pp-rel-sub">{p.sub}</p> */}
               <div className="pp-rel-prices">
                 <span className="pp-rel-price">{p.price}</span>
-                <span className="pp-rel-orig">{p.original}</span>
+                <span className="pp-rel-orig"> MRP: {p.original}</span>
               </div>
             </div>
           </div>
