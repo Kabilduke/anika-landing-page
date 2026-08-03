@@ -78,10 +78,12 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const CATEGORIES = ["All", "Rings", "Earrings", "Bangles", "Necklaces", "Bracelets", "Anklets"];
   const STATUSES = ["All", "Visible", "Draft"];
   const STOCKS = ["All", "In Stock", "Low Stock", "Out of Stock"];
+
 
   // Detect mobile card breakpoint
   const [isMobileCard, setIsMobileCard] = useState(window.innerWidth <= 540);
@@ -125,12 +127,18 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
   const handleEdit = (product) => { if (onEditProduct) onEditProduct(product); };
 
-  const handleDelete = (id) => {
+  const requestDelete = (id) => {
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    const id = pendingDeleteId
     if (onDeleteProduct) onDeleteProduct(id);
     const newTotal = filteredProducts.length - 1;
     const newTotalPages = Math.max(1, Math.ceil(newTotal / itemsPerPage));
     if (currentPage > newTotalPages) setCurrentPage(newTotalPages);
     setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
+    setPendingDeleteId(null);
   };
 
   const toggleSelectAll = (e) => {
@@ -304,7 +312,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                 key={product.id}
                 product={product}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={requestDelete}
                 selectedRows={selectedRows}
                 toggleSelectRow={toggleSelectRow}
               />
@@ -394,7 +402,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                       <button
                         className="pl-action-btn pl-action-btn--delete"
                         aria-label="Delete"
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => requestDelete(product.id)}
                       >
                         <img src={trashIcon} alt="Delete" className="pl-action-icon pl-action-icon--delete" />
                       </button>
@@ -444,7 +452,28 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
           </button>
         </div>
       </div>
-
+      {pendingDeleteId !== null && (
+        <div className="pl-confirm-overlay" onClick={() => setPendingDeleteId(null)}>
+          <div className="pl-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pl-confirm-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <p className="pl-confirm-text">Are you sure you want to delete this product?</p>
+            <div className="pl-confirm-actions">
+              <button className="pl-confirm-cancel" onClick={() => setPendingDeleteId(null)}>
+                Cancel
+              </button>
+              <button className="pl-confirm-ok" onClick={confirmDelete}>
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

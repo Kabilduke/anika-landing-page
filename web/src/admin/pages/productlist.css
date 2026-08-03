@@ -56,6 +56,83 @@
   background: #1a1a1a;
 }
 
+
+/* Delete Confirmation Button */
+.pl-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.pl-confirm-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 26px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.pl-confirm-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.pl-confirm-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.pl-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pl-confirm-cancel,
+.pl-confirm-ok {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.pl-confirm-cancel {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.pl-confirm-cancel:hover {
+  background: #e8e8e8;
+}
+
+.pl-confirm-ok {
+  background: #ef4444;
+  color: #fff;
+}
+
+.pl-confirm-ok:hover {
+  background: #dc2626;
+}
+
 /* ── Filters ── */
 .pl-filters {
   display: flex;
