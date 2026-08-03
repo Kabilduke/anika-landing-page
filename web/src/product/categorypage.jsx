@@ -362,7 +362,7 @@ export default function CategoryPage({ category }) {
                       {/* <p className="product-card-subtitle-desc">{product.desc}</p> */}
                       <div className="product-card-price-row">
                         <span className="price-tag-now">₹{product.price}.00</span>
-                        <span className="price-tag-was">₹ MRP: {product.originalPrice}.00</span>
+                        <span className="price-tag-was">MRP: ₹{product.originalPrice}.00</span>
                       </div>
                       <div className="product-card-footer-actions">
                         <button type="button" onClick={(e) => handleAddToCart(e, product)} className="product-card-add-to-cart-btn">
