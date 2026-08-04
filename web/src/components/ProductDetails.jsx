@@ -186,6 +186,8 @@ export default function ProductPage({ onBack }) {
   const [warrantyOpen, setWarrantyOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
+
+  const [productImages, setProductImages] = useState([]);
   const [showAll, setShowAll] = useState(false);
   const [productPrices, setProductPrice] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
@@ -201,6 +203,22 @@ export default function ProductPage({ onBack }) {
   useEffect(() => {
     const productId = selectedProduct?.productId || selectedProduct?.id;
     if (!productId) return;
+
+    const fetchImages = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('images', 'image_url')
+        .eq('product_id', productId)
+        .single()
+
+        if (error || !data) return;
+
+        const imgs = Array.isArray(data.images) && data.images.length > 0
+          ? data.images
+          : (data.image_url ? [data.image_url] : []);
+      
+        setProductImages(imgs)
+    };
 
     const fetchPrices = async () => {
       const { data, error } = await supabase
@@ -233,10 +251,11 @@ export default function ProductPage({ onBack }) {
 
     setSize([]);
     setLength([]);
-
+    setProductImages([]); 
     setProductPrice(null);
     fetchPrices();
     fetchSizes();
+    fetchImages();
   }, [selectedProduct, cat]);
 
   const showToast = (message, type = "success") => {
@@ -273,11 +292,14 @@ export default function ProductPage({ onBack }) {
     ? Math.round(((strikePrice - payPrice) / strikePrice) * 100)
     : 0;
 
-  const dynamicThumbs = useMemo(() => Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    img: displayImage,
-    alt: `${displayName} view ${i + 1}`
-  })), [displayImage, displayName]);
+  const dynamicThumbs = useMemo(() => {
+    const imgs = productImages.length > 0 ? productImages : [displayImage];
+    return imgs.map((img, i) => ({
+      id: i + 1,
+      img,
+      alt : `${displayName} view ${i + 1}` 
+    }));
+  }, [productImages, displayImage, displayName]);
 
   // Fetch related products from DB when category changes
   useEffect(() => {
