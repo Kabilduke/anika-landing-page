@@ -317,6 +317,80 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         </div>
       </div>
 
+      {/* ── Product Images ── */}
+      <div className="card">
+        <div className="card-title">Product Images</div>
+        <div
+          className={`drop-zone ${uploading ? "uploading" : ""}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current.click()}
+        >
+          <div className="drop-btn">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            {uploading ? "Uploading..." : "Click or drop image"}
+          </div>
+          <div className="drop-hint">
+            SVG or WEBP • Max 2 MB each • Up to 5 Images
+          </div>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={(e) => addFiles(e.target.files)}
+        />
+        <div className="thumbs">
+          {images.map((src, i) => (
+            <div key={i} className="thumb-wrapper">
+              <img src={src} className="thumb" alt="" />
+              <button
+                className="thumb-del"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage(i);
+                }}
+                title="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {images.length === 0 && <div className="thumb-placeholder" />}
+          {images.length < 6 && !uploading && (
+            <div
+              className="add-thumb"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileRef.current.click();
+              }}
+            >
+              +
+            </div>
+          )}
+        </div>
+        <div className="thumb-hint">
+          First image will be used as thumbnail. Drag to reorder.
+        </div>
+      </div>
+
+
+
       {/* ── Price & Stock ── */}
       <div className="card">
         <div className="card-title">Price &amp; Stock</div>
@@ -424,77 +498,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         </div>
       </div>
 
-      {/* ── Product Images ── */}
-      <div className="card">
-        <div className="card-title">Product Images</div>
-        <div
-          className={`drop-zone ${uploading ? "uploading" : ""}`}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() => fileRef.current.click()}
-        >
-          <div className="drop-btn">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            {uploading ? "Uploading..." : "Click or drop image"}
-          </div>
-          <div className="drop-hint">
-            SVG or WEBP • Max 2 MB each • Up to 5 Images
-          </div>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          multiple
-          style={{ display: "none" }}
-          onChange={(e) => addFiles(e.target.files)}
-        />
-        <div className="thumbs">
-          {images.map((src, i) => (
-            <div key={i} className="thumb-wrapper">
-              <img src={src} className="thumb" alt="" />
-              <button
-                className="thumb-del"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeImage(i);
-                }}
-                title="Remove image"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          {images.length === 0 && <div className="thumb-placeholder" />}
-          {images.length < 6 && !uploading && (
-            <div
-              className="add-thumb"
-              onClick={(e) => {
-                e.stopPropagation();
-                fileRef.current.click();
-              }}
-            >
-              +
-            </div>
-          )}
-        </div>
-        <div className="thumb-hint">
-          First image will be used as thumbnail. Drag to reorder.
-        </div>
-      </div>
 
       {/* ── Visibility Options ── */}
       <div className="card">
