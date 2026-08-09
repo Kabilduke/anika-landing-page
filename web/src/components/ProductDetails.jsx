@@ -38,6 +38,7 @@ const LoadingSkeleton = ({ height = '200px' }) => (
 // ── Memoized sub-components ──────────────────────────────────────────────────
 const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => {
   const currentIndex = activeThumb === -1 ? 0 : activeThumb;
+  const safeIndex = Math.min(currentIndex, thumbs.length - 1);
   const currentImg = activeThumb === -1 ? displayImage : thumbs[activeThumb].img;
 
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -108,7 +109,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
           </button>
           
           <img
-            src={activeThumb === -1 ? displayImage : thumbs[activeThumb].img}
+            src={currentImg}
             alt={displayName}
             className="pp-main-img"
             loading="eager"
@@ -343,6 +344,7 @@ export default function ProductPage({ onBack }) {
     if (infoCol) {
       infoCol.scrollTop = 0;
     }
+    setActiveThumb(-1);
   }, [selectedProduct]);
 
   // Dynamic Related Items from DB catalog
