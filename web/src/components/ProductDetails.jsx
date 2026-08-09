@@ -42,6 +42,31 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
 
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  const goToIndex = (i) => {
+    const clamped = Math.max(0, Math.min(thumbs.length-1, i));
+    setActiveThumb(clamped)
+  };
+
+  const handleTouchStart = (e) =>{
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    const SWIPE_THRESHOLD = 50;
+    if (Math.abs(diff) > SWIPE_THRESHOLD){
+      if (diff > 0){
+        goToIndex(currentIndex + 1);
+      } else {
+        goToIndex(currentIndex - 1);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   const handleZoomImageClick = (e) =>{
     if (!isZoomedIn){
@@ -61,7 +86,10 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   return(
     <div className="pp-gallery">
       <div className="pp-main-wrap">
-        <div className="pp-image-container-inner">
+        <div className="pp-image-container-inner"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}
           </div>
           
@@ -223,7 +251,7 @@ export default function ProductPage({ onBack }) {
     const fetchPrices = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('price, compare_price, discount_price, sku')
+        .select('price, compare_price, discount_price, sku, stock, stock_alert')
         .eq('product_id', productId)
         .single();
 
@@ -277,6 +305,8 @@ export default function ProductPage({ onBack }) {
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
   const displaySku = productPrices?.sku || selectedProduct?.sku || '';
+  const stockCount = productPrices?.stock ?? selectedProduct?.stock ?? null;
+  const stockAlertThreshold = productPrices?.stock_alert ?? 10; 
 
   const payPrice = rawDiscount && rawPrice
     ? Number(rawPrice) - Number(rawDiscount)
@@ -548,9 +578,18 @@ export default function ProductPage({ onBack }) {
               </div>
             )}
 
-            <div className="pp-stock">
-              <span>Hurry, Only 9 items left in stock!</span>
-            </div>
+
+            {stockCount != null && (
+              <div className="pp-stock">
+                {stockCount === 0 ?(
+                  <span className="pp-stock-out">Out of stock</span>
+                ) : stockCount <= stockAlertThreshold ? (
+                  <span className="pp-stock-low">Hurry, Only {stockCount} item{stockCount > 1 ? 's' : ''} left in stock!</span>
+                ): (
+                  <span className="pp-stock-ok">In stock</span>
+                )}
+              </div>
+            )}
             <div className="pp-ship-row">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
                   <rect x="1" y="3" width="15" height="13" />

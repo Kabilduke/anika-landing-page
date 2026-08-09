@@ -666,6 +666,21 @@ button {
   padding-bottom: 10px;
 }
 
+.pp-stock{
+  color: var(--maroon);
+  font-weight: 700;
+}
+
+.pp-stock-out{
+  color: #b3261e;
+  font-weight: 700;
+}
+
+.pp-stock-ok{
+  color: #1e7a3e;
+  font-weight: 600;
+}
+
 /* Shipping */
 .pp-ship-info {
   display: flex;
@@ -1008,6 +1023,8 @@ button {
   font-size: 13px;
   margin-top: 16px;
 }
+
+
 
 /* ══════════════════════════════════════════════════════════════
    YOU MAY ALSO LIKE
