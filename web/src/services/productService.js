@@ -135,10 +135,17 @@ export const productService = {
    * @param {string} filePath 
    * @returns {string}
    */
-  getProductImagePublicUrl(filePath) {
+  getProductImagePublicUrl(filePath, width = 600) {
     const { data } = supabase.storage
       .from('product_img')
-      .getPublicUrl(filePath);
+      .getPublicUrl(
+        filePath, {
+          transform: {
+            width, 
+            quanlity: 75,
+            format: "webp",
+          }
+        });
     return data.publicUrl;
   },
 
@@ -161,10 +168,15 @@ export const productService = {
    * @param {string} filePath 
    * @returns {string}
    */
-  getCategoryImagePublicUrl(filePath) {
+  getCategoryImagePublicUrl(filePath, width= 400) {
     const { data } = supabase.storage
       .from('categories_img')
-      .getPublicUrl(filePath);
+      .getPublicUrl(filePath,{
+        transform: {
+          width,
+          quality: 75,
+        },
+      });
     return data.publicUrl;
   },
 

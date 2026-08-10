@@ -268,6 +268,23 @@ button {
   will-change: transform;
 }
 
+.pp-main-img .swiper{
+  width: 100%;
+  height: 100%;
+}
+
+.pp-main-img .swiper-slide{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pp-main-wrap .swiper-slide img {
+   width: 100%;
+   height: 100%;
+   object-fit: contain;
+}
+
 .pp-main-img:hover {
   transform: scale(1.04);
 }

@@ -1,4 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Zoom } from "swiper/modules";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../lib/supabase';
 import './ProductDetails.css';
@@ -8,6 +11,11 @@ import { useStore } from '../hooks/useStore';
 import SizeChart from '../assets/Size_bangle.png';
 import LengthChart from '../assets/Anklet_length.jpeg'
 
+
+import "swiper/css";
+import "swiper/css/navigation";
+// import "swiper/css/pagination";
+import "swiper/css/zoom";
 
 import DescIcon from '../assets/details/ad_pro.svg';
 import SpecIcon from '../assets/details/mat.svg';
@@ -40,10 +48,12 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   const currentIndex = activeThumb === -1 ? 0 : activeThumb;
   const safeIndex = Math.min(currentIndex, thumbs.length - 1);
   const currentImg = activeThumb === -1 ? displayImage : thumbs[activeThumb].img;
+  const swiperRef = useRef(null);
 
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
+
 
   const goToIndex = (i) => {
     const clamped = Math.max(0, Math.min(thumbs.length-1, i));
@@ -107,14 +117,35 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
               <line x1="8" y1="11" x2="14" y2="11" />
             </svg>
           </button>
+
+          <Swiper
+            modules={[Navigation, Zoom]}
+            navigation={false}
+            // pagination = {{ clickable: true }}
+            zoom= {true}
+            onSwiper={(swiper) => (swiperRef.current = swiper)}
+            onSlideChange={(swiper) => setActiveThumb(swiper.activeIndex)}
+            speed={500}
+            spaceBetween={0}
+          >
+            {thumbs.map((item) => (
+              <SwiperSlide key ={item.id}>
+                <img
+                  src={item.img}
+                  alt={item.alt}
+                  className='pp-main-img'
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
           
-          <img
+          {/* <img
             src={currentImg}
             alt={displayName}
             className="pp-main-img"
-            loading="eager"
-            decoding="sync"
-          /> 
+            loading="lazy"
+            decoding="async"
+          />  */}
         </div>
       </div>
 
@@ -124,7 +155,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
             <button
               key={item.id}
               className={`pp-dot ${currentIndex === i ? 'active' : ''}`}
-              onClick={() => setActiveThumb(i)}
+              onClick={() => swiperRef.current?.slideTo(i)}
               aria-label={`View image ${i + 1}`}
               aria-selected={currentIndex === i}
               role="tab"
@@ -205,7 +236,7 @@ export default function ProductPage({ onBack }) {
   const cat = selectedProduct?.category || 'Bangles';
 
   // React State Hooks
-  const [activeThumb, setActiveThumb] = useState(-1);
+  const [activeThumb, setActiveThumb] = useState(0);
   const [qty, setQty] = useState(1);
 
   const [descOpen, setDescOpen] = useState(false);
