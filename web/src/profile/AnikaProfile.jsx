@@ -110,7 +110,11 @@ export default function AnikaProfile() {
           phone: tempDetails.phone,
           email: user.email,
           updated_at: new Date().toISOString()
-        });
+        },
+        {
+          onConflict: "id",
+        }
+      );
 
       if (profileError) throw profileError;
 

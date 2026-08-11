@@ -564,5 +564,24 @@ export const useStore = create((set, get) => ({
       console.error('Failed to sync guest cart & wishlist to database:', err);
       set({ loadingCart: false, loadingWishlist: false });
     }
-  }
+  },
+  syncProfileFromMetadata: async (user) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name ?? "",
+        },
+        {
+          onConflict: "id",
+        }
+      );
+    if (error){
+      console.error("Profile sync failed:", error);
+    }
+  },
 }));
