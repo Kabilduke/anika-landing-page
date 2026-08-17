@@ -22,9 +22,9 @@ const RealExperience = () => {
   return (
     <div className="textParent">
       <div className="text">
-        <div className="realExperiences">Real Experiences</div>
+        <div className="realExperiences">Anika Expressions</div>
         <div className="hearFromOur">
-          Hear from our happy customers who've experienced our world-magic.
+          #MyAnikaStory
         </div>
       </div>
       
