@@ -115,12 +115,6 @@ export default function CategoryPage({ category }) {
     }
   };
 
-  const handleAddToCart = async (e, product) => {
-    e.stopPropagation();
-    await addToCart(product, 1, null);
-    showToast(`Added "${product.name}" to cart!`, "success");
-  };
-
   const handleCategorySelect = (e) => {
     const value = e.target.value;
     if (value !== category) navigate(getNavPath(value, allCategories));
@@ -201,7 +195,7 @@ export default function CategoryPage({ category }) {
     const formattedProduct = {
       ...product,
       price: `₹${product.price}.00`,
-      original: `₹${product.originalPrice}.00`,
+      original: `₹${product.compare_price}.00`,
       category
     };
     setSelectedProduct(formattedProduct);
@@ -356,27 +350,23 @@ export default function CategoryPage({ category }) {
                   <article key={product.id} onClick={() => handleProductCardClick(product)} className="grid-product-card">
                     <div className="product-card-image-wrapper">
                       <img src={product.img} alt={product.name} className="product-card-image-display" loading="lazy" />
+                      <button
+                        type="button"
+                        onClick={(e) => handleWishlistToggle(e, product)}
+                        className={`product-card-wishlist-toggle-btn ${wishlistProductIds.includes(product.id) ? "active" : ""}`}
+                      >
+                        <svg viewBox="0 0 24 24" fill={wishlistProductIds.includes(product.id) ? "#C42049" : "none"} stroke={wishlistProductIds.includes(product.id) ? "#C42049" : "#ffffff"} strokeWidth="2">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                      </button>
                     </div>
+
                     <div className="product-card-body-details">
                       <h3 className="product-card-title-text">{product.name}</h3>
                       {/* <p className="product-card-subtitle-desc">{product.desc}</p> */}
                       <div className="product-card-price-row">
                         <span className="price-tag-now">₹{product.price}.00</span>
-                        <span className="price-tag-was">MRP: ₹{product.originalPrice}.00</span>
-                      </div>
-                      <div className="product-card-footer-actions">
-                        <button type="button" onClick={(e) => handleAddToCart(e, product)} className="product-card-add-to-cart-btn">
-                          <svg viewBox="0 0 24 24" fill="none" width="14" height="14" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                          </svg>
-                          Add To Cart
-                        </button>
-                        <button type="button" onClick={(e) => handleWishlistToggle(e, product)} className={`product-card-wishlist-toggle-btn ${wishlistProductIds.includes(product.id) ? "active" : ""}`}>
-                          <svg viewBox="0 0 24 24" fill={wishlistProductIds.includes(product.id) ? "#C42049" : "none"} stroke={wishlistProductIds.includes(product.id) ? "#C42049" : "currentColor"} strokeWidth="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                          </svg>
-                        </button>
+                        <span className="price-tag-was">MRP: ₹{product.compare_price}.00</span>
                       </div>
                     </div>
                   </article>
