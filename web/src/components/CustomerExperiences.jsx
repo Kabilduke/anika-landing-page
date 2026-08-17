@@ -26,8 +26,8 @@ const CustomerExperiences = () => {
   return (
     <section className="customer-experiences">
       <div className="experiences-text-content">
-        <h2 className="experiences-title">Anika Expressions</h2>
-        <p className="experiences-subtitle">Share your #MyAnikaStory</p>
+        <h2 className="experiences-title">Real Experiences</h2>
+        <p className="experiences-subtitle">Hear from our happy customers who've experienced our world-magic.</p>
       </div>
 
       <div className="experiences-visual-container">
