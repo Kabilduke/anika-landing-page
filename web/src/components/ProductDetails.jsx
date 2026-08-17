@@ -195,7 +195,11 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
             style={{ cursor: 'pointer' }}
           >
             <div className="pp-rel-img-wrap">
-              <span className="pp-rel-badge">{p.badge}</span>
+              {p.badge && (
+                <span className='pp-rel-badge'>
+                  {p.badge}
+                </span>
+              )}
               <img src={p.img} alt={p.name} className="pp-rel-img" loading="lazy" decoding="async" />
             </div>
             <div className="pp-rel-info">
@@ -250,6 +254,8 @@ export default function ProductPage({ onBack }) {
   const [productImages, setProductImages] = useState([]);
   const [showAll, setShowAll] = useState(false);
   const [productPrices, setProductPrice] = useState(null);
+  const [relatedPrices, setRelatedPrices] = useState({});
+
   const [toastMsg, setToastMsg] = useState("");
   const [toastType, setToastType] = useState("success");
   const [selectedSize, setSelectedSize] = useState("");
@@ -283,7 +289,7 @@ export default function ProductPage({ onBack }) {
     const fetchPrices = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('price, compare_price, discount_price, sku, stock, stock_alert')
+        .select('price, compare_price, sku, stock, stock_alert')
         .eq('product_id', productId)
         .single();
 
@@ -331,24 +337,21 @@ export default function ProductPage({ onBack }) {
 
   // Determine which image to show in gallery
   const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
-  // const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price  ?? null;
-  const rawCompare = productPrices?.compare_price ?? selectedProduct?.originalPrice ?? null;
-  const rawDiscount = productPrices?.discount_price ?? 0;
+
+  const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price ?? null;
+  // const rawDiscount = productPrices?.discount_price ?? 0;
+
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
   const displaySku = productPrices?.sku || selectedProduct?.sku || '';
   const stockCount = productPrices?.stock ?? selectedProduct?.stock ?? null;
   const stockAlertThreshold = productPrices?.stock_alert ?? 10; 
 
-  const payPrice = rawDiscount && rawPrice
-    ? Number(rawPrice) - Number(rawDiscount)
-    : (rawPrice != null ? Number(rawPrice) : 0);
-  // : Number(rawPrice) ?? 0;
+  const payPrice = rawPrice != null ? Number(rawPrice) : 0; 
+  const strikePrice = rawCompare != null ? Number(rawCompare) : Math.round(payPrice * 1.3);
 
-  const strikePrice = rawCompare ?? null;
-
-  const displayPrice = payPrice ? `₹${Number(payPrice).toLocaleString('en-IN')}` : '';
-  const displayOriginal = strikePrice ? `₹${Number(strikePrice).toLocaleString('en-IN')}` : '';
+  const displayPrice = payPrice ? `₹${payPrice.toLocaleString("en-IN")}` : "";
+  const displayOriginal = strikePrice ? `₹${strikePrice.toLocaleString("en-IN")}` : "";
 
   const discountPct = strikePrice && payPrice && strikePrice > payPrice
     ? Math.round(((strikePrice - payPrice) / strikePrice) * 100)
@@ -378,26 +381,33 @@ export default function ProductPage({ onBack }) {
     setActiveThumb(-1);
   }, [selectedProduct]);
 
-  // Dynamic Related Items from DB catalog
   const dynamicRelated = useMemo(() => {
     const dbProducts = productsCache[cat] || [];
     const currentId = selectedProduct?.productId || selectedProduct?.id;
 
-    // Map DB products to the shape RelatedProducts expects
     const mapped = dbProducts
-      .filter(p => p.id !== currentId && p.productId !== currentId)
-      .map(p => ({
-        ...p,
-        sub: p.desc || p.category || cat,
-        price: typeof p.price === 'number' ? `₹${p.price}.00` : p.price,
-        original: p.originalPrice
-          ? (typeof p.originalPrice === 'number' ? `₹${p.originalPrice}.00` : p.originalPrice)
-          : p.original || '',
-        badge: '',
-        category: p.category || cat,
-      }));
+      .filter(
+        (p) =>
+          p.id !== currentId &&
+          p.productId !== currentId
+      )
+      .map((p) => {
+        const sellingPrice = Number(p.price) || 0;
+        const mrp = Number(p.compare_price) || 0;
 
-    return mapped.length > 0 ? mapped : [];
+        const discountPct = mrp > sellingPrice && sellingPrice > 0 ? Math.round(((mrp - sellingPrice)/mrp)*100):0;
+
+        return {
+          ...p,
+          sub: p.desc || p.category || cat,
+
+          price: sellingPrice ? `₹${sellingPrice.toLocaleString("en-IN")}` : "",
+          original: mrp ? `₹${mrp.toLocaleString("en-IN")}` : "",
+          badge: discountPct > 0 ? `${discountPct}% Off` : "",
+          category: p.category || cat,
+        };
+      });
+      return mapped;
   }, [cat, productsCache, selectedProduct]);
 
   // Dynamic Info Rows
@@ -435,18 +445,16 @@ export default function ProductPage({ onBack }) {
     }
   };
 
-  const handleRelatedProductClick = useCallback((product) => {
-    const formattedProduct = {
-      ...product,
-      price: typeof product.price === 'number' ? `₹${product.price}.00` : product.price,
-      original: product.originalPrice
-        ? (typeof product.originalPrice === 'number' ? `₹${product.originalPrice}.00` : product.originalPrice)
-        : product.original || '',
-      category: product.category || cat,
-    };
-    setSelectedProduct(formattedProduct);
-    navigate("/product");
-  }, [cat, setSelectedProduct, navigate]);
+  const handleRelatedProductClick = useCallback(
+    (product) => {
+      setSelectedProduct({
+        ...product,
+        category: product.category || cat,
+      });
+      navigate("/product")
+    },
+    [cat, setSelectedProduct, navigate]
+  )
 
   const handleBuyNow = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -946,8 +954,6 @@ export default function ProductPage({ onBack }) {
         relatedItems={dynamicRelated}
         onProductClick={handleRelatedProductClick}
       />
-
-
 
       {/* ── CATEGORY STRIP ── */}
       <div className="pp-category-section-wrap">

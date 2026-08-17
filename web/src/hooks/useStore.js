@@ -195,9 +195,8 @@ export const useStore = create((set, get) => ({
     try {
       const productsData = await productService.getProductsByCategoryName(categoryName);
       const mapped = (productsData || []).map(p => {
-        const rawPrice = Number(p.price) || 0;
-        const rawDiscount = Number(p.discount_price) || 0;
-        const finalPrice = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+        const sellingPrice = Number(p.price) || 0;
+        const mrp = Number(p.compare_price) || 0;
 
         return {
           id: p.product_id || p.id,
@@ -205,8 +204,8 @@ export const useStore = create((set, get) => ({
           img: p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
           name: p.name,
           desc: p.description,
-          price: finalPrice,
-          originalPrice: p.compare_price || Math.round(rawPrice * 1.3),
+          price: sellingPrice,
+          compare_price: mrp,
           sizes: p.sizes || [],
           stock: p.stock > 0 ? 'in-stock' : 'out-of-stock'
         };

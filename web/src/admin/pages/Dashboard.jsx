@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { supabase } from "../../lib/supabase";
 import { productService } from "../../services/productService";
 import { useAdminData } from "../../hooks/useAdminData";
 import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
@@ -536,8 +537,12 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [openMenus, setOpenMenus] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState([]);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -592,6 +597,54 @@ const Dashboard = () => {
   }, [selectedCustomer, customers]);
 
   const currentPath = location.pathname;
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-new-orders")
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        (payload) => {
+          console.log('🔔 NEW ORDER:', payload.new);
+
+          const newOrder = payload.new;
+          setNotifications((prev) =>[
+            {
+              id: newOrder.id,
+              type: "new_order",
+              title: "New Order Received",
+              message: `Order #${String(newOrder.id).slice(-6)} has been placed`,
+              order: newOrder,
+              read:false,
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+
+          if ('Notification' in window && window.Notification.permission === 'granted'){
+            new window.Notification('New Order Recieved!',{
+              body: `Order #${String(newOrder.id).slice(-6)} has been placed.`,
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Order notification subscription:', status);
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if ('Notification' in window && window.Notification.permission === 'default'){
+      window.Notification.requestPermission();
+    }
+  }, [])
 
   // Auto-expand menu based on current path
   useEffect(() => {
@@ -669,6 +722,11 @@ const Dashboard = () => {
   const goToAddProduct = () => {
     setEditingProduct(null);
     navigate("/admin/products/add");
+  };
+
+  const goToOrder = () =>{
+    setSelectedOrder(null);
+    navigate("/admin/orders");
   };
 
   const handleEditProduct = (product) => {
@@ -806,14 +864,103 @@ const Dashboard = () => {
         </div>
 
         <div className="db__navbar-actions">
-          {!hideAddProduct && (
-            <button className="db__add-btn" onClick={goToAddProduct}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          <div className="notification-wrapper">
+            <button
+              className="db__add-btn notification-btn"
+              onClick={() => setNotificationOpen((prev) => !prev)}
+              aria-label={`Notifications${
+                notifications.filter((n) => !n.read).length
+                ? `, ${notifications.filter((n) => !n.read).length} unread`
+                : ""
+              }`}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
-              <span>Add product</span>
+
+              <span className="notification-label">Notification</span>
+
+              {notifications.filter((n) => !n.read).length > 0 &&(
+                <span className="notification-badge">
+                  {notifications.filter((n) => !n.read).length}
+                </span>
+              )}
             </button>
-          )}
+
+            {notificationOpen && (
+              <div className="notification-dropdown">
+                <div className="notification-header">
+                  <strong>Notifications</strong>
+
+                  {notifications.length > 0 && (
+                    <button
+                    onClick={() => {
+                      setNotifications([]);
+                    }}
+                      >
+                        Clear all
+                    </button>
+                  )}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="notification-empty">
+                    <span>🔔</span>
+                    <p>No new notifications</p>
+                  </div>
+                ):(
+                  <div className="notification-list">
+                    {notifications.map((notification) =>
+                    <button
+                      key={notification.id}
+                      className={`notification-item ${
+                        notification.read ? "notification-item--read" : ""
+                      }`}
+                      onClick={() => {
+                        setNotifications((prev) =>
+                          prev.map((item) =>
+                            item.id === notification.id
+                              ? { ...item, read: true }
+                              : item
+                          )
+                        );
+                        setNotificationOpen(false);
+                        setSelectedOrder(notification.order);
+
+                        navigate("/admin/orders/detail");
+                      }}  
+                    >
+                      <div className="notification-icon">
+                        🛍️
+                      </div>
+                      <div className="notification-content">
+                        <strong>{notification.title}</strong>
+                        <span>{notification.message}</span>
+                        <small>
+                          ₹{Number(notification.order.total_price || 0).toLocaleString("en-IN")}
+                          {" • "}
+                          {notification.order.payment || "Payment"}
+                        </small>
+                      </div>
+                      {!notification.read && (
+                        <span className="notification-dot" />
+                      )}
+                    </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <Link to="/" style={{ textDecoration: 'none' }}>
             <button className="db__profile-btn" aria-label="Admin Profile" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
