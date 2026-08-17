@@ -384,18 +384,29 @@ export default function ProductPage({ onBack }) {
     const currentId = selectedProduct?.productId || selectedProduct?.id;
 
     // Map DB products to the shape RelatedProducts expects
-    const mapped = dbProducts
-      .filter(p => p.id !== currentId && p.productId !== currentId)
-      .map(p => ({
-        ...p,
-        sub: p.desc || p.category || cat,
-        price: typeof p.price === 'number' ? `₹${p.price}.00` : p.price,
-        original: p.originalPrice
-          ? (typeof p.originalPrice === 'number' ? `₹${p.originalPrice}.00` : p.originalPrice)
-          : p.original || '',
-        badge: '',
-        category: p.category || cat,
-      }));
+  const mapped = dbProducts
+  .filter(p => p.id !== currentId && p.productId !== currentId)
+  .map(p => {
+    const rawPrice = typeof p.price === 'number' ? p.price : parseFloat(p.price);
+    const rawOriginal = typeof p.originalPrice === 'number'
+      ? p.originalPrice
+      : parseFloat(p.originalPrice ?? p.original);
+
+    const pct = (!isNaN(rawPrice) && !isNaN(rawOriginal) && rawOriginal > rawPrice)
+      ? Math.round(((rawOriginal - rawPrice) / rawOriginal) * 100)
+      : 0;
+
+    return {
+      ...p,
+      sub: p.desc || p.category || cat,
+      price: typeof p.price === 'number' ? `₹${p.price}.00` : p.price,
+      original: p.originalPrice
+        ? (typeof p.originalPrice === 'number' ? `₹${p.originalPrice}.00` : p.originalPrice)
+        : p.original || '',
+      badge: pct > 0 ? `${pct}% Off` : '',
+      category: p.category || cat,
+    };
+  });
 
     return mapped.length > 0 ? mapped : [];
   }, [cat, productsCache, selectedProduct]);
