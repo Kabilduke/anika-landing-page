@@ -11,6 +11,22 @@ import CartIcon from "../assets/header/cards.png";
 
 const DEFAULT_LINKS = ["Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
+// Generates placeholder subcategory names like Ring1, Ring2, Ring3
+// Replace with real subcategories from your store once available (category.subcategories = [{ name }, ...])
+const getSubcategories = (link, categories = []) => {
+  if (link === "Home") return [];
+
+  const matched = categories.find(
+    (c) => c.name?.toLowerCase() === link.toLowerCase()
+  );
+  if (matched?.subcategories?.length) {
+    return matched.subcategories.map((s) => s.name);
+  }
+
+  const singular = link.endsWith("s") ? link.slice(0, -1) : link;
+  return [1, 2, 3].map((n) => `${singular}${n}`);
+};
+
 const LoginDropdown = () => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -71,6 +87,149 @@ const LoginDropdown = () => {
   );
 };
 
+// Desktop nav item: click toggles a popup of subcategories below it.
+// Shows a divider + chevron icon when the item has subcategories.
+const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const subcategories = useMemo(
+    () => getSubcategories(link, categories),
+    [link, categories]
+  );
+  const hasPopup = subcategories.length > 0;
+
+  useEffect(() => {
+    if (!hasPopup) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [hasPopup]);
+
+  const handleMainClick = () => {
+    if (!hasPopup) {
+      onLinkClick(link);
+      return;
+    }
+    setOpen((o) => !o);
+  };
+
+  const handleSubClick = (sub) => {
+    setOpen(false);
+    onSubClick(link, sub);
+  };
+
+  return (
+    <div className="nav-item-wrapper" ref={ref}>
+      <button
+        className={`nav-link ${isActive ? "active" : ""} ${hasPopup ? "has-caret" : ""}`}
+        onClick={handleMainClick}
+      >
+        <span>{link}</span>
+        {hasPopup && (
+          <svg
+            className={`nav-caret-icon ${open ? "open" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            width="14"
+            height="14"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </button>
+
+      {hasPopup && open && (
+        <div className="nav-popup">
+          {subcategories.map((sub) => (
+            <button
+              key={sub}
+              className="nav-popup-item"
+              onClick={() => handleSubClick(sub)}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Mobile nav item: click expands an accordion of subcategories inline
+const MobileNavItem = ({ link, categories, onLinkClick, onSubClick }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const subcategories = useMemo(
+    () => getSubcategories(link, categories),
+    [link, categories]
+  );
+  const hasPopup = subcategories.length > 0;
+
+  const handleMainClick = () => {
+    if (!hasPopup) {
+      onLinkClick(link);
+      return;
+    }
+    setExpanded((e) => !e);
+  };
+
+  const handleSubClick = (sub) => {
+    setExpanded(false);
+    onSubClick(link, sub);
+  };
+
+  return (
+    <div className="mobile-nav-item">
+      <button
+        className={`mobile-nav-link ${expanded ? "expanded" : ""}`}
+        onClick={handleMainClick}
+      >
+        <span>{link}</span>
+        {hasPopup && (
+          <svg
+            className={`mobile-nav-caret-icon ${expanded ? "open" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            width="16"
+            height="16"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </button>
+
+      {hasPopup && expanded && (
+        <div className="mobile-nav-submenu">
+          {subcategories.map((sub) => (
+            <button
+              key={sub}
+              className="mobile-nav-subitem"
+              onClick={() => handleSubClick(sub)}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -116,6 +275,12 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
     }
   };
 
+  // Called when a subcategory item (e.g. "Ring1") is clicked, desktop or mobile
+  const handleSubClick = (parentLink, sub) => {
+    setMenuOpen(false);
+    navigate(`${getNavPath(parentLink, categories)}?sub=${encodeURIComponent(sub)}`);
+  };
+
   return (
     <>
       <header className={`header ${menuOpen ? "menu-open" : ""}`}>
@@ -135,13 +300,14 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
           <nav className="desktop-nav">
             {NAV_LINKS.map((link) => (
-              <button
+              <NavItem
                 key={link}
-                className={`nav-link ${link === activeLink ? "active" : ""}`}
-                onClick={() => handleLinkClick(link)}
-              >
-                {link}
-              </button>
+                link={link}
+                isActive={link === activeLink}
+                categories={categories}
+                onLinkClick={handleLinkClick}
+                onSubClick={handleSubClick}
+              />
             ))}
           </nav>
 
@@ -185,13 +351,13 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
         <nav className="mobile-nav-links">
           {NAV_LINKS.map((link) => (
-            <button
+            <MobileNavItem
               key={link}
-              className="mobile-nav-link"
-              onClick={() => handleLinkClick(link)}
-            >
-              {link}
-            </button>
+              link={link}
+              categories={categories}
+              onLinkClick={handleLinkClick}
+              onSubClick={handleSubClick}
+            />
           ))}
         </nav>
       </div>

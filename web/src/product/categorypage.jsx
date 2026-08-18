@@ -34,6 +34,7 @@ export default function CategoryPage({ category }) {
   const [stockStatus, setStockStatus] = useState({ inStock: true, outOfStock: false });
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [sizeMenuOpen, setSizeMenuOpen] = useState(true);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
@@ -149,6 +150,8 @@ export default function CategoryPage({ category }) {
 
   const toggleSizeMenu = () => setSizeMenuOpen(prev => !prev);
 
+  const toggleFilterPanel = () => setFilterPanelOpen(prev => !prev);
+
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -253,42 +256,63 @@ export default function CategoryPage({ category }) {
 
       <div className="categorypage-main-layout">
         <aside className="categorypage-sidebar">
-          <div className="sidebar-filter-section">
-            <h3 className="filter-title-no-collapse">Stock Status</h3>
-            <div className="filter-options-content">
-              <label className="checkbox-item-label">
-                <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.inStock} onChange={() => handleStockToggle("inStock")} />
-                <span className="checkbox-custom-box"></span>
-                <span className="checkbox-item-text">In Stock</span>
-              </label>
-              <label className="checkbox-item-label">
-                <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.outOfStock} onChange={() => handleStockToggle("outOfStock")} />
-                <span className="checkbox-custom-box"></span>
-                <span className="checkbox-item-text">Out of Stock</span>
-              </label>
-            </div>
-          </div>
+          {/* ─── Filter and Sort trigger (replaces Stock Status header) ─── */}
+          <button
+            type="button"
+            onClick={toggleFilterPanel}
+            className="filter-sort-toggle-btn"
+          >
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="currentColor" strokeWidth="2">
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <circle cx="9" cy="6" r="2" fill="#fff" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <circle cx="15" cy="12" r="2" fill="#fff" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+              <circle cx="11" cy="18" r="2" fill="#fff" />
+            </svg>
+            <span>Filter and sort</span>
+          </button>
 
-          {sizeOptions.length > 0 && (
-            <div className="sidebar-filter-section border-top">
-              <button type="button" onClick={toggleSizeMenu} className="filter-collapse-header-btn">
-                <span className="filter-title-text">Size</span>
-                <svg className={`filter-chevron-icon ${sizeMenuOpen ? "rotated" : ""}`} viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 15l-6-6-6 6" strokeLinecap="round" />
-                </svg>
-              </button>
-              {sizeMenuOpen && (
-                <div className="filter-options-content size-list-layout">
-                  {sizeOptions.map(size => (
-                    <label key={size} className="checkbox-item-label">
-                      <input type="checkbox" className="filter-checkbox-input" checked={selectedSizes.includes(size)} onChange={() => handleSizeToggle(size)} />
-                      <span className="checkbox-custom-box"></span>
-                      <span className="checkbox-item-text">Size {size}</span>
-                    </label>
-                  ))}
+          {filterPanelOpen && (
+            <>
+              <div className="sidebar-filter-section border-top">
+                <h3 className="filter-title-no-collapse">Stock Status</h3>
+                <div className="filter-options-content">
+                  <label className="checkbox-item-label">
+                    <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.inStock} onChange={() => handleStockToggle("inStock")} />
+                    <span className="checkbox-custom-box"></span>
+                    <span className="checkbox-item-text">In Stock</span>
+                  </label>
+                  <label className="checkbox-item-label">
+                    <input type="checkbox" className="filter-checkbox-input" checked={stockStatus.outOfStock} onChange={() => handleStockToggle("outOfStock")} />
+                    <span className="checkbox-custom-box"></span>
+                    <span className="checkbox-item-text">Out of Stock</span>
+                  </label>
+                </div>
+              </div>
+
+              {sizeOptions.length > 0 && (
+                <div className="sidebar-filter-section border-top">
+                  <button type="button" onClick={toggleSizeMenu} className="filter-collapse-header-btn">
+                    <span className="filter-title-text">Size</span>
+                    <svg className={`filter-chevron-icon ${sizeMenuOpen ? "rotated" : ""}`} viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M18 15l-6-6-6 6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                  {sizeMenuOpen && (
+                    <div className="filter-options-content size-list-layout">
+                      {sizeOptions.map(size => (
+                        <label key={size} className="checkbox-item-label">
+                          <input type="checkbox" className="filter-checkbox-input" checked={selectedSizes.includes(size)} onChange={() => handleSizeToggle(size)} />
+                          <span className="checkbox-custom-box"></span>
+                          <span className="checkbox-item-text">Size {size}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </aside>
 
