@@ -11,6 +11,41 @@ import CartIcon from "../assets/header/cards.png";
 
 const DEFAULT_LINKS = ["Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
+// Second bar under the header — 3 rows, each centered independently.
+// Entries with hasDropdown show a chevron and open a subcategory popup.
+// Second bar under the header — exactly 3 rows.
+// Row 1 ends at "Haaram"; everything else is redistributed across rows 2 & 3.
+// Second bar under the header — 3 rows, matching the reference exactly.
+const LOWER_NAV_ROWS = [
+  [
+    { name: "All Products" },
+    { name: "New Arrivals" },
+    { name: "Neckpiece", hasDropdown: true },
+    { name: "Party Wears" },
+    { name: "Haaram", hasDropdown: true },
+    { name: "Bangles", hasDropdown: true },
+    { name: "Earrings", hasDropdown: true },
+    { name: "Hip Accessories", hasDropdown: true },
+    { name: "Hair Accessories", hasDropdown: true },
+  ],
+  [
+    { name: "Nagas Temple Designers" },
+    { name: "Micro Gold Platings" },
+    { name: "Under 999" },
+    { name: "Bridal Essentials" },
+    { name: "GJ polish diamond insp" },
+    { name: "Restocked" },
+    { name: "Sales" },
+    { name: "Others", hasDropdown: true },
+  ],
+  [
+    { name: "Non - Idol Collection" },
+    { name: "Mugappu Chain" },
+    { name: "Chic - Office Wear" },
+    { name: "Vintage Collection" },
+  ],
+];
+
 // Generates placeholder subcategory names like Ring1, Ring2, Ring3
 // Replace with real subcategories from your store once available (category.subcategories = [{ name }, ...])
 const getSubcategories = (link, categories = []) => {
@@ -164,6 +199,79 @@ const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick }) => {
   );
 };
 
+// Lower-bar nav item: same popup behavior as NavItem, white-on-navbar styling.
+const LowerNavItem = ({ item, categories, onLinkClick, onSubClick }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const subcategories = useMemo(
+    () => (item.hasDropdown ? getSubcategories(item.name, categories) : []),
+    [item, categories]
+  );
+  const hasPopup = item.hasDropdown && subcategories.length > 0;
+
+  useEffect(() => {
+    if (!hasPopup) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [hasPopup]);
+
+  const handleMainClick = () => {
+    if (!hasPopup) {
+      onLinkClick(item.name);
+      return;
+    }
+    setOpen((o) => !o);
+  };
+
+  const handleSubClick = (sub) => {
+    setOpen(false);
+    onSubClick(item.name, sub);
+  };
+
+  return (
+    <div className="lower-nav-item-wrapper" ref={ref}>
+      <button className="lower-nav-link" onClick={handleMainClick}>
+        <span>{item.name}</span>
+        {hasPopup && (
+          <svg
+            className={`lower-nav-caret-icon ${open ? "open" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            width="13"
+            height="13"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </button>
+
+      {hasPopup && open && (
+        <div className="nav-popup lower-nav-popup">
+          {subcategories.map((sub) => (
+            <button
+              key={sub}
+              className="nav-popup-item"
+              onClick={() => handleSubClick(sub)}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Mobile nav item: click expands an accordion of subcategories inline
 const MobileNavItem = ({ link, categories, onLinkClick, onSubClick }) => {
   const [expanded, setExpanded] = useState(false);
@@ -226,6 +334,28 @@ const MobileNavItem = ({ link, categories, onLinkClick, onSubClick }) => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Mobile version of the lower bar — flattened into one accordion section
+const MobileLowerNav = ({ categories, onLinkClick, onSubClick }) => {
+  const allItems = LOWER_NAV_ROWS.flat();
+
+  return (
+    <div className="mobile-collections">
+      <p className="mobile-collections-title">Collections</p>
+      <div className="mobile-collections-links">
+        {allItems.map((item) => (
+          <MobileNavItem
+            key={item.name}
+            link={item.name}
+            categories={item.hasDropdown ? categories : []}
+            onLinkClick={onLinkClick}
+            onSubClick={onSubClick}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -346,6 +476,22 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
             <LoginDropdown />
           </div>
         </div>
+
+        <div className="header-desktop-lower">
+          {LOWER_NAV_ROWS.map((row, i) => (
+            <nav className="lower-nav-row" key={i}>
+              {row.map((item) => (
+                <LowerNavItem
+                  key={item.name}
+                  item={item}
+                  categories={categories}
+                  onLinkClick={handleLinkClick}
+                  onSubClick={handleSubClick}
+                />
+              ))}
+            </nav>
+          ))}
+        </div>
       </header>
 
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
@@ -360,6 +506,12 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
             />
           ))}
         </nav>
+
+        <MobileLowerNav
+          categories={categories}
+          onLinkClick={handleLinkClick}
+          onSubClick={handleSubClick}
+        />
       </div>
     </>
   );
