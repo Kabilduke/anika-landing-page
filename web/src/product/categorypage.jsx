@@ -4,6 +4,7 @@ import { useStore } from "../hooks/useStore";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import Toast from "../components/Toast";
+import { SkeletonProductCard } from "../components/ui/Skeleton";
 import "./categorypage.css";
 
 import { getNavPath } from "../services/categoryRoute";
@@ -11,19 +12,8 @@ import { getNavPath } from "../services/categoryRoute";
 const ITEMS_PER_PAGE = 9;
 const EMPTY_PRODUCTS = [];
 
-// ─── Loading Skeleton ─────────────1────────────────────────────
-const ProductSkeleton = () => (
-  <div className="grid-product-card skeleton">
-    <div className="product-card-image-wrapper">
-      <div className="skeleton-img" />
-    </div>
-    <div className="product-card-body-details">
-      <div className="skeleton-title" />
-      <div className="skeleton-desc" />
-      <div className="skeleton-price" />
-    </div>
-  </div>
-);
+// ─── Loading Skeleton ─────────────────────────────────────────
+const ProductSkeleton = () => <SkeletonProductCard />;
 
 export default function CategoryPage({ category }) {
   const navigate = useNavigate();

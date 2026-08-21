@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './ProductSection.css';
 import RingHandImg from '../assets/RingHand.webp';
 import { supabase } from '../lib/supabase';
-
+import { Skeleton } from './ui/Skeleton';
 
 const VISIBLE = 5;
 
@@ -79,11 +79,11 @@ export default function ProductSection({ onProductClick }) {
       <div className="product-right">
         <div className="product-cards">
           {Array.from({ length: VISIBLE }).map((_, i) => (
-            <div key={i} className="product-card">
-              <div className="product-img-wrapper" style={{ background: '#f5f5f5', borderRadius: 8 }} />
-              <div className="product-details">
-                <div style={{ height: 12, width: 60, background: '#eee', borderRadius: 4, margin: '8px 0 4px' }} />
-                <div style={{ height: 10, width: 90, background: '#f0f0f0', borderRadius: 4 }} />
+            <div key={i} className="product-card" style={{ border: 'none', padding: 0 }}>
+              <Skeleton height="180px" width="100%" borderRadius="12px" />
+              <div className="product-details" style={{ marginTop: '8px' }}>
+                <Skeleton height="14px" width="50%" />
+                <Skeleton height="12px" width="80%" style={{ marginTop: '4px' }} />
               </div>
             </div>
           ))}

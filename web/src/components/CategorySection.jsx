@@ -37,6 +37,7 @@
 
 import { useState, useEffect } from "react";
 import { productService } from "../services/productService";
+import { SkeletonCategories } from "./ui/Skeleton";
 import "./CategorySection.css";
 
 export default function CategorySection({ onCategoryClick }) {
@@ -61,8 +62,8 @@ export default function CategorySection({ onCategoryClick }) {
   if (loading) {
     return (
       <section className="category-section">
-        <div className="category-wrapper">
-          <p>Loading categories...</p>
+        <div className="category-wrapper" style={{ justifyContent: 'center' }}>
+          <SkeletonCategories count={6} />
         </div>
       </section>
     );

@@ -26,7 +26,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 10px 50px;
+  padding: 4px 50px 0;
   max-width: 1600px;
   margin: 0 auto;
   position: relative;
@@ -36,9 +36,9 @@
 /* ─── Second bar: 3 rows, each centered independently, same navbar color ─── */
 .header-desktop-lower {
   max-width: 1600px;
-  margin: 0 auto;
+  margin: -14px auto 0;
   width: 100%;
-  padding: 14px 50px 18px;
+  padding: 0 50px 12px;
 }
 
 .lower-nav-row {
@@ -46,11 +46,11 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 8px 34px;
+  gap: 2px 28px;
 }
 
 .lower-nav-row + .lower-nav-row {
-  margin-top: 10px;
+  margin-top: 2px;
 }
 
 .lower-nav-item-wrapper {
@@ -62,21 +62,25 @@
   border: none;
   color: #fff;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   cursor: pointer;
   padding: 2px 0;
+  position: relative;
   opacity: 0.9;
   transition: opacity 0.2s;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
-.lower-nav-link:hover {
+.lower-nav-link:hover,
+.lower-nav-link.active {
   opacity: 1;
 }
+
+
 
 .lower-nav-caret-icon {
   color: #fff;
@@ -88,9 +92,17 @@
   transform: rotate(180deg);
 }
 
+@keyframes dropdown-opacity-only {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .lower-nav-popup {
-  left: 50%;
-  transform: translateX(-50%);
+  left: 50% !important;
+  top: calc(100% + 4px) !important;
+  transform: translateX(-50%) !important;
+  animation: dropdown-opacity-only 0.15s ease !important;
+  z-index: 1001;
 }
 
 .logo {
@@ -100,8 +112,8 @@
 }
 
 .logo-img {
-  height: 80px;
-  width: 180px;
+  height: 52px;
+  width: 150px;
   object-fit: contain;
 }
 
@@ -208,7 +220,7 @@
   font-size: 15px;
   font-weight: 400;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 2px 0;
   position: relative;
   opacity: 0.9;
   transition: opacity 0.2s;
@@ -223,15 +235,7 @@
   opacity: 1;
 }
 
-.desktop-nav .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1.5px;
-  background: #fff;
-}
+
 
 /* ─── Nav item popup (desktop) ─── */
 .nav-item-wrapper {
@@ -353,11 +357,11 @@
   }
 
   .header-desktop-lower {
-    padding: 12px 20px 16px;
+    padding: 6px 20px 8px;
   }
 
   .lower-nav-row {
-    gap: 6px 22px;
+    gap: 4px 22px;
   }
 }
 

@@ -11,40 +11,19 @@ import CartIcon from "../assets/header/cards.png";
 
 const DEFAULT_LINKS = ["Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
 
-// Second bar under the header — 3 rows, each centered independently.
-// Entries with hasDropdown show a chevron and open a subcategory popup.
-// Second bar under the header — exactly 3 rows.
-// Row 1 ends at "Haaram"; everything else is redistributed across rows 2 & 3.
-// Second bar under the header — 3 rows, matching the reference exactly.
-const LOWER_NAV_ROWS = [
-  [
-    { name: "All Products" },
-    { name: "New Arrivals" },
-    { name: "Neckpiece", hasDropdown: true },
-    { name: "Party Wears" },
-    { name: "Haaram", hasDropdown: true },
-    { name: "Bangles", hasDropdown: true },
-    { name: "Earrings", hasDropdown: true },
-    { name: "Hip Accessories", hasDropdown: true },
-    { name: "Hair Accessories", hasDropdown: true },
-  ],
-  [
-    { name: "Nagas Temple Designers" },
-    { name: "Micro Gold Platings" },
-    { name: "Under 999" },
-    { name: "Bridal Essentials" },
-    { name: "GJ polish diamond insp" },
-    { name: "Restocked" },
-    { name: "Sales" },
-    { name: "Others", hasDropdown: true },
-  ],
-  [
-    { name: "Non - Idol Collection" },
-    { name: "Mugappu Chain" },
-    { name: "Chic - Office Wear" },
-    { name: "Vintage Collection" },
-  ],
-];
+// Max items per row in the lower nav bar before wrapping to a new row
+const ITEMS_PER_ROW = 9;
+
+// Splits an array into chunks of `size`
+const chunkArray = (arr, size) => {
+  const rows = [];
+  for (let i = 0; i < arr.length; i += size) {
+    rows.push(arr.slice(i, i + size));
+  }
+  return rows;
+};
+
+
 
 // Generates placeholder subcategory names like Ring1, Ring2, Ring3
 // Replace with real subcategories from your store once available (category.subcategories = [{ name }, ...])
@@ -124,7 +103,7 @@ const LoginDropdown = () => {
 
 // Desktop nav item: click toggles a popup of subcategories below it.
 // Shows a divider + chevron icon when the item has subcategories.
-const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick }) => {
+const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick, isLower = false }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -156,16 +135,21 @@ const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick }) => {
     onSubClick(link, sub);
   };
 
+  const linkClass = isLower ? "lower-nav-link" : "nav-link";
+  const caretClass = isLower ? "lower-nav-caret-icon" : "nav-caret-icon";
+  const popupClass = isLower ? "nav-popup lower-nav-popup" : "nav-popup";
+  const wrapperClass = isLower ? "lower-nav-item-wrapper" : "nav-item-wrapper";
+
   return (
-    <div className="nav-item-wrapper" ref={ref}>
+    <div className={wrapperClass} ref={ref}>
       <button
-        className={`nav-link ${isActive ? "active" : ""} ${hasPopup ? "has-caret" : ""}`}
+        className={`${linkClass} ${isActive ? "active" : ""} ${hasPopup ? "has-caret" : ""}`}
         onClick={handleMainClick}
       >
         <span>{link}</span>
         {hasPopup && (
           <svg
-            className={`nav-caret-icon ${open ? "open" : ""}`}
+            className={`${caretClass} ${open ? "open" : ""}`}
             viewBox="0 0 24 24"
             fill="none"
             width="14"
@@ -183,80 +167,7 @@ const NavItem = ({ link, isActive, categories, onLinkClick, onSubClick }) => {
       </button>
 
       {hasPopup && open && (
-        <div className="nav-popup">
-          {subcategories.map((sub) => (
-            <button
-              key={sub}
-              className="nav-popup-item"
-              onClick={() => handleSubClick(sub)}
-            >
-              {sub}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Lower-bar nav item: same popup behavior as NavItem, white-on-navbar styling.
-const LowerNavItem = ({ item, categories, onLinkClick, onSubClick }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  const subcategories = useMemo(
-    () => (item.hasDropdown ? getSubcategories(item.name, categories) : []),
-    [item, categories]
-  );
-  const hasPopup = item.hasDropdown && subcategories.length > 0;
-
-  useEffect(() => {
-    if (!hasPopup) return;
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [hasPopup]);
-
-  const handleMainClick = () => {
-    if (!hasPopup) {
-      onLinkClick(item.name);
-      return;
-    }
-    setOpen((o) => !o);
-  };
-
-  const handleSubClick = (sub) => {
-    setOpen(false);
-    onSubClick(item.name, sub);
-  };
-
-  return (
-    <div className="lower-nav-item-wrapper" ref={ref}>
-      <button className="lower-nav-link" onClick={handleMainClick}>
-        <span>{item.name}</span>
-        {hasPopup && (
-          <svg
-            className={`lower-nav-caret-icon ${open ? "open" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            width="13"
-            height="13"
-          >
-            <path
-              d="M6 9l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
-
-      {hasPopup && open && (
-        <div className="nav-popup lower-nav-popup">
+        <div className={popupClass}>
           {subcategories.map((sub) => (
             <button
               key={sub}
@@ -338,28 +249,6 @@ const MobileNavItem = ({ link, categories, onLinkClick, onSubClick }) => {
   );
 };
 
-// Mobile version of the lower bar — flattened into one accordion section
-const MobileLowerNav = ({ categories, onLinkClick, onSubClick }) => {
-  const allItems = LOWER_NAV_ROWS.flat();
-
-  return (
-    <div className="mobile-collections">
-      <p className="mobile-collections-title">Collections</p>
-      <div className="mobile-collections-links">
-        {allItems.map((item) => (
-          <MobileNavItem
-            key={item.name}
-            link={item.name}
-            categories={item.hasDropdown ? categories : []}
-            onLinkClick={onLinkClick}
-            onSubClick={onSubClick}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
 export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -375,7 +264,8 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
     fetchCategories();
   }, [fetchCategories]);
 
-  const NAV_LINKS = useMemo(() => {
+  // All available navigation category links
+  const allNavLinks = useMemo(() => {
     const customNames = (categories || [])
       .map(c => c.name)
       .filter(Boolean)
@@ -383,6 +273,17 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
     return ["Home", ...DEFAULT_LINKS, ...customNames];
   }, [categories]);
+
+  // Top navbar shows fixed maximum of 8 categories
+  const topNavLinks = useMemo(() => allNavLinks.slice(0, 8), [allNavLinks]);
+
+  // Lower navbar shows remaining categories, chunked into rows of 8 items
+  const lowerNavNames = useMemo(() => allNavLinks.slice(8), [allNavLinks]);
+
+  const lowerNavRows = useMemo(
+    () => chunkArray(lowerNavNames, 8),
+    [lowerNavNames]
+  );
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -429,7 +330,7 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
           </div>
 
           <nav className="desktop-nav">
-            {NAV_LINKS.map((link) => (
+            {topNavLinks.map((link) => (
               <NavItem
                 key={link}
                 link={link}
@@ -477,26 +378,30 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
           </div>
         </div>
 
-        <div className="header-desktop-lower">
-          {LOWER_NAV_ROWS.map((row, i) => (
-            <nav className="lower-nav-row" key={i}>
-              {row.map((item) => (
-                <LowerNavItem
-                  key={item.name}
-                  item={item}
-                  categories={categories}
-                  onLinkClick={handleLinkClick}
-                  onSubClick={handleSubClick}
-                />
-              ))}
-            </nav>
-          ))}
-        </div>
+        {lowerNavRows.length > 0 && (
+          <div className="header-desktop-lower">
+            {lowerNavRows.map((row, i) => (
+              <nav className="lower-nav-row" key={i}>
+                {row.map((name) => (
+                  <NavItem
+                    key={name}
+                    link={name}
+                    isActive={name === activeLink}
+                    categories={categories}
+                    onLinkClick={handleLinkClick}
+                    onSubClick={handleSubClick}
+                    isLower={true}
+                  />
+                ))}
+              </nav>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
         <nav className="mobile-nav-links">
-          {NAV_LINKS.map((link) => (
+          {topNavLinks.map((link) => (
             <MobileNavItem
               key={link}
               link={link}
@@ -507,11 +412,22 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
           ))}
         </nav>
 
-        <MobileLowerNav
-          categories={categories}
-          onLinkClick={handleLinkClick}
-          onSubClick={handleSubClick}
-        />
+        {lowerNavNames.length > 0 && (
+          <div className="mobile-collections">
+            <p className="mobile-collections-title">Collections</p>
+            <div className="mobile-collections-links">
+              {lowerNavNames.map((name) => (
+                <MobileNavItem
+                  key={name}
+                  link={name}
+                  categories={categories}
+                  onLinkClick={handleLinkClick}
+                  onSubClick={handleSubClick}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
