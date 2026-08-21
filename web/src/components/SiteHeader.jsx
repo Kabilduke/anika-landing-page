@@ -414,7 +414,6 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
 
         {lowerNavNames.length > 0 && (
           <div className="mobile-collections">
-            <p className="mobile-collections-title">Collections</p>
             <div className="mobile-collections-links">
               {lowerNavNames.map((name) => (
                 <MobileNavItem

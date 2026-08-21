@@ -480,8 +480,12 @@
   }
 
   .mobile-menu.open {
-    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
+    max-height: calc(100vh - 64px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-bottom: 80px;
   }
 
   .mobile-nav-links {
@@ -558,8 +562,8 @@
   }
 
   .mobile-collections {
-    border-top: 8px solid #f5f5f5;
-    padding-top: 4px;
+    border-top: none;
+    padding-top: 0;
   }
 
   .mobile-collections-title {
