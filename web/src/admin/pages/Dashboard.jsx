@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import { productService } from "../../services/productService";
 import { useAdminData } from "../../hooks/useAdminData";
-import { Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useLocation, Navigate, useSearchParams } from "react-router-dom";
 import { useStore } from "../../hooks/useStore";
 import "./Dashboard.css";
 
@@ -21,7 +21,13 @@ import dropdownIcon from "../../assets/admin/dropdown.png";
 
 import AddProduct from "./addproduct";
 import ProductList from "./productlist";
+
 import AddCategory from "./addcategory";
+import SubCategoryForm from "./cat/FormCategory";
+import SubCategory from "./cat/SubCategory";
+
+import ProductVariant from "./variant/ProductVariant";
+
 import CategoryList from "./categorylist";
 import AllOrders from "./Allorders";
 import OrderDetails from "./Orderdetails";
@@ -505,6 +511,7 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
     };
   }, [orders, customers]);
 
+
   return (
     <div className="dc">
       <div className="dc__page-title-wrapper">
@@ -532,6 +539,23 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
 };
 
 
+// Sub category Setup
+  function SubcategoryByParent({ onSave, navigate, categories }) {
+    const [searchParams] = useSearchParams();
+    const parentId = searchParams.get("parentId");
+    const parentCategory = categories.find(
+      (c) => String(c.category_id ?? c_id) === String(parentId)
+    );
+    return (
+      <SubCategoryForm
+        parentId={parentId}
+        categories={categories}
+        onBack={() => navigate("/admin/categories")}
+        onDiscard={() => navigate("/admin/categories")}
+        onSave={onSave}
+      />
+    );
+  }
 
 // ── Main Dashboard Layout ───────────────────────────────────────
 const Dashboard = () => {
@@ -546,7 +570,10 @@ const Dashboard = () => {
 
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
+
   const [categories, setCategories] = useState([]);
+  const [subcategoriesCache, setSubcategoriesCache] = useState({});
+
   const [editingCategory, setEditingCategory] = useState(null);
   const selectedOrder = useStore((state) => state.selectedAdminOrder);
   const setSelectedOrder = useStore((state) => state.setSelectedAdminOrder);
@@ -686,6 +713,7 @@ const Dashboard = () => {
     images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
     image: row.image_url || null,
     category: row.categories?.name || row.category || "",
+    subcategory: row.subcategories?.name || null,
     status: row.is_active ? "Visible" : "Draft",
   });
 
@@ -718,11 +746,43 @@ const Dashboard = () => {
   const showSearchNavbar = ["/admin/categories", "/admin/categories/add", "/admin/products/add", "/admin/orders", "/admin/orders/detail", "/admin/customers", "/admin/customers/detail", "/admin/banners"].some(p => currentPath.startsWith(p));
   const hideAddProduct = HIDE_ADD_PRODUCT_PATHS.includes(currentPath);
 
+  const fetchSubcategoriesForParent = useCallback(async (parentId, force = false) =>{
+    if (!force && subcategoriesCache[parentId]) {
+      return subcategoriesCache[parentId];
+    }
+    const data = await productService.getSubCategories(parentId);
+    setSubcategoriesCache((prev) => ({ ...prev, [parentId]: data }));
+    return data;
+  }, [subcategoriesCache]);
+
+  function SubcategoryCard({ navigate, categories, products}){
+    const [searchParams] = useSearchParams();
+    const parentId = searchParams.get("parentId");
+    const parentCategory = categories.find(
+      (c) => String(c.category_id ?? c.id) === String(parentId)
+    );
+    return (
+      <SubCategory
+        parentCategory={parentCategory}
+        subcategories={subcategoriesCache[parentId]}
+        products={products}
+        onFetchSubcategories={fetchSubcategoriesForParent}
+        onBack={() => navigate("/admin/categories")}
+        onAddSubcategory={() => navigate(`/admin/subcategories/new?parentId=${parentId}`)}
+      />
+    );
+  }
+
+
   // ── Handlers ──────────────────────────────────────────────────
   const goToAddProduct = () => {
     setEditingProduct(null);
     navigate("/admin/products/add");
   };
+
+  const goToAddMultipleProduct = () =>{
+    navigate("/admin/products/add-multiple");
+  }
 
   const goToOrder = () =>{
     setSelectedOrder(null);
@@ -733,8 +793,6 @@ const Dashboard = () => {
     setEditingProduct(product);
     navigate("/admin/products/add");
   };
-
-
 
   const handleDeleteProduct = async (id) => {
     try {
@@ -772,6 +830,45 @@ const Dashboard = () => {
     setEditingCategory(null);
     navigate("/admin/categories/add");
   };
+
+  const handleOpenSubcategory = (cat) =>{
+    const parentId = cat.category_id || cat.id;
+
+    if(!parentId){
+      console.error("Category ID missing:", cat);
+      return;
+    }
+    navigate(`/admin/subcategories?parentId=${parentId}`);
+    // navigate(`/admin/subcategories/new?parentId=${parentId}`);
+  };
+
+  const handleSubCategorySave = (data) => {
+    setSubcategoriesCache((prev) => {
+      const existingList = prev[data.parent_id] || [];
+      const alreadyExists = existingList.some((s) => s.subcategory_id === data.subcategory_id);
+      const updatedList = alreadyExists
+        ? existingList.map((s) => (s.subcategory_id === data.subcategory_id ? data : s))
+        : [data, ...existingList];
+
+      return { ...prev, [data.parent_id]: updatedList };
+    });
+    navigate(`/admin/subcategories?parentId=${data.parent_id}`);
+  };
+
+  const handleSubCategoryUpdate = (data) => {
+    setSubcategoriesCache((prev) => ({
+      ...prev,
+      [data.parent_id]: (prev[data.parent_id] || []).map((s) =>
+        s.subcategory_id === data.subcategory_id ? data : s
+      ),
+    }));
+    navigate(`/admin/subcategories?parentId=${data.parent_id}`);
+  };
+
+  const handleSaveMultipleProduct = (data) =>{
+    console.log("Multi-variant product to save:", data);
+    navigate("/admin/products");
+  }
 
   const handleEditCategory = (cat) => {
     setEditingCategory(cat);
@@ -1041,11 +1138,70 @@ const Dashboard = () => {
             <Route path="/analytics" element={<Analytics />} />
 
             {/* Products */}
-            <Route path="/products" element={<ProductList products={products} onAddProduct={goToAddProduct} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} />} />
-            <Route path="/products/add" element={<AddProduct initialData={editingProduct} onBack={() => { setEditingProduct(null); navigate("/admin/products"); }} onPublish={handlePublish} onSaveDraft={handleSaveDraft} />} />
+            <Route path="/products" element={
+              <ProductList 
+                products={products} 
+                onAddProduct={goToAddProduct} 
+                onEditProduct={handleEditProduct} 
+                onDeleteProduct={handleDeleteProduct} 
+              />} />
+            <Route path="/products/add" element={
+              <AddProduct 
+                initialData={editingProduct} 
+                onBack={() => { setEditingProduct(null); navigate("/admin/products"); }} 
+                onPublish={handlePublish} 
+                onSaveDraft={handleSaveDraft} 
+                onAddVariant={goToAddMultipleProduct}
+              />} />
+
+            <Route path="/products/add-multiple" element={
+              <ProductVariant
+                categories={categories}
+                onGoToRoot={() => navigate("/admin/categories")}
+                onBack={() => navigate("/admin/products/add")}
+                onSave={handleSaveMultipleProduct}
+                subcategoriesCache={subcategoriesCache}
+                onFetchSubcategories={fetchSubcategoriesForParent}
+              />} />
 
             {/* Categories */}
-            <Route path="/categories" element={<CategoryList categories={categories} onAddCategory={goToAddCategory} onEditCategory={handleEditCategory} onDeleteCategory={handleDeleteCategory} />} />
+            <Route path="/categories" element={
+              <CategoryList 
+                categories={categories}
+                setCategories={setCategories} 
+                onAddCategory={goToAddCategory} 
+                // onAddSubcategory={handleAddSubcategory} 
+                onOpenSubcategory={handleOpenSubcategory}
+                onEditCategory={handleEditCategory} 
+                onDeleteCategory={handleDeleteCategory} 
+              />
+             } 
+            />
+
+            <Route
+              path="/subcategories/new"
+              element = {
+                <SubcategoryByParent
+                  navigate={navigate}
+                  categories={categories}
+                  onSave={handleSubCategorySave}
+                />
+              }
+            />
+
+            <Route
+              path="/subcategories"
+              element = {
+                <SubcategoryCard
+                  navigate={navigate}
+                  categories={categories}
+                  products={products}
+                  subcategoriesCache={subcategoriesCache}
+                  fetchSubcategoriesForParent={fetchSubcategoriesForParent}
+                />
+              }
+            />
+
             <Route path="/categories/add" element={<AddCategory initialData={editingCategory} onBack={() => { setEditingCategory(null); navigate("/admin/categories"); }} onPublish={handlePublishCategory} onSaveDraft={handleSaveDraftCategory} />} />
 
             {/* Orders */}

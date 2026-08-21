@@ -405,6 +405,21 @@
   white-space: nowrap;
 }
 
+.pl-subcategory-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f0fdf4;
+  color: #16a34a;
+  white-space: nowrap;
+}
+
+.pl-subcategory-none {
+  color: #ccc;
+  font-size: 13px;
+}
+
 /* ── Price ── */
 .pl-price-col {
   width: 100px;
@@ -412,6 +427,18 @@
   color: #1a1a1a;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.pl-price-compare {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.pl-price-final {
+  font-weight: 600;
+  color: #1c1c1e;
 }
 
 /* ── Stock ── */

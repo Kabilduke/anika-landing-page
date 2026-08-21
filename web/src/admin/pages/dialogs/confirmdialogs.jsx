@@ -1,0 +1,38 @@
+import React from "react";
+import "./confirmdialogs.css";
+
+const ConfirmDialog = ({
+  title = "Are You Sure?",
+  message,
+  confirmLabel = "Save",
+  cancelLabel = "Cancel",
+  onConfirm,
+  onCancel,
+}) => {
+  return (
+    <div className="confirm-dialog-backdrop" onClick={onCancel}>
+      <div className="confirm-dialog-card" onClick={(e) => e.stopPropagation()}>
+        <h2 className="confirm-dialog-title">{title}</h2>
+        <p className="confirm-dialog-message">{message}</p>
+        <div className="confirm-dialog-actions">
+          <button
+            type="button"
+            className="confirm-dialog-btn confirm-dialog-btn-outline"
+            onClick={onCancel}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className="confirm-dialog-btn confirm-dialog-btn-dark"
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConfirmDialog;

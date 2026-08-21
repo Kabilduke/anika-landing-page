@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+
+// const navigate = useNavigate();
 
 // ─── Responsive hook ──────────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -42,13 +46,15 @@ const NoResultsSVG = () => (
 );
 
 // ─── Grid Card ────────────────────────────────────────────────────────────────
-const GridCard = ({ cat, onEdit, onDelete }) => {
+const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
   // Check categoryImage first, then fall back to images array or legacy image field
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
-    <div style={{
-      background: "#fff", borderRadius: 14, border: "1px solid #e8e8e8",
-      overflow: "hidden",
+    <div 
+      onClick={() => onSelect(cat)}
+      style={{
+        background: "#fff", borderRadius: 14, border: "1px solid #e8e8e8",
+        overflow: "hidden",
     }}>
       <div style={{ padding: "10px 10px 0 10px" }}>
         <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", borderRadius: 8, border: "1px solid #ebebeb" }}>
@@ -67,11 +73,17 @@ const GridCard = ({ cat, onEdit, onDelete }) => {
         <div style={{ display: "flex", gap: 8 }}>
           <button
             style={{ background: "#eff6ff", color: "#3b82f6", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
-            onClick={() => onEdit(cat)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(cat);
+            }}
           >Edit</button>
           <button
             style={{ background: "#fff0f0", color: "#ef4444", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}
-            onClick={() => onDelete(cat.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(cat.category_id || cat.id);
+            }}
           >Delete</button>
         </div>
       </div>
@@ -80,10 +92,12 @@ const GridCard = ({ cat, onEdit, onDelete }) => {
 };
 
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
-const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete }) => {
+const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcategory}) => {
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
-    <div style={{
+    <div 
+    onClick={() => onOpenSubcategory(cat)}
+    style={{
       display: "flex", alignItems: "flex-start", gap: 12,
       padding: "14px 16px", borderBottom: "1px solid #f5f5f5",
       background: selected ? "#fafffe" : "#fff",
@@ -252,6 +266,8 @@ const CategoryList = ({
   categories = [],
   setCategories,
   onAddCategory,
+  // onAddSubcategory,
+  onOpenSubcategory,
   onEditCategory,
   onDeleteCategory,
 }) => {
@@ -377,7 +393,7 @@ const CategoryList = ({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          {isXS ? "Add" : "Add category"}
+          {isXS ? "Add" : "Add Category"}
         </button>
       </div>
     </div>
@@ -460,10 +476,12 @@ const CategoryList = ({
                 <MobileCard
                   key={cat.id}
                   cat={cat}
-                  selected={selectedIds.includes(cat.id)}
-                  onSelect={() => toggleOne(cat.id)}
+                  selected={selectedCategories.includes(cat.category_id || cat.id)}
+                  onSelect={() => handleSelectCategory(cat)}
+                  // onSelect={() => toggleOne(cat.id)}
                   onEdit={onEditCategory}
                   onDelete={handleDeleteClick}
+                  onOpenSubcategory={onOpenSubcategory}
                 />
               ))}
         </>
@@ -558,7 +576,13 @@ const CategoryList = ({
         : (
           <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: isXS ? 12 : 16 }}>
             {filtered.map((cat) => (
-              <GridCard key={cat.id} cat={cat} onEdit={onEditCategory} onDelete={handleDeleteClick} />
+              <GridCard 
+                key={cat.id} 
+                cat={cat} 
+                onEdit={onEditCategory} 
+                onDelete={handleDeleteClick} 
+                onSelect={onOpenSubcategory}
+              />
             ))}
           </div>
         )}

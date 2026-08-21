@@ -24,7 +24,7 @@ export const productService = {
   async getProducts() {
     const { data, error } = await supabase
       .from('products')
-      .select('*, categories(name)')
+      .select('*, categories(name), subcategories(name)')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
@@ -227,5 +227,94 @@ export const productService = {
 
     if (error) throw error;
     return data || [];
-  }
+  },
+
+  async uploadSubcategoryImage(filePath, file) {
+    const { data, error } = await supabase.storage
+      .from('subcategories_img')   // create this bucket in Supabase Storage first
+      .upload(filePath, file);
+    if (error) throw error;
+    return data;
+  },
+
+  getSubcategoryImagePublicUrl(filePath, width = 400) {
+    const { data } = supabase.storage
+      .from('subcategories_img')
+      .getPublicUrl(filePath, {
+        transform: { 
+          width, 
+          quality: 75 
+        },
+      });
+    return data.publicUrl;
+  },
+
+   /**
+   * Retrieves subcategories.
+   * @param {number|null} parentId
+   * @returns {Promise<any[]>}
+   */
+  async getSubCategories(parentId = null) {
+    let query = supabase
+      .from("subcategories")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (parentId !== null && parentId !== undefined) {
+      query = query.eq("parent_id", parentId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Creates a subcategory.
+   * @param {object} payload
+   * @returns {Promise<any>}
+   */
+  async createSubcategory(payload) {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Updates a subcategory.
+   * @param {string} id
+   * @param {object} payload
+   * @returns {Promise<any>}
+   */
+  async updateSubcategory(id, payload) {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .update(payload)
+      .eq("subcategory_id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Deletes a subcategory.
+   * @param {string} id
+   * @returns {Promise<void>}
+   */
+  async deleteSubcategory(id) {
+    const { error } = await supabase
+      .from("subcategories")
+      .delete()
+      .eq("subcategory_id", id);
+
+    if (error) throw error;
+  },
 };

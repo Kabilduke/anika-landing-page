@@ -3,14 +3,33 @@ import { productService } from "../../services/productService";
 import back from "../../assets/admin/back.png";
 import "./addproduct.css";
 
+const COLOR_SWATCHES = [
+  "#EF4444", // red
+  "#F5A623", // orange
+  "#E5C100", // yellow
+  "#8B5E34", // brown
+  "#8BC34A", // light green
+  "#3C8B0A", // green
+  "#8B2FC9", // purple
+  "#C026D3", // magenta
+  "#3B82F6", // blue
+  "#2DD4BF", // teal
+  "#A7F3D0", // pale green
+  "#111827", // black
+  "#9CA3AF", // gray
+  "#E5E7EB", // light gray
+  "#FFFFFF", // white
+];
+
 const EMPTY_FORM = {
   name: "",
   description: "",
   sku: "",
   category_id: "",
+  subcategory_id: "",
   price: "",
   compare_price: "",
-  discount_price: "",
+  // discount_price: "",
   stock: "",
   stock_alert: "",
   material: "",
@@ -65,7 +84,7 @@ const compressImage = async (file, maxWidth = 1200, quality = 0.8) => {
   });
 };
 
-export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData }) {
+export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVariant, initialData }) {
   const isEditing = !!initialData;
 
   const [form, setForm] = useState(() =>
@@ -75,15 +94,16 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         description: initialData.description || "",
         sku: initialData.sku || "",
         category_id: initialData.category_id || "",
+        subcategory_id: initialData.subcategory_id || "",
         price: initialData.price || "",
         compare_price: initialData.compare_price || "",
-        discount_price: initialData.discount_price || "",
+        // discount_price: initialData.discount_price || "",
         stock: initialData.stock || "",
         stock_alert: initialData.stock_alert || "",
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: initialData.colors?.join(", ") || "",
+        colors: initialData.colors || "",
         care: initialData.care || "",
       }
       : EMPTY_FORM
@@ -93,6 +113,10 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   const [rawFiles, setRawFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [loadingSubcategories, setLoadingSubcategories] = useState(false);
+  const [errors, setErrors] = useState({});
+  const sanitizeInteger = (value) => value.replace(/[^0-9]/g, "");
   const [visibility, setVisibility] = useState([
     initialData?.is_active ?? false,
     initialData?.is_featured ?? false,
@@ -116,6 +140,37 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (!form.category_id){
+      setSubcategories([]);
+      return;
+    }
+
+    const fetchSubcategories = async () => {
+      setLoadingSubcategories(true);
+      try {
+        const data = await productService.getSubCategories(form.category_id);
+        setSubcategories(data || []);
+      } catch (err) {
+        console.error("Failed to load subcategories:", err);
+        setSubcategories([]);
+      } finally {
+        setLoadingSubcategories(false);
+      }
+    };
+    fetchSubcategories();
+  }, [form.category_id])
+
+  const validatePricing = (priceVal, comparePriceVal)=>{
+    const price = parseFloat(priceVal);
+    const comparePrice = parseFloat(comparePriceVal);
+
+    if (!isNaN(price) && !isNaN(comparePrice) && comparePrice > 0 && price >= comparePrice){
+      return "Price must be lower than MRP (Compare-at Price)";
+    }
+    return null;
+  };
+
   // Reset form when initialData changes
   useEffect(() => {
     if (initialData) {
@@ -124,9 +179,10 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         description: initialData.description || "",
         sku: initialData.sku || "",
         category_id: initialData.category_id || "",
+        subcategory_id: initialData.subcategory_id || "",
         price: initialData.price || "",
         compare_price: initialData.compare_price || "",
-        discount_price: initialData.discount_price || "",
+        // discount_price: initialData.discount_price || "",
         stock: initialData.stock || "",
         stock_alert: initialData.stock_alert || "",
         material: initialData.material || "",
@@ -174,6 +230,10 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   const toggleVis = (i) =>
     setVisibility((v) => v.map((val, idx) => (idx === i ? !val : val)));
 
+  const selectColor = (hex) =>{
+    setForm((f) => ({ ...f, colors: hex }));
+  };
+
   // ── Upload All Images to Supabase ────────────────────────────
   const uploadAllImages = async () => {
     if (rawFiles.length === 0) return { urls: images, error: null };
@@ -205,6 +265,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
 
   // ── Save Product to Database ─────────────────────────────────
   const saveProduct = async (status) => {
+    console.log("category_id:", form.category_id, "subcategory_id:", form.subcategory_id); 
     const { urls, error: uploadError } = await uploadAllImages();
     if (uploadError) {
       alert("Failed to upload images: " + uploadError.message);
@@ -216,15 +277,16 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       description: form.description,
       sku: form.sku,
       category_id: parseInt(form.category_id) || null,
+      subcategory_id: form.subcategory_id || null,
       price: parseFloat(form.price) || 0,
       compare_price: parseFloat(form.compare_price) || null,
-      discount_price: parseFloat(form.discount_price) || null,
+      // discount_price: parseFloat(form.discount_price) || null,
       stock: parseInt(form.stock) || 0,
       stock_alert: parseInt(form.stock_alert) || null,
       material: form.material,
       weight: parseFloat(form.weight) || null,
       sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
-      colors: form.colors ? form.colors.split(",").map((c) => c.trim()) : null,
+      colors: form.colors || null,
       care: form.care,
       image_url: urls[0] || null,
       images: urls,
@@ -251,14 +313,45 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
   const handlePublish = async () => {
     if (!form.name.trim()) { alert("Product name is required."); return; }
     if (!form.price) { alert("Price is required."); return; }
+    if (errors.price) { alert(errors.price); return; }
     const result = await saveProduct("Visible");
     if (!result.error && onPublish) onPublish(result.data);
   };
 
   const handleDraft = async () => {
     if (!form.name.trim()) { alert("Product name is required."); return; }
+    if (errors.price) { alert(errors.price); return; } 
     const result = await saveProduct("Draft");
     if (!result.error && onSaveDraft) onSaveDraft(result.data);
+  };
+
+  const handleCategoryChange = (e) =>{
+    const newCategoryId = e.target.value;
+    setForm((f) => ({ ...f, category_id: newCategoryId, subcategory_id: "" }));
+  };
+
+  const handlePriceChange  = (e) =>{
+    const value = sanitizeInteger(e.target.value);
+    setForm((f) => {
+      const updated = { ...f, price: value };
+      const error = validatePricing(value, updated.compare_price);
+      setErrors((prev) => ({ ...prev, price: error }));
+      return updated;
+    });
+  };
+
+  const handleComparePriceChange = (e) =>{
+    const value = sanitizeInteger(e.target.value);
+    setForm((f) => {
+      const updated = { ...f, compare_price: value };
+      const error = validatePricing(updated.price, value);
+      setErrors((prev) => ({ ...prev, price: error }));
+      return updated;
+    });
+  };
+
+  const handleAddVariant = () => {
+    onAddVariant?.();
   };
 
   return (
@@ -269,6 +362,15 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
           <img src={back} alt="Back" />
         </button>
         <h1>{isEditing ? "Edit Product" : "Add Product"}</h1>
+        {!isEditing && (
+          <button
+            type="button"
+            className="btn-draft ap-header-variant-btn"
+            onClick={handleAddVariant}
+          >
+            + Add Multiple Product
+          </button>
+        )}
       </div>
 
       {/* ── Name & Description ── */}
@@ -290,7 +392,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
             onChange={set("description")}
           />
         </div>
-        <div className="row-2">
+        <div className="grid3-wrap">
           <div className="field">
             <label>SKU</label>
             <input
@@ -313,6 +415,27 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
                 </option>
               ))}
             </select>
+          </div>
+          <div className="field">
+            <label>Subcategory <span className="scc-optional-tag">optional</span></label>
+            {!form.category_id ? (
+              <select disabled>
+                <option>Select a category first</option>
+              </select>
+            ) : loadingSubcategories ? (
+              <div className="auto-hint">Loading subcategories…</div>
+            ): subcategories.length > 0 ? (
+              <select value={form.subcategory_id} onChange={set("subcategory_id")}>
+                <option value="">No subcategory</option>
+                {subcategories.map((sub)=>(
+                  <option key={sub.subcategory_id} value={sub.subcategory_id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            ):(
+              <div className="auto-hint">No subcategories — listed under category directly.</div>
+            )}
           </div>
         </div>
       </div>
@@ -395,34 +518,42 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
       <div className="card">
         <div className="card-title">Price &amp; Stock</div>
 
-        <div className="grid3-wrap">
+        <div className="row-2">
           <div className="field">
             <label>Price (₹)</label>
             <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="Eg: 2000"
               value={form.price}
-              onChange={set("price")}
+              onChange={handlePriceChange}
+              className={errors.price ? "input-error" : ""}
             />
+            {errors.price && <div className="field-warning">{errors.price}</div>}
           </div>
           <div className="field">
-            <label>Compare-at Price (₹)</label>
+            <label>MRP Price (₹)</label>
             <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="Eg: 2000"
               value={form.compare_price}
-              onChange={set("compare_price")}
+              onChange={handleComparePriceChange}
             />
           </div>
-          <div className="field">
+          {/* <div className="field">
             <label>Discount Price (₹)</label>
             <input
               placeholder="Eg: 2000"
               value={form.discount_price}
               onChange={set("discount_price")}
             />
-          </div>
+          </div> */}
         </div>
 
-        <div className="grid3-wrap">
+        <div className="row-2">
           <div className="field">
             <label>Stock Quantity</label>
             <input
@@ -441,8 +572,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
           </div>
           <div />
         </div>
-
-        <div className="auto-hint">Auto Generated Or Enter Manually</div>
       </div>
 
       {/* ── Product Details ── */}
@@ -479,11 +608,33 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
         <div className="grid3-wrap">
           <div className="field">
             <label>Colors</label>
-            <input
-              placeholder="Eg: Red, Green, Blue"
-              value={form.colors}
-              onChange={set("colors")}
-            />
+            <div className="ap-color-grid">
+              {COLOR_SWATCHES.map((c) =>(
+                <button
+                  key={c}
+                  type="button"
+                  className={`ap-color-swatch${
+                    form.colors.includes(c) ? " ap-color-swatch--selected" : ""
+                  }${c === "#FFFFFF" ? " ap-color-swatch--white" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => selectColor(c)}
+                  aria-label={`Select color ${c}`}
+                >
+                  {form.colors.includes(c) && (
+                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                      <path
+                        d="M1 5L4.2 8.2L11 1"
+                        stroke={c === "#FFFFFF" ? "#111827" : "#fff"}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+              ))}
+
+            </div>
           </div>
           <div className="field">
             <label>Care Instructions</label>
@@ -492,7 +643,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, initialData
               value={form.care}
               onChange={set("care")}
             />
-            <div className="auto-hint">Auto Generated Or Enter Manually</div>
           </div>
           <div />
         </div>
