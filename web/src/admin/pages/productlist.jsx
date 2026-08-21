@@ -5,9 +5,7 @@ import editIcon from "../../assets/admin/Edit.png";
 import trashIcon from "../../assets/admin/Trash.png";
 
 const getFinalPrice = (product) => {
-  const rawPrice = parseFloat(product.price) || 0;
-  const rawDiscount = parseFloat(product.discount_price) || 0;
-  return rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+  return parseFloat(product.price) || 0;
 };
 
 const getCategoryStyle = (category) => {
@@ -57,6 +55,9 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
       </div>
       <div className="pl-mobile-card__meta">
         <span className="pl-category-badge" style={getCategoryStyle(product.category)}>{product.category}</span>
+        {product.subcategory && (
+          <span className="pl-subcategory-badge">{product.subcategory}</span>  
+        )}
         <span className="pl-stock-low">{product.stock} left</span>
         <span className={`pl-status-badge ${product.status === "Visible" ? "pl-status-visible" : product.status === "Draft" ? "pl-status-draft" : ""}`}>{product.status}</span>
         <span className="pl-mobile-card__price">{"Rs." + getFinalPrice(product).toLocaleString()}</span>
@@ -76,6 +77,10 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedStock, setSelectedStock] = useState("All");
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  const [selectedSubcategory, setSelectedSubcategory] = useState("All");
+  const [subcategoryOpen, setSubcategoryOpen] = useState(false);
+
   const [statusOpen, setStatusOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
@@ -84,6 +89,9 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const STATUSES = ["All", "Visible", "Draft"];
   const STOCKS = ["All", "In Stock", "Low Stock", "Out of Stock"];
 
+  const SUBCATEGORIES = ["All", ...new Set(
+    products.map((p) => p.subcategory).filter(Boolean)
+  )];
 
   // Detect mobile card breakpoint
   const [isMobileCard, setIsMobileCard] = useState(window.innerWidth <= 540);
@@ -100,13 +108,14 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
       p.sku?.toLowerCase().includes(q);
 
     const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
+    const matchSubcategory = selectedSubcategory === "All" || p.subcategory === selectedSubcategory; 
     const matchStatus   = selectedStatus === "All"   || p.status === selectedStatus;
     const matchStock    = selectedStock === "All"    ||
       (selectedStock === "In Stock"    && p.stock > 5)  ||
       (selectedStock === "Low Stock"   && p.stock > 0 && p.stock <= 5) ||
       (selectedStock === "Out of Stock" && p.stock === 0);
 
-    return matchSearch && matchCategory && matchStatus && matchStock;
+    return matchSearch && matchCategory && matchSubcategory && matchStatus && matchStock; 
   });
 
   const totalItems = filteredProducts.length;
@@ -215,9 +224,30 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
           )}
         </div>
 
+        {/* Subcategory Dropdown — new */}
+        <div className="pl-dropdown-wrap" style={{ position: 'relative'}}>
+          <div className="pl-dropdown" onClick={() => { setSubcategoryOpen(o => !o); setCategoryOpen(false); setStatusOpen(false); setStockOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18M3 12h12M3 18h6" />
+            </svg>
+            <span>{selectedSubcategory === "All" ? "All subcategories" : selectedSubcategory}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </div>
+          {subcategoryOpen && (
+            <div className="pl-dropdown-menu">
+              {SUBCATEGORIES.map(s => (
+                <div  key={s} className= {`pl-dropdown-item ${selectedSubcategory === s ? 'active' : ''}`}
+                onClick={() => { setSelectedSubcategory(s); setSubcategoryOpen(false); setCurrentPage(1); }}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Status Dropdown */}
         <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setStockOpen(false); }}>
+          <div div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStockOpen(false); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             <span>{selectedStatus === "All" ? "All Status" : selectedStatus}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -236,7 +266,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
         {/* Stock Dropdown */}
         <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setStockOpen(o => !o); setCategoryOpen(false); setStatusOpen(false); }}>
+          <div className="pl-dropdown" onClick={() => { setStockOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
             <span>{selectedStock === "All" ? "All Stock" : selectedStock}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -330,6 +360,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                 </th>
                 <th className="pl-product-col">PRODUCT</th>
                 <th className="pl-category-col">CATEGORY</th>
+                <th className="pl-subcategory-col">SUBCATEGORY</th>
                 <th className="pl-price-col">PRICE</th>
                 <th className="pl-stock-col">STOCK</th>
                 <th className="pl-status-col">STATUS</th>
@@ -380,8 +411,22 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                         {product.category}
                       </span>
                     </td>
+                    <td className="pl-categoru-col">
+                      {product.subcategory ? (
+                        <span className="pl-subcategory-badge">{product.subcategory}</span>
+                      ) :(
+                        <span className="pl-subcategory-none">—</span>
+                      )}
+                    </td>
                     <td className="pl-price-col">
-                      {"Rs." + getFinalPrice(product).toLocaleString()}
+                      {product.compare_price && parseFloat (product.compare_price) > parseFloat(product.price) && (
+                        <span className="pl-price-compare">
+                          Rs.{parseFloat(product.compare_price).toLocaleString()}
+                        </span>
+                      )}
+                      <span className="pl-price-final">
+                        Rs.{getFinalPrice(product).toLocaleString()}
+                      </span>
                     </td>
                     <td className="pl-stock-col">
                       <span className="pl-stock-low">{product.stock} left</span>
