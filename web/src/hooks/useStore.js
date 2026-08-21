@@ -207,7 +207,9 @@ export const useStore = create((set, get) => ({
           price: sellingPrice,
           compare_price: mrp,
           sizes: p.sizes || [],
-          stock: p.stock > 0 ? 'in-stock' : 'out-of-stock'
+          stock: p.stock > 0 ? 'in-stock' : 'out-of-stock',
+          subcategory: p.subcategory || p.subcategories?.name || null,
+          subcategory_id: p.subcategory_id || null,
         };
       });
       set(state => ({

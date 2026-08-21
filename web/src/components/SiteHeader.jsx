@@ -25,20 +25,25 @@ const chunkArray = (arr, size) => {
 
 
 
-// Generates placeholder subcategory names like Ring1, Ring2, Ring3
-// Replace with real subcategories from your store once available (category.subcategories = [{ name }, ...])
+// Retrieves real subcategories for a category from the store categories array,
+// and prepends "All [Category]" so users can view all main category products.
 const getSubcategories = (link, categories = []) => {
   if (link === "Home") return [];
 
   const matched = categories.find(
     (c) => c.name?.toLowerCase() === link.toLowerCase()
   );
-  if (matched?.subcategories?.length) {
-    return matched.subcategories.map((s) => s.name);
+
+  const realSubs = (matched?.subcategories || [])
+    .map((s) => (typeof s === "string" ? s : s.name))
+    .filter(Boolean);
+
+  if (realSubs.length > 0) {
+    const allLabel = `All ${link}`;
+    return [allLabel, ...realSubs];
   }
 
-  const singular = link.endsWith("s") ? link.slice(0, -1) : link;
-  return [1, 2, 3].map((n) => `${singular}${n}`);
+  return [];
 };
 
 const LoginDropdown = () => {
@@ -306,10 +311,18 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
     }
   };
 
-  // Called when a subcategory item (e.g. "Ring1") is clicked, desktop or mobile
+  // Called when a subcategory item is clicked, desktop or mobile
   const handleSubClick = (parentLink, sub) => {
     setMenuOpen(false);
-    navigate(`${getNavPath(parentLink, categories)}?sub=${encodeURIComponent(sub)}`);
+    const isAllOption =
+      sub.toLowerCase() === `all ${parentLink.toLowerCase()}` ||
+      sub.toLowerCase() === parentLink.toLowerCase();
+
+    if (isAllOption) {
+      navigate(getNavPath(parentLink, categories));
+    } else {
+      navigate(`${getNavPath(parentLink, categories)}?sub=${encodeURIComponent(sub)}`);
+    }
   };
 
   return (

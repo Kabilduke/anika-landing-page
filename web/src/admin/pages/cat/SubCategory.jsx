@@ -23,31 +23,44 @@ const SubcategoryCard = ({ sub, productCount, onEdit, onDelete }) => (
 
 const SubcategoryCards = ({ 
     parentCategory, 
-    subcategories, 
+    subcategories: propSubcategories, 
     products = [],
     onFetchSubcategories, 
+    onDeleteSubcategory,
     onBack, 
     onAddSubcategory 
 }) => {
-//   const [subcategories, setSubcategories] = useState([]);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(!subcategories);
+  const [localSubcategories, setLocalSubcategories] = useState(propSubcategories || []);
+  const [loading, setLoading] = useState(!propSubcategories);
   const parentId = parentCategory?.category_id || parentCategory?.id;
+
+  useEffect(() => {
+    if (propSubcategories) {
+      setLocalSubcategories(propSubcategories);
+    }
+  }, [propSubcategories]);
 
   useEffect(() => {
     if (!parentId) { 
         setLoading(false); 
         return; 
     }
-    if (subcategories) {
+    if (propSubcategories) {
         setLoading(false);
         return;
     }
     setLoading(true);
-    onFetchSubcategories(parentId).finally(() => setLoading(false));
-  }, [parentId, subcategories, onFetchSubcategories]);
+    if (onFetchSubcategories) {
+      onFetchSubcategories(parentId).then((data) => {
+        if (data) setLocalSubcategories(data);
+      }).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [parentId, propSubcategories, onFetchSubcategories]);
 
-  const list = subcategories || [];
+  const list = localSubcategories || [];
 
   const productCountBySubcategory = React.useMemo(() => {
     const counts = {};
@@ -68,7 +81,10 @@ const SubcategoryCards = ({
     if (!confirmed) return;
     try {
       await productService.deleteSubcategory(sub.subcategory_id);
-      setSubcategories((prev) => prev.filter((s) => s.subcategory_id !== sub.subcategory_id));
+      setLocalSubcategories((prev) => prev.filter((s) => s.subcategory_id !== sub.subcategory_id));
+      if (onDeleteSubcategory) {
+        onDeleteSubcategory(sub.subcategory_id, parentId);
+      }
     } catch (error) {
       alert("Failed to delete: " + error.message);
     }
@@ -92,7 +108,7 @@ const SubcategoryCards = ({
         </div>
       ) : (
         <div className="subcat-grid">
-          {subcategories.map((sub) => (
+          {list.map((sub) => (
             <SubcategoryCard
               key={sub.subcategory_id}
               sub={sub}

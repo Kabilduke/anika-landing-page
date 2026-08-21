@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import "./confirmdialogs.css";
 
 const ConfirmDialog = ({
@@ -6,11 +7,12 @@ const ConfirmDialog = ({
   message,
   confirmLabel = "Save",
   cancelLabel = "Cancel",
+  isLoading = false,
   onConfirm,
   onCancel,
 }) => {
-  return (
-    <div className="confirm-dialog-backdrop" onClick={onCancel}>
+  const content = (
+    <div className="confirm-dialog-backdrop" onClick={isLoading ? undefined : onCancel}>
       <div className="confirm-dialog-card" onClick={(e) => e.stopPropagation()}>
         <h2 className="confirm-dialog-title">{title}</h2>
         <p className="confirm-dialog-message">{message}</p>
@@ -19,6 +21,7 @@ const ConfirmDialog = ({
             type="button"
             className="confirm-dialog-btn confirm-dialog-btn-outline"
             onClick={onCancel}
+            disabled={isLoading}
           >
             {cancelLabel}
           </button>
@@ -26,13 +29,16 @@ const ConfirmDialog = ({
             type="button"
             className="confirm-dialog-btn confirm-dialog-btn-dark"
             onClick={onConfirm}
+            disabled={isLoading}
           >
-            {confirmLabel}
+            {isLoading ? "Saving..." : confirmLabel}
           </button>
         </div>
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(content, document.body);
 };
 
 export default ConfirmDialog;

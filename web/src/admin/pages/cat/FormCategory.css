@@ -393,10 +393,10 @@
 /* ===== Success Toast (matches reference design) ===== */
 .scc-toast {
   position: fixed;
-  top: 24px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 9999999;
   display: flex;
   align-items: center;
   gap: 14px;

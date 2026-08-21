@@ -174,10 +174,16 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
     return { url, error };
   };
 
+  const [saving, setSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   // ── Save Category ───────────────────────────────────────────
   const saveCategory = async (status) => {
+    setSaving(true);
     const { url: uploadedUrl, error: uploadError } = await uploadImage();
     if (uploadError) {
+      setSaving(false);
       alert("Failed to upload image: " + uploadError.message);
       return { error: uploadError };
     }
@@ -194,12 +200,15 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
     try {
       if (isEditing) {
         const data = await productService.updateCategory(initialData.category_id, categoryData);
+        setSaving(false);
         return { data: data[0], error: null };
       } else {
         const data = await productService.insertCategory(categoryData);
+        setSaving(false);
         return { data: data[0], error: null };
       }
     } catch (error) {
+      setSaving(false);
       alert((isEditing ? "Update failed: " : "Insert failed: ") + error.message);
       return { error };
     }
@@ -211,8 +220,12 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       return;
     }
     const result = await saveCategory("active");
-    if (!result.error && onPublish) {
-      onPublish(result.data); // parent handles refresh
+    if (!result.error) {
+      setToastMessage(isEditing ? "Category Updated Successfully!" : "Category Created Successfully!");
+      setShowToast(true);
+      setTimeout(() => {
+        if (onPublish) onPublish(result.data);
+      }, 1200);
     }
   };
 
@@ -222,7 +235,13 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       return;
     }
     const result = await saveCategory("draft");
-    if (!result.error && onSaveDraft) onSaveDraft(result.data);
+    if (!result.error) {
+      setToastMessage("Category Draft Saved Successfully!");
+      setShowToast(true);
+      setTimeout(() => {
+        if (onSaveDraft) onSaveDraft(result.data);
+      }, 1200);
+    }
   };
 
   return (
@@ -346,13 +365,38 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
 
       {/* ── Footer ── */}
       <div className="ap-footer">
-        <button type="button" className="ap-btn-draft" onClick={handleDraft} disabled={uploading}>
-          Save Draft
+        <button type="button" className="ap-btn-draft" onClick={handleDraft} disabled={saving || uploading}>
+          {saving ? "Saving..." : "Save Draft"}
         </button>
-        <button type="button" className="ap-btn-publish" onClick={handlePublish} disabled={uploading}>
-          {uploading ? "Uploading..." : isEditing ? "Update Category" : "Publish"}
+        <button type="button" className="ap-btn-publish" onClick={handlePublish} disabled={saving || uploading}>
+          {saving ? "Saving..." : uploading ? "Uploading..." : isEditing ? "Update Category" : "Publish Category"}
         </button>
       </div>
+
+      {showToast && (
+        <div style={{
+          position: "fixed",
+          bottom: "30px",
+          right: "30px",
+          background: "#111827",
+          color: "#fff",
+          padding: "14px 24px",
+          borderRadius: "10px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+          zIndex: 9999,
+          animation: "dropdown-fade 0.2s ease"
+        }}>
+          <span style={{ background: "#10B981", borderRadius: "50%", padding: "4px", display: "flex" }}>
+            <svg width="14" height="14" viewBox="0 0 12 10" fill="none">
+              <path d="M1 5L4.2 8.2L11 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span style={{ fontSize: "14px", fontWeight: "600" }}>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

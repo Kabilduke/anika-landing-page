@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "../hooks/useStore";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
@@ -17,6 +17,8 @@ const ProductSkeleton = () => <SkeletonProductCard />;
 
 export default function CategoryPage({ category }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const subcategoryParam = searchParams.get("sub") || "";
 
   // Search and filter states
   const [searchInput, setSearchInput] = useState("");
@@ -145,6 +147,15 @@ export default function CategoryPage({ category }) {
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
+      // Filter by subcategory URL parameter if present (?sub=SubcategoryName)
+      if (subcategoryParam.trim()) {
+        const targetSub = subcategoryParam.trim().toLowerCase();
+        const pSub = String(product.subcategory || product.subcategory_id || "").trim().toLowerCase();
+        if (pSub !== targetSub) {
+          return false;
+        }
+      }
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = product.name?.toLowerCase().includes(q);
@@ -165,7 +176,7 @@ export default function CategoryPage({ category }) {
 
       return true;
     });
-  }, [products, searchQuery, stockStatus, selectedSizes]);
+  }, [products, searchQuery, stockStatus, selectedSizes, subcategoryParam]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
 
@@ -310,14 +321,18 @@ export default function CategoryPage({ category }) {
           <nav className="breadcrumbs-nav-panel">
             <span onClick={() => navigate("/")} className="breadcrumb-nav-link">Home</span>
             <span className="breadcrumb-nav-separator">/</span>
-            <span onClick={handleClearSearch} className="breadcrumb-nav-link">Search</span>
-            <span className="breadcrumb-nav-separator">/</span>
-            <span className="breadcrumb-nav-current-page">{category}</span>
+            <span onClick={() => navigate(getNavPath(category, allCategories))} className="breadcrumb-nav-link">{category}</span>
+            {subcategoryParam && (
+              <>
+                <span className="breadcrumb-nav-separator">/</span>
+                <span className="breadcrumb-nav-current-page">{subcategoryParam}</span>
+              </>
+            )}
           </nav>
 
           <div className="search-results-summary-header">
             <h2 className="search-query-results-title">
-              {searchQuery || `All ${category}`}
+              {searchQuery || (subcategoryParam ? `${category} — ${subcategoryParam}` : `All ${category}`)}
             </h2>
             <span className="search-results-divider-line"></span>
             <span className="search-results-count-badge">
@@ -341,9 +356,11 @@ export default function CategoryPage({ category }) {
               </svg>
               <h3 className="empty-state-title">No products found</h3>
               <p className="empty-state-subtitle">
-                {products.length === 0
-                  ? "No products in this category yet. Check back soon!"
-                  : "No items match your filters. Try adjusting your search criteria."}
+                {subcategoryParam
+                  ? `No products in "${subcategoryParam}" subcategory yet. Check back soon!`
+                  : (products.length === 0
+                      ? "No products in this category yet. Check back soon!"
+                      : "No items match your filters. Try adjusting your search criteria.")}
               </p>
               {products.length > 0 && (
                 <button type="button" onClick={() => {

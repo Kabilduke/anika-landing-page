@@ -1,22 +1,34 @@
 .confirm-dialog-backdrop {
   position: fixed;
-  inset: 0;
-  background: rgba(20, 20, 20, 0.45);
+  top: 52px;
+  left: 240px;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999999;
   padding: 20px;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .confirm-dialog-backdrop {
+    top: 52px;
+    left: 0;
+  }
 }
 
 .confirm-dialog-card {
   background: #fff;
   border-radius: 16px;
-  padding: 40px 44px 32px;
+  padding: 36px 40px 32px;
   width: 100%;
-  max-width: 560px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
 }
 

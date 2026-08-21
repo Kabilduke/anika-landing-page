@@ -47,9 +47,9 @@ const SuccessToast = ({ message, onClose }) => (
     </button>
   </div>
 );
- 
-const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard, onSave }) => {
-  
+
+const CreateSubCategory = ({ parentCategory, categories = [], onBack, onDiscard, onSave }) => {
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [showOnStore, setShowOnStore] = useState(false);
@@ -60,7 +60,7 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
 
   const [coverImage, setCoverImage] = useState(null); // { file, url, dims }
   const [loadingExisting, setLoadingExisting] = useState(isEditMode);
-//   const [previewImage, setPreviewImage] = useState(null);
+  //   const [previewImage, setPreviewImage] = useState(null);
 
   const [showToast, setShowToast] = useState(false);
   const toastTimerRef = React.useRef(null);
@@ -69,8 +69,8 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
   const [showConfirm, setShowConfirm] = useState(false);
 
   const coverInputRef = React.useRef(null);
-//   const previewInputRef = React.useRef(null);
-//   const parentId = searchParams.get("parentId");
+  //   const previewInputRef = React.useRef(null);
+  //   const parentId = searchParams.get("parentId");
 
   const matchedParent = categories.find(
     (c) => String(c.category_id ?? c.id) === String(parentId)
@@ -83,18 +83,18 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
   useEffect(() => {
     if (!subcategoryId) return;
     const loadingExisting = async () => {
-      try{
+      try {
         const rows = await productService.getSubCategories(parentId);
         const existing = rows.find((s) => s.subcategory_id === subcategoryId);
-        if (existing){
+        if (existing) {
           setName(existing.name || "");
           setDescription(existing.description || "");
           setShowOnStore(!!existing.is_active);
-          if (existing.image_url){
+          if (existing.image_url) {
             setCoverImage({ url: existing.image_url, name: "current-image", file: null });
           }
         }
-      } catch(error){
+      } catch (error) {
         console.error("Error loading subcategory:", error);
       } finally {
         setLoadingExisting(false);
@@ -147,71 +147,76 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
   };
 
   const slugify = (str) =>
-  (str || "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    (str || "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
   // This is the actual save logic, now triggered from ConfirmDialog's
   // onConfirm instead of directly from the Save button.
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const performSave = async () => {
+    setIsSaving(true);
     try {
-        let imageUrl = coverImage?.url && !coverImage?.file ? coverImage.url : null;
+      let imageUrl = coverImage?.url && !coverImage?.file ? coverImage.url : null;
 
-        if (coverImage?.file) {
-          const filePath = `${Date.now()}-${coverImage.file.name}`;
-          await productService.uploadSubcategoryImage(filePath, coverImage.file);
-          imageUrl = productService.getSubcategoryImagePublicUrl(filePath);
-        }
+      if (coverImage?.file) {
+        const filePath = `${Date.now()}-${coverImage.file.name}`;
+        await productService.uploadSubcategoryImage(filePath, coverImage.file);
+        imageUrl = productService.getSubcategoryImagePublicUrl(filePath);
+      }
 
-        const payload = {
-          parent_id: parentId || parentCategory?.id,
-          name,
-          slug: slugify(name),
-          description: description || null,
-          image_url: imageUrl,
-          is_active: showOnStore,
-        };
+      const payload = {
+        parent_id: parentId || parentCategory?.id,
+        name,
+        slug: slugify(name),
+        description: description || null,
+        image_url: imageUrl,
+        is_active: showOnStore,
+      };
 
-        const saved = isEditMode
-          ? await productService.updateSubcategory(subcategoryId, payload)
-          : await productService.createSubcategory(payload);
+      const saved = isEditMode
+        ? await productService.updateSubcategory(subcategoryId, payload)
+        : await productService.createSubcategory(payload);
 
+      setIsSaving(false);
+      setShowConfirm(false);
+      setShowToast(true);
+
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => {
+        setShowToast(false);
+        toastTimerRef.current = null;
         onSave?.(saved);
-
-        setShowConfirm(false);
-        setShowToast(true);
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = setTimeout(() => {
-            setShowToast(false);
-            toastTimerRef.current = null;
-        }, 3000);
-    } catch(error){
+      }, 1200);
+    } catch (error) {
       console.error("Error saving subcategory:", error);
+      setIsSaving(false);
       alert("Failed to save subcategory: " + error.message);
       setShowConfirm(false);
     }
   };
-//   const performSave = () => {
-//     onSave?.({
-//       id: parentCategory?.id ? `${parentCategory.id}-${Date.now()}` : Date.now(),
-//       name,
-//     //   parentId,
-//       parentCategoryName,
-//       description,
-//       showOnStore,
-//       // url is a base64 data string (not a blob URL), so this whole object
-//       // is plain serializable data — safe to store in localStorage and it
-//       // survives a page refresh. CategoryDetail reads item.image?.url.
-//       image: coverImage
-//         ? {
-//             url: coverImage.url,
-//             name: coverImage.name,
-//             width: coverImage.width,
-//             height: coverImage.height,
-//             size: coverImage.size,
-//           }
-//         : null,
-//       parentId: parentId || parentCategory?.id || null,
-//     });
+  //   const performSave = () => {
+  //     onSave?.({
+  //       id: parentCategory?.id ? `${parentCategory.id}-${Date.now()}` : Date.now(),
+  //       name,
+  //     //   parentId,
+  //       parentCategoryName,
+  //       description,
+  //       showOnStore,
+  //       // url is a base64 data string (not a blob URL), so this whole object
+  //       // is plain serializable data — safe to store in localStorage and it
+  //       // survives a page refresh. CategoryDetail reads item.image?.url.
+  //       image: coverImage
+  //         ? {
+  //             url: coverImage.url,
+  //             name: coverImage.name,
+  //             width: coverImage.width,
+  //             height: coverImage.height,
+  //             size: coverImage.size,
+  //           }
+  //         : null,
+  //       parentId: parentId || parentCategory?.id || null,
+  //     });
 
   return (
     <div className="dashboard-shell">
@@ -224,12 +229,12 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
 
       {showConfirm && (
         <ConfirmDialog
-          title="Create Sub Category?"
-          message={`Are you sure you want to create "${name || "this sub category"}"?`}
-          confirmLabel="Save"
-          cancelLabel="Cancel"
+          title={isEditMode ? "Update Sub Category?" : "Create Sub Category?"}
+          message={`Are you sure you want to ${isEditMode ? "update" : "create"} "${name || "this sub category"}"?`}
+          confirmLabel={isSaving ? "Saving..." : "Save"}
+          isLoading={isSaving}
           onConfirm={performSave}
-          onCancel={() => setShowConfirm(false)}
+          onCancel={() => !isSaving && setShowConfirm(false)}
         />
       )}
 
@@ -272,23 +277,23 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
                 />
 
                 <label className="scc-field-label" htmlFor="scc-parent-category">
-                    Parent Category Name
+                  Parent Category Name
                 </label>
 
                 <input
-                    id="scc-parent-category"
-                    type="text"
-                    className="scc-input"
-                    value={parentCategoryName}
-                    onChange={(e) => setParentCategoryName(e.target.value)}
-                    placeholder="Enter parent category name"
-                    readOnly={!!matchedParent}
-                    style={matchedParent ? { backgroundColor: "#f5f5f5", cursor: "not-allowed" } : undefined}
+                  id="scc-parent-category"
+                  type="text"
+                  className="scc-input"
+                  value={parentCategoryName}
+                  onChange={(e) => setParentCategoryName(e.target.value)}
+                  placeholder="Enter parent category name"
+                  readOnly={!!matchedParent}
+                  style={matchedParent ? { backgroundColor: "#f5f5f5", cursor: "not-allowed" } : undefined}
                 />
                 {matchedParent && (
-                    <div className="scc-optional-tag" style={{ marginTop: 4 }}>
-                      Locked — creating a subcategory under "{matchedParent.name}"
-                    </div>
+                  <div className="scc-optional-tag" style={{ marginTop: 4 }}>
+                    Locked — creating a subcategory under "{matchedParent.name}"
+                  </div>
                 )}
 
                 <label className="scc-field-label scc-field-label-optional" htmlFor="scc-desc">
@@ -373,8 +378,8 @@ const CreateSubCategory = ({ parentCategory, categories = [],  onBack, onDiscard
             </div>
 
             <div className="scc-bottom-actions">
-              <button className="scc-btn scc-btn-dark" onClick={handleSaveClick}>
-                Save
+              <button className="scc-btn scc-btn-dark" onClick={handleSaveClick} disabled={isSaving}>
+                {isSaving ? "Saving..." : isEditMode ? "Update Subcategory" : "Save Subcategory"}
               </button>
             </div>
           </div>

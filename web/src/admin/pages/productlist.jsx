@@ -67,11 +67,11 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
   );
 };
 
-const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], onBack }) => {
+const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], loading = false, onBack }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); 
   const itemsPerPage = 8;
 
   const [selectedCategory, setSelectedCategory] = useState("All");
