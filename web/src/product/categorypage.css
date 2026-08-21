@@ -182,11 +182,38 @@
   background-color: #fff;
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 15px;
+  padding: 10px 15px;
   height: fit-content;
   position: sticky;
   top: 170px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.01);
+}
+
+/* Filter and Sort toggle (replaces Stock Status header) */
+.filter-sort-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 0;
+  margin: 0;
+  color: var(--text-dark);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.filter-sort-toggle-btn svg {
+  color: var(--brand-crimson);
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 .sidebar-filter-section {

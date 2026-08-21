@@ -3,6 +3,7 @@ import "./productlist.css";
 import searchEmpty from "../../assets/admin/search.png";
 import editIcon from "../../assets/admin/Edit.png";
 import trashIcon from "../../assets/admin/Trash.png";
+import { SkeletonTable } from "../../components/ui/Skeleton";
 
 const getFinalPrice = (product) => {
   return parseFloat(product.price) || 0;
@@ -368,7 +369,13 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: "20px" }}>
+                    <SkeletonTable rows={5} cols={7} />
+                  </td>
+                </tr>
+              ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="pl-empty-state">
                     <div className="pl-empty-content">
