@@ -715,8 +715,6 @@ button {
   padding-bottom: 20px;
 }
 
-
-
 /* ══════════════════════════════════════════════════════════════
    ACCORDIONS
 ══════════════════════════════════════════════════════════════ */
@@ -1176,6 +1174,16 @@ button {
   border-color: #E52B50;
   color: #E52B50;
 }
+
+.pp-color-picker { margin-top: 12px; }
+.pp-color-buttons { display: flex; gap: 8px; margin-top: 6px; }
+.pp-color-swatch {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1); cursor: pointer; padding: 0;
+}
+
+.pp-color-swatch--white { border: 1px solid #d1d5db; }
+.pp-color-swatch--selected { outline: 2px solid #111827; outline-offset: 2px; }
 
 /* ══════════════════════════════════════════════════════════════
    CATEGORY SECTION

@@ -248,7 +248,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
         {/* Status Dropdown */}
         <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStockOpen(false); }}>
+          <div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStockOpen(false); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             <span>{selectedStatus === "All" ? "All Status" : selectedStatus}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -418,7 +418,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                         {product.category}
                       </span>
                     </td>
-                    <td className="pl-categoru-col">
+                    <td className="pl-category-col">
                       {product.subcategory ? (
                         <span className="pl-subcategory-badge">{product.subcategory}</span>
                       ) :(

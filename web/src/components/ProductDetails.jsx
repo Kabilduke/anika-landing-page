@@ -4,13 +4,14 @@ import { Navigation, Zoom } from "swiper/modules";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../lib/supabase';
+import { variantService } from '../services/variantService';
+
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
 import Toast from './Toast';
 import { useStore } from '../hooks/useStore';
 import SizeChart from '../assets/Size_bangle.png';
 import LengthChart from '../assets/Anklet_length.jpeg'
-
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -53,7 +54,6 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
-
 
   const goToIndex = (i) => {
     const clamped = Math.max(0, Math.min(thumbs.length-1, i));
@@ -266,6 +266,68 @@ export default function ProductPage({ onBack }) {
   const [size, setSize] = useState([]);
   const [length, setLength] = useState([]);
 
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState([]);
+  const [selectedColor, setSelectedColor] = useState("");
+
+  // useEffect(() => {
+  //   const productId = selectedProduct?.productId || selectedProduct?.id;
+  //   if (!productId) return;
+
+  //   const fetchImages = async () => {
+  //     const { data, error } = await supabase
+  //       .from('products')
+  //       .select('images', 'image_url')
+  //       .eq('product_id', productId)
+  //       .single()
+
+  //       if (error || !data) return;
+
+  //       const imgs = Array.isArray(data.images) && data.images.length > 0
+  //         ? data.images
+  //         : (data.image_url ? [data.image_url] : []);
+      
+  //       setProductImages(imgs)
+  //   };
+
+  //   const fetchPrices = async () => {
+  //     const { data, error } = await supabase
+  //       .from('products')
+  //       .select('price, compare_price, sku, stock, stock_alert')
+  //       .eq('product_id', productId)
+  //       .single();
+
+  //     if (error || !data) return;
+  //     setProductPrice(data)
+  //   };
+
+  //   const fetchSizes = async () => {
+  //     const { data, error } = await supabase
+  //       .from('products')
+  //       .select('sizes')
+  //       .eq('product_id', productId)
+  //       .single();
+
+  //     if (error || !data?.sizes?.length) return;
+
+  //     if (cat === 'Bangles') {
+  //       setSize(data.sizes);
+  //       setSelectedSize(data.sizes[0] || "");
+  //     } else if (cat === 'Anklets') {
+  //       setLength(data.sizes);
+  //       setSelectedLength(data.sizes[0] || "");
+  //     }
+  //   };
+
+  //   setSize([]);
+  //   setLength([]);
+  //   setProductImages([]); 
+  //   setProductPrice(null);
+  //   fetchPrices();
+  //   fetchSizes();
+  //   fetchImages();
+  // }, [selectedProduct, cat]);
+
   useEffect(() => {
     const productId = selectedProduct?.productId || selectedProduct?.id;
     if (!productId) return;
@@ -273,54 +335,71 @@ export default function ProductPage({ onBack }) {
     const fetchImages = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('images', 'image_url')
+        .select('images, image_url')
         .eq('product_id', productId)
-        .single()
-
-        if (error || !data) return;
-
-        const imgs = Array.isArray(data.images) && data.images.length > 0
-          ? data.images
-          : (data.image_url ? [data.image_url] : []);
-      
-        setProductImages(imgs)
+        .single();
+      if (error || !data ) return;
+      const imgs = Array.isArray(data.images) && data.images.length > 0
+        ? data.images
+        : (data.image_url ? [data.image_url] : []);
+      setProductImages(imgs);
     };
 
-    const fetchPrices = async () => {
+    const fetchProductBase = async () =>{
       const { data, error } = await supabase
-        .from('products')
-        .select('price, compare_price, sku, stock, stock_alert')
+        .from("products")
+        .select('price, compare_price, sku, stock, stock_alert, sizes, has_variants')
         .eq('product_id', productId)
         .single();
 
-      if (error || !data) return;
-      setProductPrice(data)
-    };
+      if (error){
+        console.error("fetchProductBase error:", error.message, error.details);
+        return;
+      }
+      if(!data) return;
 
-    const fetchSizes = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('sizes')
-        .eq('product_id', productId)
-        .single();
+      setHasVariants(!!data.has_variants);
 
-      if (error || !data?.sizes?.length) return;
+      if (data.has_variants){
+        try{
+          const variantRows = await variantService.getVariantsByProductId(productId);
+          setVariants(variantRows);
 
-      if (cat === 'Bangles') {
-        setSize(data.sizes);
-        setSelectedSize(data.sizes[0] || "");
-      } else if (cat === 'Anklets') {
-        setLength(data.sizes);
-        setSelectedLength(data.sizes[0] || "");
+          const sizes = [...new Set(variantRows.map(v => v.size).filter(Boolean))];
+          const firstVariant = variantRows[0];
+
+          if(cat === 'Bangles'){
+            setSize(sizes);
+            setSelectedSize(firstVariant?.size || "");
+          } else if (cat === 'Anklets'){
+            setLength(sizes);
+            setSelectedLength(firstVariant?.size || "");
+          }
+          setSelectedColor(firstVariant?.color || "");
+        } catch (err) {
+          console.error("Failed to load variants:", err);
+          setVariants([]);
+        }
+      } else {
+        setProductPrice(data);
+        if (data.sizes?.length){
+          if (cat === 'Bangles'){
+            setSize(data.sizes);
+            setSelectedSize(data.sizes[0] || "");
+          } else if(cat === "Anklets"){
+            setLength(data.sizes);
+            setSelectedLength(data.sizes[0] || "");
+          }
+        }
       }
     };
-
     setSize([]);
     setLength([]);
-    setProductImages([]); 
+    setProductImages([]);
     setProductPrice(null);
-    fetchPrices();
-    fetchSizes();
+    setVariants([]);
+    setSelectedColor("");
+    fetchProductBase();
     fetchImages();
   }, [selectedProduct, cat]);
 
@@ -335,17 +414,50 @@ export default function ProductPage({ onBack }) {
     return wishlistItems.some(w => w.id === currentId);
   }, [wishlistItems, selectedProduct]);
 
-  // Determine which image to show in gallery
-  const rawPrice = productPrices?.price ?? selectedProduct?.price ?? null;
-
-  const rawCompare = productPrices?.compare_price ?? selectedProduct?.compare_price ?? null;
   // const rawDiscount = productPrices?.discount_price ?? 0;
+  const activeSizeValue = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
+
+  const selectedVariant = useMemo(() => {
+    if (!hasVariants || variants.length === 0) return null;
+    return variants.find(
+      v => (v.size || "") === (activeSizeValue || "") && (v.color || "") === (selectedColor || "")
+    ) || null;
+  }, [hasVariants, variants, activeSizeValue, selectedColor]);
+
+  useEffect(()=> {
+    if (!hasVariants || variants.length === 0) return;
+
+    const colorsForCurrentSize = [...new Set(
+      variants.filter(v => !activeSizeValue || v.size === activeSizeValue).map(v => v.color).filter(Boolean)
+    )];
+    if (colorsForCurrentSize.length > 0 && !colorsForCurrentSize.includes(selectedColor)){
+      setSelectedColor(colorsForCurrentSize[0]);
+    }
+  }, [activeSizeValue, hasVariants, variants]);
+
+    // Determine which image to show in gallery
+  const rawPrice = hasVariants
+    ? (selectedVariant?.price ?? null)
+    : (productPrices?.price ?? selectedProduct?.price ?? null);
+
+  const rawCompare = hasVariants
+    ? (selectedVariant?.compare_price ?? null)
+    : (productPrices?.compare_price ?? selectedProduct?.compare_price ?? null);
 
   const displayImage = selectedProduct?.img || selectedProduct?.image || MainBangle;
   const displayName = selectedProduct?.name || 'Antique Bangle set';
-  const displaySku = productPrices?.sku || selectedProduct?.sku || '';
-  const stockCount = productPrices?.stock ?? selectedProduct?.stock ?? null;
-  const stockAlertThreshold = productPrices?.stock_alert ?? 10; 
+
+  const displaySku = hasVariants
+    ? (selectedVariant?.sku || '')
+    : (productPrices?.sku || selectedProduct?.sku || '');
+
+  const stockCount = hasVariants
+    ? (selectedVariant?.stock ?? 0)
+    : (productPrices?.stock ?? selectedProduct?.stock ?? null);
+
+  const stockAlertThreshold = hasVariants
+    ? (selectedVariant?.stock_alert ?? 10)
+    : (productPrices?.stock_alert ?? 10); 
 
   const payPrice = rawPrice != null ? Number(rawPrice) : 0; 
   const strikePrice = rawCompare != null ? Number(rawCompare) : Math.round(payPrice * 1.3);
@@ -356,6 +468,21 @@ export default function ProductPage({ onBack }) {
   const discountPct = strikePrice && payPrice && strikePrice > payPrice
     ? Math.round(((strikePrice - payPrice) / strikePrice) * 100)
     : 0;
+
+  const canAddToCart = hasVariants
+    ? (!!selectedVariant && selectedVariant.stock > 0)
+    : (stockCount == null || stockCount > 0);
+
+
+  const availableColorForSize = useMemo(() => {
+    if (!hasVariants) return;
+    return [...new Set(
+      variants
+        .filter(v => !activeSizeValue || v.size === activeSizeValue)
+        .map(v => v.color)
+        .filter(Boolean)
+    )];
+  }, [hasVariants, variants, activeSizeValue]);
 
   const dynamicThumbs = useMemo(() => {
     const imgs = productImages.length > 0 ? productImages : [displayImage];
@@ -462,6 +589,7 @@ export default function ProductPage({ onBack }) {
       navigate("/account/signup");
       return;
     }
+    if (!canAddToCart) return;
 
     const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
     navigate("/shipping", {
@@ -553,7 +681,7 @@ export default function ProductPage({ onBack }) {
             </div>
             <p className="pp-tax-note">Inclusive of all taxes</p>
 
-            {cat == 'Bangles' && (
+            {/* {cat == 'Bangles' && (
               <div className='pp-size'>
                 <div className='pp-size-row'>
                   <h4>Size: {selectedSize}</h4>
@@ -584,8 +712,25 @@ export default function ProductPage({ onBack }) {
                   ))}
                 </div>
               </div>
+            )} */}
+            {hasVariants && availableColorForSize.length > 0 && (
+              <div className='pp-color-picker'>
+                <h4>Color</h4>
+                <div className='pp-color-buttons'>
+                  {availableColorForSize.map((c) => (
+                    <button
+                      key={c}
+                      type='button'
+                      className={`pp-color-swatch${selectedColor === c ? ' pp-color-swatch--selected' : ''}${c === '#FFFFFF' ? ' pp-color-swatch--white' : ''}`}
+                      style={{ backgroundColor: c }}
+                      onClick={() => setSelectedColor(c)}
+                      aria-label={`Select color ${c}`}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
-
+{/* 
             {cat == 'Anklets' && (
               <div className='pp-size'>
                 <div className='pp-size-row'>
@@ -614,6 +759,23 @@ export default function ProductPage({ onBack }) {
                     >
                       {size}
                     </button>
+                  ))}
+                </div>
+              </div>
+            )} */}
+            {hasVariants && availableColorForSize.length > 0 && (
+              <div className='pp-color-picker'>
+                <h4>Color</h4>
+                <div className='pp-color-buttons'>
+                  {availableColorForSize.map((c) =>(
+                    <button
+                      key={c}
+                      type='button'
+                      className={`pp-color-swatch${selectedColor === c ? ' pp-color-swatch--selected' : ''}${c === '#FFFFFF' ? ' pp-color-swatch--white' : ''}`}
+                      style={{ backgroundColor: c }}
+                      onClick={() => setSelectedColor(c)}
+                      aria-label={`Select color ${c}`}
+                    />
                   ))}
                 </div>
               </div>
@@ -652,12 +814,15 @@ export default function ProductPage({ onBack }) {
               </div>
               <button
                 className="pp-cart-btn"
+                disabled={!canAddToCart}
                 onClick={async () => {
                   const { data: { session } } = await supabase.auth.getSession();
                   if (!session) {
                     navigate("/account/signup");
                     return;
                   }
+                  if (!canAddToCart) return;
+
                   if (selectedProduct) {
                     const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
                     await addToCart(selectedProduct, qty, sizeParam);
@@ -665,7 +830,7 @@ export default function ProductPage({ onBack }) {
                   }
                 }}
               >
-                Add to Cart
+                {canAddToCart ? "Add to Cart" : "Select options"}
               </button>
               <button
                 className="pp-wish-btn"

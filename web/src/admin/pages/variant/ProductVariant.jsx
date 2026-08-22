@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { variantService } from "../../../services/variantService";
 import "./ProductVariant.css";
 
 const COLOR_SWATCHES = [
@@ -92,8 +93,10 @@ const CreateMultipleProduct = ({
   const [errors, setErrors] = useState({});
   const mediaInputRefs = useRef({});
 
+  const [saving, setSaving] = useState(false);
+
   useEffect(() =>{
-    if (!category) return;
+    
     if (subcategoriesCache[category]) return;
 
     const fetchSubcategories = async () =>{
@@ -213,22 +216,45 @@ const CreateMultipleProduct = ({
     return Object.keys(topErrors).length === 0 && Object.keys(variantErrors).length === 0;
   };
 
-  const handleSave = () => {
-    if (!validate()) return;
-    const categoryObj = categories.find((c) => (c.category_id ?? c.id) === category);
-    const subCategoryObj = subcategories.find((s) => s.subcategory_id === subCategory);
+//   const handleSave = () => {
+//     if (!validate()) return;
+//     const categoryObj = categories.find((c) => (c.category_id ?? c.id) === category);
+//     const subCategoryObj = subcategories.find((s) => s.subcategory_id === subCategory);
 
-    onSave?.({
-      title,
+//     onSave?.({
+//       title,
+//       description,
+//       category_id: category,
+//       category_name: categoryObj?.name,
+//       subcategory_id: subCategory || null,
+//       subcategory_name: subCategoryObj?.name,
+//       variants,
+//       showOnStore,
+//       featuredProduct,
+//     });
+//   };
+  const handleSave = async () =>{
+    if (!validate()) return;
+
+    const productData = {
+      name: title,
       description,
-      category_id: category,
-      category_name: categoryObj?.name,
+      category_id: parseInt(category) || null,
       subcategory_id: subCategory || null,
-      subcategory_name: subCategoryObj?.name,
-      variants,
-      showOnStore,
-      featuredProduct,
-    });
+      is_active: showOnStore,
+      is_featured: featuredProduct,
+    };
+
+    setSaving(true);
+    try {
+      const result = await variantService.createProductWithVariants(productData, variants);
+      onSave?.(result);
+    } catch (err){
+      console.error("Failed to save variant product:", err);
+      alert("Failed to save product: " + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -265,8 +291,8 @@ const CreateMultipleProduct = ({
               </div>
             </div>
 
-            <button type="button" className="cmp-save-btn" onClick={handleSave}>
-              Save
+            <button type="button" className="cmp-save-btn" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
 
@@ -401,7 +427,7 @@ const CreateMultipleProduct = ({
                     </label>
 
                     <label className="cmp-field">
-                      <span className="cmp-label">Price</span>
+                      <span className="cmp-label">MRP Price</span>
                       <input
                         type="text"
                         className={`cmp-input${vErrors.price ? " cmp-input--error" : ""}`}
@@ -415,7 +441,7 @@ const CreateMultipleProduct = ({
                     </label>
 
                     <label className="cmp-field">
-                      <span className="cmp-label">Selling Price</span>
+                      <span className="cmp-label">Price</span>
                       <input
                         type="text"
                         className={`cmp-input${vErrors.sellingPrice ? " cmp-input--error" : ""}`}

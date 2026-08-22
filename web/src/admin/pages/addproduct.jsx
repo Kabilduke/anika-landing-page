@@ -35,7 +35,7 @@ const EMPTY_FORM = {
   material: "",
   weight: "",
   sizes: "",
-  colors: "",
+  colors: [],
   care: "",
 };
 
@@ -103,7 +103,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: initialData.colors || "",
+        colors: initialData.colors || [],
         care: initialData.care || "",
       }
       : EMPTY_FORM
@@ -188,7 +188,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: initialData.colors?.join(", ") || "",
+        colors: form.colors.length > 0 ? form.colors : null,
         care: initialData.care || "",
       });
       setImages(initialData.images || []);
@@ -230,8 +230,14 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
   const toggleVis = (i) =>
     setVisibility((v) => v.map((val, idx) => (idx === i ? !val : val)));
 
-  const selectColor = (hex) =>{
-    setForm((f) => ({ ...f, colors: hex }));
+  const toggleColor = (hex) =>{
+    setForm((f) => {
+      const exists = f.colors.includes(hex);
+      return {
+        ...f,
+        colors: exists ? f.colors.filter((c) => c !== hex) : [...f.colors, hex],
+      };
+    });
   };
 
   // ── Upload All Images to Supabase ────────────────────────────
@@ -285,8 +291,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       stock_alert: parseInt(form.stock_alert) || null,
       material: form.material,
       weight: parseFloat(form.weight) || null,
-      sizes: form.sizes ? (Array.isArray(form.sizes) ? form.sizes : String(form.sizes).split(",").map((s) => s.trim()).filter(Boolean)) : null,
-      colors: form.colors ? (Array.isArray(form.colors) ? form.colors : String(form.colors).split(",").map((c) => c.trim()).filter(Boolean)) : null,
+      sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
+      colors: form.colors.length > 0 ? form.colors : null,
       care: form.care,
       image_url: urls[0] || null,
       images: urls,
@@ -617,8 +623,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
                     form.colors.includes(c) ? " ap-color-swatch--selected" : ""
                   }${c === "#FFFFFF" ? " ap-color-swatch--white" : ""}`}
                   style={{ backgroundColor: c }}
-                  onClick={() => selectColor(c)}
-                  aria-label={`Select color ${c}`}
+                  onClick={() => toggleColor(c)}
+                  aria-label={`Toggle color ${c}`}
                 >
                   {form.colors.includes(c) && (
                     <svg width="12" height="10" viewBox="0 0 12 10" fill="none">

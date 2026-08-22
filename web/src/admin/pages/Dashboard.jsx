@@ -707,15 +707,35 @@ const Dashboard = () => {
   }, []);
 
   // Normalize a raw Supabase product row into the shape productlist.jsx expects
-  const normalizeProductRow = (row) => ({
-    ...row,
-    id: row.product_id ?? row.id,
-    images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
-    image: row.image_url || null,
-    category: row.categories?.name || row.category || "",
-    subcategory: row.subcategories?.name || null,
-    status: row.is_active ? "Visible" : "Draft",
-  });
+  const normalizeProductRow = (row) => {
+    const variants = row.product_variants || [];
+    const prices = variants.map(v => v.price).filter(Boolean);
+
+    return {
+      ...row,
+      id: row.product_id ?? row.id,
+      images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
+      image: row.image_url || null,
+      category: row.categories?.name || row.category || "",
+      subcategory: row.subcategories?.name || null,
+      status: row.is_active ? "Visible" : "Draft",
+      priceDisplay: row.has_variants && prices.length
+        ? (Math.min(...prices) === Math.max(...prices)
+          ? `₹${Math.min(...prices)}`
+          : `₹${Math.min(...prices)} – ₹${Math.max(...prices)}`)
+        : `₹${row.price}`,
+        totalStock: row.has_variants
+          ? variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+          : row.stock,
+    };
+    // ...row,
+    // id: row.product_id ?? row.id,
+    // images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
+    // image: row.image_url || null,
+    // category: row.categories?.name || row.category || "",
+    // subcategory: row.subcategories?.name || null,
+    // status: row.is_active ? "Visible" : "Draft",
+  };
 
   // ── Fetch products on mount ─────────────────────
   useEffect(() => {
@@ -772,7 +792,6 @@ const Dashboard = () => {
       />
     );
   }
-
 
   // ── Handlers ──────────────────────────────────────────────────
   const goToAddProduct = () => {
@@ -865,8 +884,13 @@ const Dashboard = () => {
     navigate(`/admin/subcategories?parentId=${data.parent_id}`);
   };
 
-  const handleSaveMultipleProduct = (data) =>{
-    console.log("Multi-variant product to save:", data);
+  const handleSaveMultipleProduct = ( product, variant ) => {
+    const normalized = normalizeProductRow({
+      ...product, 
+      images: variants[0]?.images || [],
+      product_variants: variants.map(v => ({ price: v.price, stock: v.stock })),
+     });
+    setProducts((p) => [normalized, ...p]);
     navigate("/admin/products");
   }
 
