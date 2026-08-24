@@ -412,11 +412,12 @@ export const useStore = create((set, get) => ({
   // --- Wishlist Actions ---
   toggleWishlist: async (product) => {
     const user = get().user;
-    const productId = product.productId || product.id;
+    const productId = product.productId || product.id || product.product_id;
+    if (!productId) return;
     if (user) {
       set({ loadingWishlist: true });
       try {
-        const exists = get().wishlistItems.find(w => w.id === productId);
+        const exists = get().wishlistItems.find(w => (w.id === productId || w.productId === productId));
         if (exists) {
           await wishlistService.deleteWishlistItem(user.id, productId);
         } else {
@@ -432,19 +433,22 @@ export const useStore = create((set, get) => ({
     } else {
       // Guest local update
       let localWishlist = [...get().wishlistItems];
-      const exists = localWishlist.find(w => w.id === productId);
+      const exists = localWishlist.find(w => (w.id === productId || w.productId === productId));
       if (exists) {
-        localWishlist = localWishlist.filter(w => w.id !== productId);
+        localWishlist = localWishlist.filter(w => (w.id !== productId && w.productId !== productId));
       } else {
+        const price = parsePrice(product.price);
+        const originalPrice = parsePrice(product.originalPrice || product.compare_price || Math.round(price * 1.3));
         localWishlist.push({
           id: productId,
+          productId: productId,
           name: product.name,
-          price: Number(product.price),
-          originalPrice: Number(product.originalPrice || product.compare_price || Math.round(product.price * 1.3)),
-          category: product.category,
+          price: price,
+          originalPrice: originalPrice,
+          category: product.category || '',
           qty: 1,
           image: product.img || product.image || (product.images && product.images[0]) || '/src/assets/cart/bangle1.webp',
-          deliveryDate: 'Sep 12, 2025'
+          deliveryDate: '2 - 3 Days'
         });
       }
       set({ wishlistItems: localWishlist });

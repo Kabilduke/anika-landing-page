@@ -59,11 +59,13 @@ export default function AnikaWishlist() {
 
   const handleAddToCart = async (item) => {
     await addToCart({
-      productId: item.id,
+      productId: item.id || item.productId,
+      id: item.id || item.productId,
       name: item.name,
       price: item.price,
       originalPrice: item.originalPrice,
-      img: item.image,
+      img: item.image || item.img,
+      image: item.image || item.img,
       category: item.category,
     });
   };

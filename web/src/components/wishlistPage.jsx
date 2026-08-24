@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./WishlistPage.css";
 import SiteHeader from "./SiteHeader";
@@ -12,10 +12,25 @@ export default function WishlistPage({ onBack }) {
   const wishlistItems = useStore((state) => state.wishlistItems);
   const removeFromWishlist = useStore((state) => state.removeFromWishlist);
   const removeSelectedFromWishlist = useStore((state) => state.removeSelectedFromWishlist);
+  const addToCart = useStore((state) => state.addToCart);
+  const setSelectedProduct = useStore((state) => state.setSelectedProduct);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [toast, setToast] = useState("");
   const [newsletterEmail, setNewsletterEmail] = useState("");
+
+  // Sync selectedIds when wishlist items change
+  useEffect(() => {
+    if (wishlistItems.length > 0) {
+      setSelectedIds((prev) => {
+        const valid = prev.filter((id) => wishlistItems.some((item) => item.id === id));
+        if (valid.length > 0) return valid;
+        return wishlistItems.map((item) => item.id);
+      });
+    } else {
+      setSelectedIds([]);
+    }
+  }, [wishlistItems]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -41,9 +56,32 @@ export default function WishlistPage({ onBack }) {
     showToast("Items removed from wishlist");
   };
 
-  const updateQty = (id, val) => {
-    // Quantities not stored in DB, mock locally or ignore.
-    showToast("Quantity updated");
+  const handleAddToCart = async (item) => {
+    await addToCart({
+      productId: item.id || item.productId,
+      id: item.id || item.productId,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      img: item.image,
+      image: item.image,
+      category: item.category,
+    });
+    showToast(`Added "${item.name}" to cart!`);
+  };
+
+  const handleViewProduct = (item) => {
+    setSelectedProduct({
+      id: item.id || item.productId,
+      productId: item.id || item.productId,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      img: item.image,
+      image: item.image,
+      category: item.category || "",
+    });
+    navigate("/product");
   };
 
   return (
@@ -85,7 +123,7 @@ export default function WishlistPage({ onBack }) {
         {wishlistItems.length === 0 ? (
           <div className="wishlist-empty">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
             <p>Your wishlist is empty</p>
           </div>
@@ -127,25 +165,26 @@ export default function WishlistPage({ onBack }) {
                     checked={selectedIds.includes(item.id)}
                     onChange={() => toggleSelect(item.id)}
                   />
-                  <img src={item.image} alt={item.name} className="wishlist-item-img" />
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="wishlist-item-img"
+                    onClick={() => handleViewProduct(item)}
+                    style={{ cursor: "pointer" }}
+                  />
                   <div className="wishlist-item-info">
-                    <p className="wishlist-item-name">{item.name}</p>
+                    <p
+                      className="wishlist-item-name"
+                      onClick={() => handleViewProduct(item)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {item.name}
+                    </p>
                     <div className="wishlist-item-pricing">
-                      <span className="wishlist-item-price">₹{item.price}</span>
-                      {item.originalPrice && (
-                        <span className="wishlist-item-original">₹{item.originalPrice}</span>
+                      <span className="wishlist-item-price">₹{Number(item.price || 0).toLocaleString("en-IN")}</span>
+                      {item.originalPrice && Number(item.originalPrice) > Number(item.price) && (
+                        <span className="wishlist-item-original">₹{Number(item.originalPrice).toLocaleString("en-IN")}</span>
                       )}
-                    </div>
-                    <div className="wishlist-item-qty">
-                      <select
-                        value={item.qty || 1}
-                        onChange={(e) => updateQty(item.id, parseInt(e.target.value))}
-                        className="qty-select"
-                      >
-                        {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                          <option key={n} value={n}>Qty: {n}</option>
-                        ))}
-                      </select>
                     </div>
                     {item.category && (
                       <p className="wishlist-item-category">{item.category}</p>
@@ -161,6 +200,23 @@ export default function WishlistPage({ onBack }) {
                         <span>Delivered by {item.deliveryDate}</span>
                       </div>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(item)}
+                      style={{
+                        marginTop: "8px",
+                        padding: "6px 14px",
+                        backgroundColor: "#111827",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        width: "fit-content"
+                      }}
+                    >
+                      Add to Cart
+                    </button>
                   </div>
                   <button
                     className="wishlist-remove-btn"
@@ -171,7 +227,7 @@ export default function WishlistPage({ onBack }) {
                     aria-label="Remove from wishlist"
                   >
                     <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
                   </button>
                 </div>

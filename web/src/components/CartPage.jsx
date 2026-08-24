@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./CartPage.css";
 import Navbar from "./SiteHeader"
 import Footer from "./SiteFooter"
@@ -15,12 +15,23 @@ export default function CartPage() {
   const toggleWishlist = useStore((state) => state.toggleWishlist);
 
   const [selectedIds, setSelectedIds] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const [newsletterEmail, setNewsletterEmail] = useState("");
   const [showWishlist, setShowWishlist] = useState(false);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // Initialize and sync selected items when cartItems load or change
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      setSelectedIds((prev) => {
+        const valid = prev.filter((id) => cartItems.some((item) => item.id === id));
+        if (valid.length > 0) return valid;
+        return cartItems.map((item) => item.id);
+      });
+    } else {
+      setSelectedIds([]);
+    }
+  }, [cartItems]);
 
   const handleNavClick = (link) =>{
     if (link == "Home"){
@@ -79,9 +90,11 @@ export default function CartPage() {
     setTimeout(() => setShowWishlist(true), 800);
   };
 
-  const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
+  // Only calculate totals for currently SELECTED items
+  const selectedItems = cartItems.filter((i) => selectedIds.includes(i.id));
+  const subtotal = selectedItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
   const taxes = 0;
-  const gst = Math.round(subtotal - (subtotal / 1.03)); // 3% inclusive GST on jewelry
+  const gst = subtotal > 0 ? Math.round(subtotal - (subtotal / 1.03)) : 0; // 3% inclusive GST on jewelry
   const platformFee = 0;
   const grandTotal = subtotal + taxes + platformFee;
 
@@ -174,8 +187,10 @@ export default function CartPage() {
                     <div className="cart-item-info">
                       <p className="cart-item-name">{item.name}</p>
                       <div className="cart-item-pricing">
-                        <span className="cart-item-price">₹{item.price}</span>
-                        <span className="cart-item-original">₹{item.originalPrice}</span>
+                        <span className="cart-item-price">₹{Number(item.price || 0).toLocaleString("en-IN")}</span>
+                        {item.originalPrice && Number(item.originalPrice) > Number(item.price) && (
+                          <span className="cart-item-original">₹{Number(item.originalPrice).toLocaleString("en-IN")}</span>
+                        )}
                       </div>
                       <div className="cart-item-qty">
                         <select
@@ -188,6 +203,16 @@ export default function CartPage() {
                           ))}
                         </select>
                       </div>
+                      {(item.size || item.color) && (
+                        <div className="cart-item-variant-meta" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "#666", marginTop: "4px" }}>
+                          {item.size && <span>Size: <strong>{item.size}</strong></span>}
+                          {item.color && (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              Color: <span style={{ display: "inline-block", width: "12px", height: "12px", borderRadius: "50%", backgroundColor: item.color, border: "1px solid #ccc" }} />
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="cart-item-category">{item.category}</p>
                       <div className="cart-item-delivery">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -211,8 +236,8 @@ export default function CartPage() {
           <div className="cart-right">
             <div className="order-summary">
               <div className="summary-row summary-subtotal">
-                <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>Subtotal ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'items'})</span>
+                <span>₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="summary-divider"></div>
               <div className="summary-row">
@@ -221,7 +246,7 @@ export default function CartPage() {
               </div>
               <div className="summary-row">
                 <span>GST (3% Incl.)</span>
-                <span>₹{gst}</span>
+                <span>₹{gst.toLocaleString("en-IN")}</span>
               </div>
               <div className="summary-row">
                 <span>Platform Fee</span>
@@ -234,13 +259,14 @@ export default function CartPage() {
               <div className="summary-divider"></div>
               <div className="summary-row summary-grand">
                 <span>Grand Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+                <span>₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <button
                 className="checkout-btn"
-                onClick={() => navigate("/shipping")}
+                onClick={() => navigate("/shipping", { state: { selectedItems } })}
+                disabled={selectedItems.length === 0}
               >
-                Checkout
+                Checkout {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
               </button>
             </div>
           </div>

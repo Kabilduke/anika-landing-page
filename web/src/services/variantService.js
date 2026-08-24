@@ -114,15 +114,16 @@ export const variantService = {
     }
 
     const baseSku = product.sku?.trim() || generateBaseSku(product.name);
-    const rows = [];
+    const existingVariantUpdates = [];
+    const newVariantRows = [];
+
     for (let i = 0; i < variants.length; i++) {
       const v = variants[i];
       const imageUrls = v.media?.length
         ? await this._uploadVariantImages(v.media, product.name)
         : (v.images || []);
 
-      const row = {
-        product_id: productId,
+      const rowData = {
         sku: v.sku?.trim() || generateVariantSku(baseSku, i),
         size: v.sizeDimension || null,
         color: v.color || null,
@@ -133,15 +134,45 @@ export const variantService = {
         images: imageUrls,
         is_active: true,
       };
-      if (v.variant_id) row.variant_id = v.variant_id;
-      rows.push(row);
+
+      if (v.variant_id) {
+        existingVariantUpdates.push({ variant_id: v.variant_id, data: rowData });
+      } else {
+        newVariantRows.push({
+          product_id: productId,
+          ...rowData,
+        });
+      }
     }
 
-    const { data: savedVariants, error: variantError } = await supabase
-      .from('product_variants')
-      .upsert(rows, { onConflict: 'variant_id' })
-      .select();
-    if (variantError) throw variantError;
+    const savedVariants = [];
+
+    // 1. Update existing variants individually (avoids non-DEFAULT identity INSERT error)
+    if (existingVariantUpdates.length > 0) {
+      const updatedResults = await Promise.all(
+        existingVariantUpdates.map(async ({ variant_id, data }) => {
+          const { data: updated, error } = await supabase
+            .from('product_variants')
+            .update(data)
+            .eq('variant_id', variant_id)
+            .select()
+            .single();
+          if (error) throw error;
+          return updated;
+        })
+      );
+      savedVariants.push(...updatedResults);
+    }
+
+    // 2. Insert newly added variants (omit variant_id so DB automatically generates it)
+    if (newVariantRows.length > 0) {
+      const { data: inserted, error: insertError } = await supabase
+        .from('product_variants')
+        .insert(newVariantRows)
+        .select();
+      if (insertError) throw insertError;
+      if (inserted) savedVariants.push(...inserted);
+    }
 
     // ── Keep base product images in sync on edit too ──
     const firstWithImages = savedVariants.find(v => v.images?.length > 0);
@@ -175,9 +206,10 @@ export const variantService = {
   },
 
   async updateVariant(variantId, variantData) {
+    const { variant_id, ...cleanData } = variantData || {};
     const { data, error } = await supabase
       .from('product_variants')
-      .update(variantData)
+      .update(cleanData)
       .eq('variant_id', variantId)
       .select();
     if (error) throw error;

@@ -569,21 +569,25 @@ export default function ProductPage({ onBack }) {
     if (!canAddToCart) return;
 
     const sizeParam = selectedSize || null;
+    const colorParam = selectedColor || null;
 
     navigate("/shipping", {
       state: {
         product: {
-          productId: selectedProduct?.productId || selectedProduct?.id,
+          productId: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
+          id: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
           name: displayName,
-          price: displayPrice,
+          price: payPrice,
+          originalPrice: strikePrice,
           qty: qty,
-          img: displayImage,
+          img: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
           category: cat,
           size: sizeParam,
+          color: colorParam,
         }
       }
     });
-  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct, selectedSize]);
+  }, [displayName, payPrice, strikePrice, qty, dynamicThumbs, selectedVariant, displayImage, cat, selectedProduct, selectedSize, selectedColor, canAddToCart, navigate]);
 
   const handleShare = useCallback(async () => {
     const shareData = {
@@ -755,8 +759,21 @@ export default function ProductPage({ onBack }) {
                   if (!canAddToCart) return;
 
                   if (selectedProduct) {
-                    const sizeParam = selectedSize || null;;
-                    await addToCart(selectedProduct, qty, sizeParam);
+                    const sizeParam = selectedSize || null;
+                    const colorParam = selectedColor || null;
+                    const cartProductPayload = {
+                      ...selectedProduct,
+                      productId: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
+                      id: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
+                      name: displayName,
+                      price: payPrice,
+                      originalPrice: strikePrice,
+                      compare_price: strikePrice,
+                      image: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
+                      img: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
+                      category: cat,
+                    };
+                    await addToCart(cartProductPayload, qty, sizeParam, colorParam);
                     showToast(`Added "${displayName}" to cart!`);
                   }
                 }}
@@ -768,7 +785,19 @@ export default function ProductPage({ onBack }) {
                 aria-label="Add to wishlist"
                 onClick={async () => {
                   if (selectedProduct) {
-                    await toggleWishlist(selectedProduct);
+                    const wishProductPayload = {
+                      ...selectedProduct,
+                      productId: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
+                      id: selectedProduct?.productId || selectedProduct?.id || selectedProduct?.product_id,
+                      name: displayName,
+                      price: payPrice,
+                      originalPrice: strikePrice,
+                      compare_price: strikePrice,
+                      category: cat,
+                      image: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
+                      img: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
+                    };
+                    await toggleWishlist(wishProductPayload);
                   }
                 }}
               >

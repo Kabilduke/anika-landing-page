@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase';
 
+/** Strip currency symbols & commas so "₹1,299" → 1299 */
+const parsePrice = (v) => {
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  const n = Number(String(v).replace(/[₹,\s]/g, ''));
+  return isNaN(n) ? 0 : n;
+};
+
 export const wishlistService = {
   /**
    * Retrieves all wishlist items for a user.
@@ -10,27 +18,46 @@ export const wishlistService = {
     if (!userId) return [];
     const { data, error } = await supabase
       .from('wishlist_items')
-      .select('*, products(*, categories(name))')
+      .select('*, products(*, categories(name), product_variants(*))')
       .eq('user_id', userId);
 
     if (error) throw error;
     return (data || []).map(item => {
-      const rawPrice = Number(item.products.price) || 0;
-      const rawDiscount = Number(item.products.discount_price) || 0;
-      const finalPrice = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+      const product = item.products;
+      if (!product) return null;
+
+      const variants = product.product_variants || [];
+      let price = 0;
+      let originalPrice = 0;
+      let image = product.image_url || (product.images && product.images[0]) || '/src/assets/cart/bangle1.webp';
+
+      if (variants.length > 0) {
+        const sortedVariants = [...variants].sort((a, b) => (parsePrice(a.price) || 0) - (parsePrice(b.price) || 0));
+        const primaryVariant = sortedVariants[0];
+        price = parsePrice(primaryVariant.price);
+        originalPrice = parsePrice(primaryVariant.compare_price || Math.round(price * 1.3));
+        if (primaryVariant.images && primaryVariant.images.length > 0) {
+          image = primaryVariant.images[0];
+        }
+      } else {
+        const rawPrice = parsePrice(product.price);
+        const rawDiscount = parsePrice(product.discount_price);
+        price = rawDiscount > 0 ? rawPrice - rawDiscount : rawPrice;
+        originalPrice = parsePrice(product.compare_price || Math.round(rawPrice * 1.3));
+      }
 
       return {
-        id: item.products.product_id,
+        id: product.product_id,
         dbId: item.id,
-        name: item.products.name,
-        price: finalPrice,
-        originalPrice: Number(item.products.compare_price || Math.round(rawPrice * 1.3)),
-        category: item.products.categories?.name || '',
+        name: product.name || '',
+        price: price,
+        originalPrice: originalPrice,
+        category: product.categories?.name || '',
         qty: 1,
-        image: item.products.images && item.products.images[0] ? item.products.images[0] : '/src/assets/cart/bangle1.webp',
+        image: image,
         deliveryDate: '2 - 3 Days'
       };
-    });
+    }).filter(Boolean);
   },
 
 

@@ -277,12 +277,15 @@ export default function ShippingAddress() {
 
   // Compute checkout items and totals
   const checkoutProduct = location.state?.product;
+  const selectedCartItems = location.state?.selectedItems;
   const cartItems = useStore((state) => state.cartItems);
-  const checkoutItems = checkoutProduct ? [checkoutProduct] : cartItems;
+  const checkoutItems = checkoutProduct
+    ? [checkoutProduct]
+    : (selectedCartItems && selectedCartItems.length > 0 ? selectedCartItems : cartItems);
 
   const subtotal = checkoutProduct
     ? (parsePrice(checkoutProduct.price) * checkoutProduct.qty)
-    : cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+    : checkoutItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 1), 0);
 
   const discountAmount = appliedDiscount
     ? Math.round((subtotal * appliedDiscount.pct) / 100)
@@ -495,6 +498,9 @@ export default function ShippingAddress() {
           body: {
             action: "create_order",
             items: paymentItems,
+            discountCode: appliedDiscount?.code || null,
+            discountPct: appliedDiscount?.pct || 0,
+            shippingFee: shippingFee || 0,
           }
         });
 
@@ -526,6 +532,9 @@ export default function ShippingAddress() {
                   razorpay_signature: response.razorpay_signature,
                   items: paymentItems,
                   addressId: addressId,
+                  discountCode: appliedDiscount?.code || null,
+                  discountPct: appliedDiscount?.pct || 0,
+                  shippingFee: shippingFee || 0,
                 }
               });
 
