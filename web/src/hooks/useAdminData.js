@@ -104,28 +104,47 @@ export function useAdminData() {
   };
 
   const aggregatedOrders = useMemo(() => {
-    return orders.map((order) => ({
-      ...order,
-      customer: customers.find((c) => c.id === order.user_id) || {
-        id: order.user_id,
-        name: 'Unknown Customer',
-        phone: 'N/A',
-        email: 'N/A',
-      },
-    }));
+    return orders.map((order) => {
+      const matchedCustomer = customers.find((c) => c.id === order.user_id);
+      const phone = matchedCustomer?.phone || matchedCustomer?.phone_number || matchedCustomer?.mobile || matchedCustomer?.phoneNumber || order.phone || order.phone_number || order.customer?.phone || 'N/A';
+      const name = matchedCustomer?.name || matchedCustomer?.full_name || order.customer?.name || 'Unknown Customer';
+      const email = matchedCustomer?.email || order.customer?.email || 'N/A';
+
+      return {
+        ...order,
+        customer: {
+          id: order.user_id,
+          name,
+          phone,
+          email,
+          ...matchedCustomer,
+        },
+      };
+    });
   }, [orders, customers]);
 
   const aggregatedCustomers = useMemo(() => {
     return customers.map((customer) => {
       const customerOrders = orders.filter((o) => o.user_id === customer.id);
+      const orderWithPhone = customerOrders.find((o) => o.phone || o.phone_number || o.customer?.phone || o.shipping_address?.phone);
+      const orderPhone = orderWithPhone?.phone || orderWithPhone?.phone_number || orderWithPhone?.customer?.phone || orderWithPhone?.shipping_address?.phone;
+
+      const phone = customer.phone || customer.phone_number || customer.mobile || customer.phoneNumber || orderPhone || '';
+      const name = customer.name || customer.full_name || (customerOrders[0]?.customer?.name) || 'Unknown Customer';
+      const email = customer.email || (customerOrders[0]?.customer?.email) || '';
+
       const totalSpent = customerOrders
         .filter((o) => {
           const s = o.status?.toLowerCase();
           return s !== 'cancelled' && s !== 'returned';
         })
         .reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+
       return {
         ...customer,
+        name,
+        email,
+        phone,
         orderCount: customerOrders.length,
         totalSpent,
       };

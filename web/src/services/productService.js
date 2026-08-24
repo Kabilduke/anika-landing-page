@@ -207,12 +207,12 @@ export const productService = {
       .from('product_img')
       .getPublicUrl(
         filePath, {
-          transform: {
-            width, 
-            quanlity: 75,
-            format: "webp",
-          }
-        });
+        transform: {
+          width,
+          quanlity: 75,
+          format: "webp",
+        }
+      });
     return data.publicUrl;
   },
 
@@ -235,10 +235,10 @@ export const productService = {
    * @param {string} filePath 
    * @returns {string}
    */
-  getCategoryImagePublicUrl(filePath, width= 400) {
+  getCategoryImagePublicUrl(filePath, width = 400) {
     const { data } = supabase.storage
       .from('categories_img')
-      .getPublicUrl(filePath,{
+      .getPublicUrl(filePath, {
         transform: {
           width,
           quality: 75,
@@ -348,19 +348,19 @@ export const productService = {
     const { data } = supabase.storage
       .from('subcategories_img')
       .getPublicUrl(filePath, {
-        transform: { 
-          width, 
-          quality: 75 
+        transform: {
+          width,
+          quality: 75
         },
       });
     return data.publicUrl;
   },
 
-   /**
-   * Retrieves subcategories.
-   * @param {number|null} parentId
-   * @returns {Promise<any[]>}
-   */
+  /**
+  * Retrieves subcategories.
+  * @param {number|null} parentId
+  * @returns {Promise<any[]>}
+  */
   async getSubCategories(parentId = null) {
     let query = supabase
       .from("subcategories")

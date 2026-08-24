@@ -50,85 +50,93 @@ const StatIcon = ({ type }) => {
   const icons = {
     orders: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
     ),
     revenue: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     ),
     customers: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
     pending: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
       </svg>
     ),
   };
   return icons[type] || null;
 };
 
-const ArrowUp   = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>;
-const ArrowDown = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>;
-const ChevronDown = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>;
-const ChevronUp   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>;
+const ArrowUp = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>;
+const ArrowDown = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>;
+const ChevronDown = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>;
+const ChevronUp = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>;
 
 const HamburgerIcon = ({ open }) =>
   open ? (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   ) : (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
     </svg>
   );
 
 // ── Menu Config ─────────────────────────────────────────────────
 const menuItems = [
   { id: "dashboard", label: "Dashboard", path: "/admin" },
-  { id: "category",  label: "Category", path: "/admin/categories", children: [
-    { label: "All Categories", path: "/admin/categories" },
-    { label: "Add Category", path: "/admin/categories/add" },
-  ]},
-  { id: "product",   label: "Product", path: "/admin/products", children: [
-    { label: "All Products", path: "/admin/products" },
-    { label: "Add Product", path: "/admin/products/add" },
-  ]},
-  { id: "order",     label: "Orders", path: "/admin/orders" },
-  { id: "customer",  label: "Customers", path: "/admin/customers" },
-  { id: "banner",    label: "Banner & Content", path: "/admin/banners", children: [
-    { label: "All Banners", path: "/admin/banners" },
-    { label: "Add Banner", path: "/admin/banners/add" },
-  ]},
+  {
+    id: "category", label: "Category", path: "/admin/categories", children: [
+      { label: "All Categories", path: "/admin/categories" },
+      { label: "Add Category", path: "/admin/categories/add" },
+    ]
+  },
+  {
+    id: "product", label: "Product", path: "/admin/products", children: [
+      { label: "All Products", path: "/admin/products" },
+      { label: "Add Product", path: "/admin/products/add" },
+    ]
+  },
+  { id: "order", label: "Orders", path: "/admin/orders" },
+  { id: "customer", label: "Customers", path: "/admin/customers" },
+  {
+    id: "banner", label: "Banner & Content", path: "/admin/banners", children: [
+      { label: "All Banners", path: "/admin/banners" },
+      { label: "Add Banner", path: "/admin/banners/add" },
+    ]
+  },
   { id: "analytics", label: "Analytics", path: "/admin/analytics" },
-  { id: "settings",  label: "Settings", path: "/admin/store", children: [
-    { label: "Store Info", path: "/admin/store" },
-    { label: "Contact", path: "/admin/contact" },
-    { label: "Shipping", path: "/admin/shipping" },
-    { label: "Payment", path: "/admin/payment" },
-    { label: "Admin Account", path: "/admin/account" },
-    { label: "Notification", path: "/admin/notification" },
-    { label: "Policies", path: "/admin/policies" },
-    { label: "Danger Zone", path: "/admin/danger" },
-  ]},
+  {
+    id: "settings", label: "Settings", path: "/admin/store", children: [
+      { label: "Store Info", path: "/admin/store" },
+      { label: "Contact", path: "/admin/contact" },
+      { label: "Shipping", path: "/admin/shipping" },
+      { label: "Payment", path: "/admin/payment" },
+      { label: "Admin Account", path: "/admin/account" },
+      { label: "Notification", path: "/admin/notification" },
+      { label: "Policies", path: "/admin/policies" },
+      { label: "Danger Zone", path: "/admin/danger" },
+    ]
+  },
 ];
 
 const sidebarIcons = {
   dashboard: <img src={dashboardIcon} alt="dashboard" className="db__menu-icon-img" />,
-  product:   <img src={productIcon}   alt="product"   className="db__menu-icon-img" />,
-  category:  <img src={categoryIcon}  alt="category"  className="db__menu-icon-img" />,
-  order:     <img src={orderIcon}     alt="order"     className="db__menu-icon-img" />,
-  customer:  <img src={customerIcon}  alt="customer"  className="db__menu-icon-img" />,
-  banner:    <img src={bannerIcon}    alt="banner"    className="db__menu-icon-img" />,
+  product: <img src={productIcon} alt="product" className="db__menu-icon-img" />,
+  category: <img src={categoryIcon} alt="category" className="db__menu-icon-img" />,
+  order: <img src={orderIcon} alt="order" className="db__menu-icon-img" />,
+  customer: <img src={customerIcon} alt="customer" className="db__menu-icon-img" />,
+  banner: <img src={bannerIcon} alt="banner" className="db__menu-icon-img" />,
   analytics: <img src={analyticsIcon} alt="analytics" className="db__menu-icon-img" />,
-  settings:  <img src={settingsIcon}  alt="settings"  className="db__menu-icon-img" />,
+  settings: <img src={settingsIcon} alt="settings" className="db__menu-icon-img" />,
 };
 
 const HIDE_ADD_PRODUCT_PATHS = [
@@ -183,7 +191,7 @@ const RevenueChart = ({ orders, loading }) => {
       const dayOrders = orders.filter(o => {
         const oDate = new Date(o.order_date);
         oDate.setHours(0, 0, 0, 0);
-        return oDate.getTime() === d.getTime() && !['cancelled','returned'].includes(o.status?.toLowerCase());
+        return oDate.getTime() === d.getTime() && !['cancelled', 'returned'].includes(o.status?.toLowerCase());
       });
 
       const dailyRevenue = dayOrders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
@@ -215,8 +223,8 @@ const RevenueChart = ({ orders, loading }) => {
   const gx = (i) => pad.l + (i / (chartData.length - 1)) * cw;
   const gy = (v) => pad.t + ch - (v / maxScaleVal) * ch;
 
-  const revPath  = chartData.map((p, i) => `${i === 0 ? "M" : "L"} ${gx(i)} ${gy(p.rev)}`).join(" ");
-  
+  const revPath = chartData.map((p, i) => `${i === 0 ? "M" : "L"} ${gx(i)} ${gy(p.rev)}`).join(" ");
+
   const maxCust = Math.max(...chartData.map(d => d.cust), 5);
   const scaleCust = (c) => pad.t + ch - (c / maxCust) * ch;
   const custPath = chartData.map((p, i) => `${i === 0 ? "M" : "L"} ${gx(i)} ${scaleCust(p.cust)}`).join(" ");
@@ -239,16 +247,16 @@ const RevenueChart = ({ orders, loading }) => {
           const val = Math.round(maxScaleVal * ratio);
           return (
             <g key={i}>
-              <line x1={pad.l} y1={gy(val)} x2={W - pad.r} y2={gy(val)} stroke="#e5e5e5" strokeDasharray="4 4"/>
+              <line x1={pad.l} y1={gy(val)} x2={W - pad.r} y2={gy(val)} stroke="#e5e5e5" strokeDasharray="4 4" />
               <text x={pad.l - 10} y={gy(val) + 4} textAnchor="end" fontSize="11" fill="#999">
-                ₹{val >= 1000 ? `${(val/1000).toFixed(1)}K` : val}
+                ₹{val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val}
               </text>
             </g>
           );
         })}
-        <path d={revPath}  fill="none" stroke="#0ea5e9" strokeWidth="2.5"/>
-        <path d={custPath} fill="none" stroke="#d4d4d8" strokeWidth="2" strokeDasharray="4 4"/>
-        {chartData.map((p, i) => <circle key={i} cx={gx(i)} cy={gy(p.rev)} r="4" fill="#0ea5e9"/>)}
+        <path d={revPath} fill="none" stroke="#0ea5e9" strokeWidth="2.5" />
+        <path d={custPath} fill="none" stroke="#d4d4d8" strokeWidth="2" strokeDasharray="4 4" />
+        {chartData.map((p, i) => <circle key={i} cx={gx(i)} cy={gy(p.rev)} r="4" fill="#0ea5e9" />)}
         {chartData.map((p, i) => <text key={i} x={gx(i)} y={H - 8} textAnchor="middle" fontSize="11" fill="#999">{p.day}</text>)}
       </svg>
       <div className="dc__chart-legend">
@@ -263,7 +271,7 @@ const SalesByCategory = ({ orders, products, loading }) => {
   const categorySales = useMemo(() => {
     const sales = {};
     orders.forEach(order => {
-      if (['cancelled','returned'].includes(order.status?.toLowerCase())) return;
+      if (['cancelled', 'returned'].includes(order.status?.toLowerCase())) return;
       const product = products.find(p => p.name === order.item_name);
       const categoryName = product?.category || 'Uncategorized';
       sales[categoryName] = (sales[categoryName] || 0) + Number(order.total_price || 0);
@@ -308,7 +316,7 @@ const SalesByCategory = ({ orders, products, loading }) => {
                 <span className="dc__category-value">₹{Number(c.value).toLocaleString('en-IN')}</span>
               </div>
               <div className="dc__category-bar-bg">
-                <div className="dc__category-bar-fill" style={{ width: `${(c.value / maxValue) * 100}%`, backgroundColor: c.color }}/>
+                <div className="dc__category-bar-fill" style={{ width: `${(c.value / maxValue) * 100}%`, backgroundColor: c.color }} />
               </div>
             </div>
           ))
@@ -490,7 +498,7 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
     const now = new Date();
     const thisMonthOrders = orders.filter(o => {
       const oDate = new Date(o.order_date);
-      return oDate.getMonth() === now.getMonth() && oDate.getFullYear() === now.getFullYear() && !['cancelled','returned'].includes(o.status?.toLowerCase());
+      return oDate.getMonth() === now.getMonth() && oDate.getFullYear() === now.getFullYear() && !['cancelled', 'returned'].includes(o.status?.toLowerCase());
     });
     const revenue = thisMonthOrders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
     const formatRevenue = (value) => {
@@ -519,10 +527,10 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
       </div>
       <div className="dc__content">
         <div className="dc__stats-row">
-          <StatCard icon="orders"    label="Total orders"         value={stats.totalOrders} change="" changeType="up"   subtext="Live count"       color="#10b981" loading={loading} />
-          <StatCard icon="revenue"   label="Revenue (this month)" value={stats.revenue} change="" changeType="down" subtext="Month total"      color="#0ea5e9" loading={loading} />
-          <StatCard icon="customers" label="Total customers"        value={stats.totalCustomers} change="" changeType="up"   subtext="Active directory" color="#f59e0b" loading={loading} />
-          <StatCard icon="pending"   label="Pending orders"       value={stats.pendingOrders} change=""       changeType="up"   subtext="Needs attention" color="#ef4444" loading={loading} />
+          <StatCard icon="orders" label="Total orders" value={stats.totalOrders} change="" changeType="up" subtext="Live count" color="#10b981" loading={loading} />
+          <StatCard icon="revenue" label="Revenue (this month)" value={stats.revenue} change="" changeType="down" subtext="Month total" color="#0ea5e9" loading={loading} />
+          <StatCard icon="customers" label="Total customers" value={stats.totalCustomers} change="" changeType="up" subtext="Active directory" color="#f59e0b" loading={loading} />
+          <StatCard icon="pending" label="Pending orders" value={stats.pendingOrders} change="" changeType="up" subtext="Needs attention" color="#ef4444" loading={loading} />
         </div>
         <div className="dc__charts-row">
           <div className="dc__chart-wrapper"><RevenueChart orders={orders} loading={loading} /></div>
@@ -540,22 +548,22 @@ const DashboardHome = ({ orders, customers, products, loading }) => {
 
 
 // Sub category Setup
-  function SubcategoryByParent({ onSave, navigate, categories }) {
-    const [searchParams] = useSearchParams();
-    const parentId = searchParams.get("parentId");
-    const parentCategory = categories.find(
-      (c) => String(c.category_id ?? c_id) === String(parentId)
-    );
-    return (
-      <SubCategoryForm
-        parentId={parentId}
-        categories={categories}
-        onBack={() => navigate("/admin/categories")}
-        onDiscard={() => navigate("/admin/categories")}
-        onSave={onSave}
-      />
-    );
-  }
+function SubcategoryByParent({ onSave, navigate, categories }) {
+  const [searchParams] = useSearchParams();
+  const parentId = searchParams.get("parentId");
+  const parentCategory = categories.find(
+    (c) => String(c.category_id ?? c_id) === String(parentId)
+  );
+  return (
+    <SubCategoryForm
+      parentId={parentId}
+      categories={categories}
+      onBack={() => navigate("/admin/categories")}
+      onDiscard={() => navigate("/admin/categories")}
+      onSave={onSave}
+    />
+  );
+}
 
 // ── Main Dashboard Layout ───────────────────────────────────────
 const Dashboard = () => {
@@ -639,21 +647,21 @@ const Dashboard = () => {
           console.log('🔔 NEW ORDER:', payload.new);
 
           const newOrder = payload.new;
-          setNotifications((prev) =>[
+          setNotifications((prev) => [
             {
               id: newOrder.id,
               type: "new_order",
               title: "New Order Received",
               message: `Order #${String(newOrder.id).slice(-6)} has been placed`,
               order: newOrder,
-              read:false,
+              read: false,
               createdAt: new Date().toISOString(),
             },
             ...prev,
           ]);
 
-          if ('Notification' in window && window.Notification.permission === 'granted'){
-            new window.Notification('New Order Recieved!',{
+          if ('Notification' in window && window.Notification.permission === 'granted') {
+            new window.Notification('New Order Recieved!', {
               body: `Order #${String(newOrder.id).slice(-6)} has been placed.`,
             });
           }
@@ -668,7 +676,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if ('Notification' in window && window.Notification.permission === 'default'){
+    if ('Notification' in window && window.Notification.permission === 'default') {
       window.Notification.requestPermission();
     }
   }, [])
@@ -749,7 +757,7 @@ const Dashboard = () => {
       }
     };
     fetchProducts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -765,7 +773,7 @@ const Dashboard = () => {
   const showSearchNavbar = ["/admin/categories", "/admin/categories/add", "/admin/products/add", "/admin/orders", "/admin/orders/detail", "/admin/customers", "/admin/customers/detail", "/admin/banners"].some(p => currentPath.startsWith(p));
   const hideAddProduct = HIDE_ADD_PRODUCT_PATHS.includes(currentPath);
 
-  const fetchSubcategoriesForParent = useCallback(async (parentId, force = false) =>{
+  const fetchSubcategoriesForParent = useCallback(async (parentId, force = false) => {
     if (!force && subcategoriesCache[parentId]) {
       return subcategoriesCache[parentId];
     }
@@ -774,7 +782,7 @@ const Dashboard = () => {
     return data;
   }, [subcategoriesCache]);
 
-  function SubcategoryCard({ navigate, categories, products}){
+  function SubcategoryCard({ navigate, categories, products }) {
     const [searchParams] = useSearchParams();
     const parentId = searchParams.get("parentId");
     const parentCategory = categories.find(
@@ -818,11 +826,11 @@ const Dashboard = () => {
     navigate("/admin/products/add");
   };
 
-  const goToAddMultipleProduct = () =>{
+  const goToAddMultipleProduct = () => {
     navigate("/admin/products/add-multiple");
   }
 
-  const goToOrder = () =>{
+  const goToOrder = () => {
     setSelectedOrder(null);
     navigate("/admin/orders");
   };
@@ -873,10 +881,10 @@ const Dashboard = () => {
     navigate("/admin/categories/add");
   };
 
-  const handleOpenSubcategory = (cat) =>{
+  const handleOpenSubcategory = (cat) => {
     const parentId = cat.category_id || cat.id;
 
-    if(!parentId){
+    if (!parentId) {
       console.error("Category ID missing:", cat);
       return;
     }
@@ -910,8 +918,8 @@ const Dashboard = () => {
   const handleSaveMultipleProduct = ({ product, variants }) => {
     const normalized = normalizeProductRow({
       ...product, 
-      images: variants[0]?.images || [],
-      product_variants: variants.map(v => ({ price: v.price, stock: v.stock })),
+      images: variants?.[0]?.images || [],
+      product_variants: (variants || []).map(v => ({ price: v.price, stock: v.stock })),
      });
     setProducts((p) => [normalized, ...p]);
     navigate("/admin/products");
@@ -1018,11 +1026,10 @@ const Dashboard = () => {
             <button
               className="db__add-btn notification-btn"
               onClick={() => setNotificationOpen((prev) => !prev)}
-              aria-label={`Notifications${
-                notifications.filter((n) => !n.read).length
+              aria-label={`Notifications${notifications.filter((n) => !n.read).length
                 ? `, ${notifications.filter((n) => !n.read).length} unread`
                 : ""
-              }`}
+                }`}
             >
               <svg
                 width="16"
@@ -1040,7 +1047,7 @@ const Dashboard = () => {
 
               <span className="notification-label">Notification</span>
 
-              {notifications.filter((n) => !n.read).length > 0 &&(
+              {notifications.filter((n) => !n.read).length > 0 && (
                 <span className="notification-badge">
                   {notifications.filter((n) => !n.read).length}
                 </span>
@@ -1054,11 +1061,11 @@ const Dashboard = () => {
 
                   {notifications.length > 0 && (
                     <button
-                    onClick={() => {
-                      setNotifications([]);
-                    }}
-                      >
-                        Clear all
+                      onClick={() => {
+                        setNotifications([]);
+                      }}
+                    >
+                      Clear all
                     </button>
                   )}
                 </div>
@@ -1067,44 +1074,43 @@ const Dashboard = () => {
                     <span>🔔</span>
                     <p>No new notifications</p>
                   </div>
-                ):(
+                ) : (
                   <div className="notification-list">
                     {notifications.map((notification) =>
-                    <button
-                      key={notification.id}
-                      className={`notification-item ${
-                        notification.read ? "notification-item--read" : ""
-                      }`}
-                      onClick={() => {
-                        setNotifications((prev) =>
-                          prev.map((item) =>
-                            item.id === notification.id
-                              ? { ...item, read: true }
-                              : item
-                          )
-                        );
-                        setNotificationOpen(false);
-                        setSelectedOrder(notification.order);
+                      <button
+                        key={notification.id}
+                        className={`notification-item ${notification.read ? "notification-item--read" : ""
+                          }`}
+                        onClick={() => {
+                          setNotifications((prev) =>
+                            prev.map((item) =>
+                              item.id === notification.id
+                                ? { ...item, read: true }
+                                : item
+                            )
+                          );
+                          setNotificationOpen(false);
+                          setSelectedOrder(notification.order);
 
-                        navigate("/admin/orders/detail");
-                      }}  
-                    >
-                      <div className="notification-icon">
-                        🛍️
-                      </div>
-                      <div className="notification-content">
-                        <strong>{notification.title}</strong>
-                        <span>{notification.message}</span>
-                        <small>
-                          ₹{Number(notification.order.total_price || 0).toLocaleString("en-IN")}
-                          {" • "}
-                          {notification.order.payment || "Payment"}
-                        </small>
-                      </div>
-                      {!notification.read && (
-                        <span className="notification-dot" />
-                      )}
-                    </button>
+                          navigate("/admin/orders/detail");
+                        }}
+                      >
+                        <div className="notification-icon">
+                          🛍️
+                        </div>
+                        <div className="notification-content">
+                          <strong>{notification.title}</strong>
+                          <span>{notification.message}</span>
+                          <small>
+                            ₹{Number(notification.order.total_price || 0).toLocaleString("en-IN")}
+                            {" • "}
+                            {notification.order.payment || "Payment"}
+                          </small>
+                        </div>
+                        {!notification.read && (
+                          <span className="notification-dot" />
+                        )}
+                      </button>
                     )}
                   </div>
                 )}
@@ -1114,17 +1120,17 @@ const Dashboard = () => {
 
           <Link to="/" style={{ textDecoration: 'none' }}>
             <button className="db__profile-btn" aria-label="Admin Profile" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div className="db__profile-avatar-img" style={{ 
-                backgroundColor: '#c48a73', 
-                color: '#fff', 
-                borderRadius: '50%', 
-                width: '22px', 
-                height: '22px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontWeight: '600', 
-                fontSize: '11px' 
+              <div className="db__profile-avatar-img" style={{
+                backgroundColor: '#c48a73',
+                color: '#fff',
+                borderRadius: '50%',
+                width: '22px',
+                height: '22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '600',
+                fontSize: '11px'
               }}>
                 {adminName ? adminName.charAt(0).toUpperCase() : 'A'}
               </div>
@@ -1182,13 +1188,33 @@ const Dashboard = () => {
               );
             })}
           </nav>
+
+          <div className="db__sidebar-socials">
+            <a href="https://www.instagram.com/anikafashionstore.jewellery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="db__social-btn db__social-btn--ig">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </a>
+            <a href="https://wa.me/919363631636" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="db__social-btn db__social-btn--wa">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.764.459 3.487 1.334 5.005l-1.416 5.174 5.297-1.389c1.464.798 3.118 1.218 4.772 1.219h.004c5.505 0 9.988-4.478 9.989-9.985 0-2.668-1.038-5.176-2.925-7.062a9.927 9.927 0 0 0-7.065-2.946zm5.642 14.341c-.244.688-1.417 1.315-1.96 1.369-.51.051-1.157.078-3.418-.853-2.888-1.19-4.747-4.135-4.891-4.327-.143-.191-1.171-1.558-1.171-2.97 0-1.412.738-2.106 1.002-2.394.263-.287.574-.359.765-.359.191 0 .383.002.55.011.177.009.414-.067.647.493.243.585.829 2.022.901 2.169.072.146.12.316.024.507-.096.191-.144.311-.287.478-.144.168-.302.375-.431.504-.144.143-.294.301-.126.589.168.287.747 1.233 1.603 1.996 1.101.98 2.031 1.285 2.318 1.428.287.143.454.12.622-.072.168-.191.718-.838.909-1.125.191-.287.383-.239.646-.144.263.096 1.674.79 1.961.933.287.143.479.215.55.335.072.12.072.694-.172 1.382z"/>
+              </svg>
+            </a>
+            <a href="https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="db__social-btn db__social-btn--fb">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
+              </svg>
+            </a>
+          </div>
         </aside>
 
         {/* Main Content - React Router Routes */}
         <main className="db__main">
           <Routes>
             <Route path="/" element={<DashboardHome orders={orders} customers={customers} products={products} loading={adminDataLoading} />} />
-            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/analytics" element={<Analytics orders={orders} customers={customers} products={products} loading={adminDataLoading} />} />
 
             {/* Products */}
             <Route path="/products" element={
@@ -1200,11 +1226,11 @@ const Dashboard = () => {
                 onDeleteProduct={handleDeleteProduct} 
               />} />
             <Route path="/products/add" element={
-              <AddProduct 
-                initialData={editingProduct} 
-                onBack={() => { setEditingProduct(null); navigate("/admin/products"); }} 
-                onPublish={handlePublish} 
-                onSaveDraft={handleSaveDraft} 
+              <AddProduct
+                initialData={editingProduct}
+                onBack={() => { setEditingProduct(null); navigate("/admin/products"); }}
+                onPublish={handlePublish}
+                onSaveDraft={handleSaveDraft}
                 onAddVariant={goToAddMultipleProduct}
               />} />
 
@@ -1230,21 +1256,21 @@ const Dashboard = () => {
 
             {/* Categories */}
             <Route path="/categories" element={
-              <CategoryList 
+              <CategoryList
                 categories={categories}
-                setCategories={setCategories} 
-                onAddCategory={goToAddCategory} 
+                setCategories={setCategories}
+                onAddCategory={goToAddCategory}
                 // onAddSubcategory={handleAddSubcategory} 
                 onOpenSubcategory={handleOpenSubcategory}
-                onEditCategory={handleEditCategory} 
-                onDeleteCategory={handleDeleteCategory} 
+                onEditCategory={handleEditCategory}
+                onDeleteCategory={handleDeleteCategory}
               />
-             } 
+            }
             />
 
             <Route
               path="/subcategories/new"
-              element = {
+              element={
                 <SubcategoryByParent
                   navigate={navigate}
                   categories={categories}
@@ -1255,7 +1281,7 @@ const Dashboard = () => {
 
             <Route
               path="/subcategories"
-              element = {
+              element={
                 <SubcategoryCard
                   navigate={navigate}
                   categories={categories}

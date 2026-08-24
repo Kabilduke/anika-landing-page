@@ -50,12 +50,12 @@ const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
   // Check categoryImage first, then fall back to images array or legacy image field
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
-    <div 
+    <div
       onClick={() => onSelect(cat)}
       style={{
         background: "#fff", borderRadius: 14, border: "1px solid #e8e8e8",
         overflow: "hidden",
-    }}>
+      }}>
       <div style={{ padding: "10px 10px 0 10px" }}>
         <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", borderRadius: 8, border: "1px solid #ebebeb" }}>
           {thumbnail
@@ -92,20 +92,21 @@ const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
 };
 
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
-const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcategory}) => {
+const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcategory }) => {
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
-    <div 
-    onClick={() => onOpenSubcategory(cat)}
-    style={{
-      display: "flex", alignItems: "flex-start", gap: 12,
-      padding: "14px 16px", borderBottom: "1px solid #f5f5f5",
-      background: selected ? "#fafffe" : "#fff",
-    }}>
+    <div
+      onClick={() => onOpenSubcategory(cat)}
+      style={{
+        display: "flex", alignItems: "flex-start", gap: 12,
+        padding: "14px 16px", borderBottom: "1px solid #f5f5f5",
+        background: selected ? "#fafffe" : "#fff",
+      }}>
       <input
         type="checkbox"
         checked={selected}
         onChange={onSelect}
+        onClick={(e) => e.stopPropagation()}
         style={{ marginTop: 2, flexShrink: 0, width: 15, height: 15, cursor: "pointer" }}
       />
       <div style={{ width: 48, height: 48, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e5e5", flexShrink: 0 }}>
@@ -136,11 +137,17 @@ const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcatego
       <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
         <button
           style={{ background: "#eff6ff", color: "#3b82f6", border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
-          onClick={() => onEdit(cat)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(cat);
+          }}
         >Edit</button>
         <button
           style={{ background: "#fff0f0", color: "#ef4444", border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
-          onClick={() => onDelete(cat.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(cat.category_id || cat.id);
+          }}
         >Del</button>
       </div>
     </div>
@@ -272,36 +279,36 @@ const CategoryList = ({
   onDeleteCategory,
 }) => {
   const width = useWindowWidth();
-  const [view, setView]               = useState("grid");
-  const [search, setSearch]           = useState("");
+  const [view, setView] = useState("grid");
+  const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
-  const [page, setPage]               = useState(1);
+  const [page, setPage] = useState(1);
 
   const [blockedCategory, setBlockedCategory] = useState(null);
 
-  const isXS  = width <= 480;
-  const isSM  = width <= 640;
-  const isMD  = width <= 768;
-  const isLG  = width <= 1024;
+  const isXS = width <= 480;
+  const isSM = width <= 640;
+  const isMD = width <= 768;
+  const isLG = width <= 1024;
 
   const ITEMS_PER_PAGE = 10;
 
-  const filtered  = categories.filter((c) =>
+  const filtered = categories.filter((c) =>
     (c.name || "").toLowerCase().includes(search.toLowerCase())
   );
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const allSelected = paginated.length > 0 && paginated.every((c) => selectedIds.includes(c.id));
-  const toggleAll   = () => setSelectedIds(allSelected ? [] : paginated.map((c) => c.id));
-  const toggleOne   = (id) => setSelectedIds((prev) =>
+  const toggleAll = () => setSelectedIds(allSelected ? [] : paginated.map((c) => c.id));
+  const toggleOne = (id) => setSelectedIds((prev) =>
     prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
   );
 
-  const handleDeleteClick = (id) =>{
+  const handleDeleteClick = (id) => {
     const cat = categories.find((c) => c.id === id);
     if (!cat) return;
 
-    if ((cat.productCount ?? 0) > 0){
+    if ((cat.productCount ?? 0) > 0) {
       setBlockedCategory(cat)
       return;
     }
@@ -313,14 +320,14 @@ const CategoryList = ({
   const isEmpty = filtered.length === 0;
 
   const gridCols = isXS
-    ? "repeat(1, 1fr)"
+    ? "repeat(2, 1fr)"
     : isSM
-    ? "repeat(2, 1fr)"
-    : isMD
-    ? "repeat(2, 1fr)"
-    : isLG
-    ? "repeat(3, 1fr)"
-    : "repeat(4, 1fr)";
+      ? "repeat(2, 1fr)"
+      : isMD
+        ? "repeat(2, 1fr)"
+        : isLG
+          ? "repeat(3, 1fr)"
+          : "repeat(4, 1fr)";
 
   const tableCols = isLG
     ? "32px 40px 2fr 1fr 1fr 1fr"
@@ -476,9 +483,8 @@ const CategoryList = ({
                 <MobileCard
                   key={cat.id}
                   cat={cat}
-                  selected={selectedIds.includes(cat.category_id || cat.id)}
-                  onSelect={() => toggleOne(cat.category_id || cat.id)}
-                  // onSelect={() => toggleOne(cat.id)}
+                  selected={selectedIds.includes(cat.id)}
+                  onSelect={() => toggleOne(cat.id)}
                   onEdit={onEditCategory}
                   onDelete={handleDeleteClick}
                   onOpenSubcategory={onOpenSubcategory}
@@ -513,16 +519,16 @@ const CategoryList = ({
           {isEmpty
             ? EmptyState()
             : paginated.map((cat) => (
-                <ListRow
-                  key={cat.id}
-                  cat={cat}
-                  cols={tableCols}
-                  selected={selectedIds.includes(cat.id)}
-                  onSelect={() => toggleOne(cat.id)}
-                  onEdit={onEditCategory}
-                  onDelete={handleDeleteClick}
-                />
-              ))}
+              <ListRow
+                key={cat.id}
+                cat={cat}
+                cols={tableCols}
+                selected={selectedIds.includes(cat.id)}
+                onSelect={() => toggleOne(cat.id)}
+                onEdit={onEditCategory}
+                onDelete={handleDeleteClick}
+              />
+            ))}
         </>
       )}
 
@@ -576,11 +582,11 @@ const CategoryList = ({
         : (
           <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: isXS ? 12 : 16 }}>
             {filtered.map((cat) => (
-              <GridCard 
-                key={cat.id} 
-                cat={cat} 
-                onEdit={onEditCategory} 
-                onDelete={handleDeleteClick} 
+              <GridCard
+                key={cat.id}
+                cat={cat}
+                onEdit={onEditCategory}
+                onDelete={handleDeleteClick}
                 onSelect={onOpenSubcategory}
               />
             ))}
@@ -599,7 +605,7 @@ const CategoryList = ({
       {view === "list" ? ListView() : GridView()}
 
       {blockedCategory && (
-        <div 
+        <div
           style={{
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -608,7 +614,7 @@ const CategoryList = ({
           onClick={() => setBlockedCategory(null)}
         >
           <div
-            style= {{
+            style={{
               background: "#fff", borderRadius: 14, padding: "28px 26px",
               maxWidth: 380, width: "100%", textAlign: "center",
               boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
@@ -629,18 +635,18 @@ const CategoryList = ({
               </svg>
             </div>
 
-            <div style={{fontSize: 15, fontWeight: 700, color: "#1c1c1e", marginBottom: 8}}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#1c1c1e", marginBottom: 8 }}>
               Can't delete "{blockedCategory.name}"
             </div>
 
-            <div style={{fontSize: 13, color: "#666", lineHeight: 1.6, marginBottom: 20}}>
+            <div style={{ fontSize: 13, color: "#666", lineHeight: 1.6, marginBottom: 20 }}>
               This category still has <strong>{blockedCategory.productCount}</strong> product
               {blockedCategory.productCount > 1 ? "s" : ""} linked to it. Move or delete those
               products first, then try again.
             </div>
             <button
               onClick={() => setBlockedCategory(null)}
-              style = {{
+              style={{
                 background: "#1c1c1e", color: "#fff", border: "none",
                 borderRadius: 8, padding: "10px 28px", fontSize: 13.5,
                 fontWeight: 500, cursor: "pointer", fontFamily: "inherit",

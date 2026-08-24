@@ -111,7 +111,7 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
   );
 };
 
-const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], categories =[], loading = false, onBack }) => {
+const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], categories = [], loading = false, onBack }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
@@ -129,27 +129,27 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [statusOpen, setStatusOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
-
   const [expandedRows, setExpandedRows] = useState([]);
+
+  const CATEGORIES = useMemo(() => {
+    const fromProps = categories.map((c) => (typeof c === "string" ? c : c?.name || c?.title)).filter(Boolean);
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    const unique = Array.from(new Set([...fromProps, ...fromProducts]));
+    return ["All", ...unique];
+  }, [categories, products]);
 
   const STATUSES = ["All", "Visible", "Draft"];
   const STOCKS = ["All", "In Stock", "Low Stock", "Out of Stock"];
 
-  const CATEGORIES = useMemo(() => [
-    "All",
-    ...new Set(categories.map(c => c.name).filter(Boolean))
-  ], [categories]);
-
   const SUBCATEGORIES = useMemo(() => {
-    const scoped = selectedCategory === "All"
-      ? products
-      : products.filter(p => p.category === selectedCategory);
-    return ["All", ...new Set(scoped.map(p => p.subcategory).filter(Boolean))];
+    const relevantProducts = selectedCategory === "All" ? products : products.filter((p) => p.category === selectedCategory);
+    const subs = relevantProducts.map((p) => p.subcategory).filter(Boolean);
+    return ["All", ...Array.from(new Set(subs))];
   }, [products, selectedCategory]);
 
-  const toggleExpand = (id) =>{
+  const toggleExpand = (id) => {
     setExpandedRows((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  }
+  };
 
   // Detect mobile card breakpoint
   const [isMobileCard, setIsMobileCard] = useState(window.innerWidth <= 540);

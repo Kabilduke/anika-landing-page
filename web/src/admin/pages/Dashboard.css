@@ -1288,3 +1288,51 @@
     background-position: -200% 0;
   }
 }
+
+/* ── Admin Sidebar Social Links ── */
+.db__sidebar-socials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px 14px;
+  border-top: 1px solid #e8e8e8;
+  margin-top: auto;
+  background: #fafafa;
+}
+
+.db__social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  color: #555;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.db__social-btn--ig:hover,
+.db__social-btn--ig:active {
+  background: #e1306c;
+  color: #fff;
+  border-color: #e1306c;
+}
+
+.db__social-btn--wa:hover,
+.db__social-btn--wa:active {
+  background: #25d366;
+  color: #fff;
+  border-color: #25d366;
+}
+
+.db__social-btn--fb:hover,
+.db__social-btn--fb:active {
+  background: #1877f2;
+  color: #fff;
+  border-color: #1877f2;
+}

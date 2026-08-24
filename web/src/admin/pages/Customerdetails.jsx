@@ -162,6 +162,29 @@ const CustomerDetails = ({ customer, onBack }) => {
     return activities.reverse(); // Newest first
   }, [c.created_at, orders]);
 
+  const customerPhone = useMemo(() => {
+    if (c.phone && c.phone !== "N/A" && String(c.phone).trim() !== "") return c.phone;
+    if (c.phone_number && c.phone_number !== "N/A" && String(c.phone_number).trim() !== "") return c.phone_number;
+    if (c.mobile && c.mobile !== "N/A" && String(c.mobile).trim() !== "") return c.mobile;
+    if (c.phoneNumber && c.phoneNumber !== "N/A" && String(c.phoneNumber).trim() !== "") return c.phoneNumber;
+
+    const defaultAddr = addresses.find(a => a.is_default) || addresses[0];
+    if (defaultAddr && (defaultAddr.phone_number || defaultAddr.phone)) {
+      return defaultAddr.phone_number || defaultAddr.phone;
+    }
+
+    if (orders && orders.length > 0) {
+      for (const ord of orders) {
+        if (ord.phone) return ord.phone;
+        if (ord.phone_number) return ord.phone_number;
+        if (ord.customer?.phone && ord.customer.phone !== "N/A") return ord.customer.phone;
+        if (ord.shipping_address?.phone) return ord.shipping_address.phone;
+        if (ord.shipping_address?.phone_number) return ord.shipping_address.phone_number;
+      }
+    }
+    return "No phone set";
+  }, [c, addresses, orders]);
+
   return (
     <div className="cd">
 
@@ -187,7 +210,7 @@ const CustomerDetails = ({ customer, onBack }) => {
           <div className="cd__card-title">Profile Info</div>
           <div className="cd__info-rows">
             <div className="cd__info-row"><span className="cd__info-label">Full name</span><span className="cd__info-value">{c.name}</span></div>
-            <div className="cd__info-row"><span className="cd__info-label">Phone</span><span className="cd__info-value">{c.phone || "N/A"}</span></div>
+            <div className="cd__info-row"><span className="cd__info-label">Phone</span><span className="cd__info-value">{customerPhone}</span></div>
             <div className="cd__info-row"><span className="cd__info-label">Email</span><span className="cd__info-value cd__info-value--email">{c.email || "N/A"}</span></div>
             <div className="cd__info-row">
               <span className="cd__info-label">Account created</span>

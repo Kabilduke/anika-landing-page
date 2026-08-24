@@ -81,7 +81,7 @@ const CustomerCard = ({ customer, selected, onToggle, onViewDetail, loading }) =
         </div>
         <div className="ac__card-row">
           <span className="ac__card-lbl">Phone</span>
-          <span className="ac__card-val">{customer.phone || "N/A"}</span>
+          <span className="ac__card-val">{customer.phone || customer.phone_number || customer.mobile || customer.phoneNumber || "No phone set"}</span>
         </div>
         <div className="ac__card-row">
           <span className="ac__card-lbl">Orders</span>
@@ -400,7 +400,7 @@ const AllCustomers = ({ customers = [], loading, onViewDetail }) => {
         </td>
         <td className="ac__td ac__td--contact ac__td--hide-sm">
           <span>{customer.email || "N/A"}</span>
-          <span>{customer.phone || "N/A"}</span>
+          <span>{customer.phone || customer.phone_number || customer.mobile || customer.phoneNumber || "No phone set"}</span>
         </td>
         <td className="ac__td ac__td--center ac__td--hide-md">{customer.orderCount || 0}</td>
         <td className="ac__td ac__td--center ac__td--hide-md">₹{Number(customer.totalSpent || 0).toLocaleString("en-IN")}</td>

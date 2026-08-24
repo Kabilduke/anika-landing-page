@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import "./Analytics.css";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -27,14 +27,18 @@ const DonutChart = ({ data }) => {
   const circumference = 2 * Math.PI * r;
 
   const slices = data.map((d) => {
-    const pct      = d.value / total;
+    const pct      = total > 0 ? d.value / total : 0;
     const offset   = circumference * (1 - pct);
     const rotation = cumulative * 360;
     cumulative += pct;
     return { ...d, offset, rotation };
   });
 
-  const centerTotal = `₹${total.toFixed(1)}L`;
+  const centerTotal = total >= 100000 
+    ? `₹${(total / 100000).toFixed(1)}L` 
+    : total >= 1000 
+      ? `₹${(total / 1000).toFixed(1)}K` 
+      : `₹${total.toLocaleString('en-IN')}`;
 
   return (
     <svg width="160" height="160" viewBox="0 0 160 160">
@@ -58,7 +62,7 @@ const DonutChart = ({ data }) => {
 
 // ── Horizontal Bar Chart (Overview) ───────────────────────────────────────
 const HorizontalBarChart = ({ data }) => {
-  const max = Math.max(...data.map((d) => d.value));
+  const max = Math.max(...data.map((d) => d.value), 1);
   return (
     <div className="an__bar-chart">
       {data.map((d, i) => (
@@ -76,7 +80,7 @@ const HorizontalBarChart = ({ data }) => {
 
 // ── Orders Bar Chart ───────────────────────────────────────────────────────
 const OrdersBarChart = ({ data }) => {
-  const max = Math.max(...data.map((d) => d.value));
+  const max = Math.max(...data.map((d) => d.value), 1);
   return (
     <div className="an__bar-chart">
       {data.map((d, i) => (
@@ -122,7 +126,6 @@ const DateInput = ({ label, value, onChange }) => {
           type="date"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Input your text"
           className="an__date-native"
           style={{
             flex: 1,
@@ -142,25 +145,24 @@ const DateInput = ({ label, value, onChange }) => {
   );
 };
 
-// ── Sparkline Chart (pure SVG, no dependencies) ────────────────────────────
-const Sparkline = () => {
+// ── Sparkline Chart ────────────────────────────────────────────────────────
+const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenueData = [0, 0, 0, 0, 0, 0, 0], customerData = [0, 0, 0, 0, 0, 0, 0] }) => {
   const W = 420, H = 210;
   const padL = 44, padR = 38, padT = 12, padB = 32;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
-  const labels       = ["Mo", "TU", "WE", "TH", "FR", "SA", "SU"];
-  const revenueData  = [5000, 8500,  11000, 13500, 14500, 5000, 9000];
-  const customerData = [8,    120,   100,   50,    100,   140,  0   ];
+  const revMax = Math.max(...revenueData, 1000);
+  const revMin = 0;
+  const cusMax = Math.max(...customerData, 10);
+  const cusMin = 0;
 
-  const revMin = 0, revMax = 20000;
-  const cusMin = 0, cusMax = 150;
-
-  const xOf  = (i) => padL + (i / (labels.length - 1)) * chartW;
+  const xOf  = (i) => padL + (i / Math.max(labels.length - 1, 1)) * chartW;
   const yRev = (v) => padT + chartH - ((v - revMin) / (revMax - revMin)) * chartH;
   const yCus = (v) => padT + chartH - ((v - cusMin) / (cusMax - cusMin)) * chartH;
 
   const smoothPath = (pts) => {
+    if (!pts.length) return "";
     let d = `M ${pts[0][0]},${pts[0][1]}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const cpX = (pts[i][0] + pts[i + 1][0]) / 2;
@@ -174,12 +176,12 @@ const Sparkline = () => {
 
   const revLine = smoothPath(revPts);
   const cusLine = smoothPath(cusPts);
-  const revArea = `${revLine} L ${revPts[revPts.length - 1][0]},${padT + chartH} L ${revPts[0][0]},${padT + chartH} Z`;
+  const revArea = revPts.length > 0 ? `${revLine} L ${revPts[revPts.length - 1][0]},${padT + chartH} L ${revPts[0][0]},${padT + chartH} Z` : "";
 
-  const revTicks = [0, 5000, 10000, 15000, 20000];
-  const cusTicks = [0, 30, 60, 150];
+  const revTicks = [0, Math.round(revMax * 0.25), Math.round(revMax * 0.5), Math.round(revMax * 0.75), Math.round(revMax)];
+  const cusTicks = [0, Math.round(cusMax * 0.33), Math.round(cusMax * 0.66), Math.round(cusMax)];
 
-  const peakIdx = 3;
+  const peakIdx = revenueData.indexOf(Math.max(...revenueData));
 
   return (
     <div className="an__sparkline-wrapper">
@@ -196,17 +198,17 @@ const Sparkline = () => {
         {revTicks.map((v) => (
           <line key={v} x1={padL} y1={yRev(v)} x2={padL + chartW} y2={yRev(v)} stroke="#e8e8e8" strokeWidth="0.5" />
         ))}
-        <path d={revArea} fill="url(#revGrad)" clipPath="url(#chartClip)" />
-        <path d={cusLine} fill="none" stroke="#c9a800" strokeWidth="2" strokeDasharray="2 5" strokeLinecap="round" clipPath="url(#chartClip)" />
-        <path d={revLine} fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" clipPath="url(#chartClip)" />
-        <circle cx={revPts[peakIdx][0]} cy={revPts[peakIdx][1]} r="4" fill="#06b6d4" />
-        {revTicks.map((v) => (
-          <text key={v} x={padL - 5} y={yRev(v) + 4} textAnchor="end" fontSize="9.5" fill="#aaa" fontFamily="Inter, sans-serif">
-            {v === 0 ? "₹0" : `₹${v / 1000}K`}
+        {revArea && <path d={revArea} fill="url(#revGrad)" clipPath="url(#chartClip)" />}
+        {cusLine && <path d={cusLine} fill="none" stroke="#c9a800" strokeWidth="2" strokeDasharray="2 5" strokeLinecap="round" clipPath="url(#chartClip)" />}
+        {revLine && <path d={revLine} fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" clipPath="url(#chartClip)" />}
+        {revPts[peakIdx] && <circle cx={revPts[peakIdx][0]} cy={revPts[peakIdx][1]} r="4" fill="#06b6d4" />}
+        {revTicks.map((v, idx) => (
+          <text key={idx} x={padL - 5} y={yRev(v) + 4} textAnchor="end" fontSize="9.5" fill="#aaa" fontFamily="Inter, sans-serif">
+            {v === 0 ? "₹0" : v >= 1000 ? `₹${(v / 1000).toFixed(0)}K` : `₹${v}`}
           </text>
         ))}
-        {cusTicks.map((v) => (
-          <text key={v} x={padL + chartW + 5} y={yCus(v) + 4} textAnchor="start" fontSize="9.5" fill="#aaa" fontFamily="Inter, sans-serif">
+        {cusTicks.map((v, idx) => (
+          <text key={idx} x={padL + chartW + 5} y={yCus(v) + 4} textAnchor="start" fontSize="9.5" fill="#aaa" fontFamily="Inter, sans-serif">
             {v}
           </text>
         ))}
@@ -227,464 +229,311 @@ const Sparkline = () => {
           <svg width="22" height="8" style={{ display: "inline-block", verticalAlign: "middle" }}>
             <line x1="0" y1="4" x2="22" y2="4" stroke="#c9a800" strokeWidth="2" strokeDasharray="2 5" strokeLinecap="round" />
           </svg>
-          <span style={{ marginLeft: 4 }}>Customer</span>
+          <span style={{ marginLeft: 4 }}>Customers</span>
         </span>
       </div>
     </div>
   );
 };
 
-// ── Orders Tab Data ────────────────────────────────────────────────────────
-const FUNNEL_DATA = [
-  { label: "Store visits",  value: 4875, color: "#22c55e", pct: 100 },
-  { label: "Produc Visits", value: 3510, color: "#06b6d4", pct: 100 },
-  { label: "Add to Cart",   value: 1365, color: "#a855f7", pct: 100 },
-  { label: "Checkout",      value: 585,  color: "#eab308", pct: 100 },
-  { label: "Ordered",       value: 156,  color: "#ef4444", pct: 100 },
-];
-
-const DAY_DATA = [
-  { label: "Monday",    value: 4875, color: "#22c55e" },
-  { label: "Tuesday",   value: 3510, color: "#06b6d4" },
-  { label: "Wednesday", value: 1365, color: "#a855f7" },
-  { label: "Thursday",  value: 585,  color: "#eab308" },
-  { label: "Friday",    value: 156,  color: "#ef4444" },
-  { label: "Saturday",  value: 156,  color: "#6366f1" },
-  { label: "Sunday",    value: 156,  color: "#f97316" },
-];
-
-const TIME_DATA = [
-  { label: "6am - 9am",  value: 80, color: "#22c55e" },
-  { label: "9am - 12pm", value: 25, color: "#06b6d4" },
-  { label: "12pm - 3pm", value: 20, color: "#a855f7" },
-  { label: "3pm - 6pm",  value: 40, color: "#eab308" },
-  { label: "6pm - 9pm",  value: 50, color: "#ef4444" },
-  { label: "9pm - 12pm", value: 30, color: "#6366f1" },
-  { label: "12am - 6am", value: 20, color: "#f97316" },
-];
-
-// ── Orders Tab ─────────────────────────────────────────────────────────────
-const OrdersTab = () => (
-  <div className="an__orders">
-    <div className="an__orders-stats">
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Total Order</div>
-        <div className="an__orders-stat-value">156</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__badge an__badge--up"><ArrowUp />37.8%</span>
-          <span className="an__stat-subtext">this week</span>
-        </div>
-      </div>
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Completed</div>
-        <div className="an__orders-stat-value">88</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__stat-subtext">84.8% Completion</span>
-        </div>
-      </div>
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Pending</div>
-        <div className="an__orders-stat-value">21</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__badge an__badge--action">Needs Action</span>
-        </div>
-      </div>
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Cancelled</div>
-        <div className="an__orders-stat-value">8</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__badge an__badge--action">5.1% Cancel rate</span>
-        </div>
-      </div>
-    </div>
-
-    <div className="an__orders-stats an__orders-stats--half">
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Returns</div>
-        <div className="an__orders-stat-value">117</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__stat-subtext">3.8% Return Rate</span>
-        </div>
-      </div>
-      <div className="an__orders-stat-card">
-        <div className="an__orders-stat-label">Avg. fulfilment</div>
-        <div className="an__orders-stat-value">3.2%</div>
-        <div className="an__orders-stat-footer">
-          <span className="an__badge an__badge--down"><ArrowDown />0.3d Faster</span>
-        </div>
-      </div>
-    </div>
-
-    <div className="an__orders-charts-row">
-      <div className="an__chart-card an__chart-card--review">
-        <div className="an__review-header">
-          <div>
-            <div className="an__review-title" style={{ fontSize: "20px", fontWeight: "700", color: "#1c1c1e", marginBottom: "10px" }}>Overall Review</div>
-            <div className="an__review-value" style={{ fontSize: "34px", fontWeight: "700", letterSpacing: "-0.02em", color: "#1c1c1e", margin: "0 0 6px" }}>₹16,192</div>
-            <div className="an__review-sub">
-              <span className="an__badge an__badge--up"><ArrowUp />37.8%</span>
-              <span className="an__stat-subtext">vs. Yesterday</span>
-            </div>
-          </div>
-          <div className="an__review-period" style={{ fontSize: "14px", padding: "6px 14px", borderRadius: "8px" }}>
-            <span>This Week</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </div>
-        </div>
-        <Sparkline />
-      </div>
-
-      <div className="an__chart-card">
-        <div className="an__chart-card-title">Avg. order value</div>
-        <OrdersBarChart data={FUNNEL_DATA} />
-      </div>
-    </div>
-
-    <div className="an__chart-card an__chart-card--bottom">
-      <div className="an__bottom-section-title">Top Order Days &amp; Peak Hours</div>
-      <div className="an__bottom-charts-row">
-        <div className="an__bottom-chart">
-          <div className="an__bottom-chart-label">Orders by Day of Week</div>
-          <OrdersBarChart data={DAY_DATA} />
-        </div>
-        <div className="an__bottom-chart-divider" />
-        <div className="an__bottom-chart">
-          <div className="an__bottom-chart-label">Orders by time of day</div>
-          <OrdersBarChart data={TIME_DATA} />
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// ── Customers Tab Data ─────────────────────────────────────────────────────
-const CUSTOMER_SEGMENT_DATA = [
-  { label: "VIP (5+ orders)", value: 4875, color: "#22c55e" },
-  { label: "Regular (2–4)",   value: 3510, color: "#06b6d4" },
-  { label: "One-time (1)",    value: 1365, color: "#a855f7" },
-  { label: "No orders yet",   value: 585,  color: "#eab308" },
-  { label: "Ordered",         value: 156,  color: "#ef4444" },
-];
-
-const CUSTOMER_FUNNEL_DATA = [
-  { label: "Store visits",  value: 4875, color: "#22c55e" },
-  { label: "Produc Visits", value: 3510, color: "#06b6d4" },
-  { label: "Add to Cart",   value: 1365, color: "#a855f7" },
-  { label: "Checkout",      value: 585,  color: "#eab308" },
-  { label: "Ordered",       value: 156,  color: "#ef4444" },
-];
-
-const TOP_CUSTOMERS = [
-  { name: "Priya Sharma", orders: 8, city: "Chennai", amount: "₹28,400" },
-  { name: "Priya Sharma", orders: 8, city: "Chennai", amount: "₹28,400" },
-  { name: "Priya Sharma", orders: 8, city: "Chennai", amount: "₹28,400" },
-  { name: "Priya Sharma", orders: 8, city: "Chennai", amount: "₹28,400" },
-  { name: "Priya Sharma", orders: 8, city: "Chennai", amount: "₹28,400" },
-];
-
-const CUSTOMER_DONUT_DATA = [
-  { label: "Necklaces", value: 1.4, color: "#f87171" },
-  { label: "Earings",   value: 1.4, color: "#3b82f6" },
-];
-
-// ── Customers Tab ──────────────────────────────────────────────────────────
-const CustomersTab = () => {
-  const customerDonutTotal = CUSTOMER_DONUT_DATA.reduce((s, d) => s + d.value, 0);
-  return (
-    <div className="an__customers">
-      <div className="an__stats-grid">
-        <div className="an__stat-card">
-          <div className="an__stat-label">Total customers</div>
-          <div className="an__stat-value">156</div>
-          <div className="an__stat-footer">
-            <span className="an__badge an__badge--up"><ArrowUp />21 this month</span>
-          </div>
-        </div>
-        <div className="an__stat-card">
-          <div className="an__stat-label">New customers</div>
-          <div className="an__stat-value">88</div>
-          <div className="an__stat-footer">
-            <span className="an__badge an__badge--up"><ArrowUp />21% vs April</span>
-          </div>
-        </div>
-        <div className="an__stat-card">
-          <div className="an__stat-label">Returning</div>
-          <div className="an__stat-value">21</div>
-          <div className="an__stat-footer">
-            <span className="an__stat-subtext--green">84.8% retention</span>
-          </div>
-        </div>
-        <div className="an__stat-card">
-          <div className="an__stat-label">VIP customers</div>
-          <div className="an__stat-value">8</div>
-          <div className="an__stat-footer">
-            <span className="an__stat-subtext">5+ Orders Each</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="an__stats-grid">
-        <div className="an__stat-card">
-          <div className="an__stat-label">Avg. LTV</div>
-          <div className="an__stat-value">₹6,840</div>
-          <div className="an__stat-footer">
-            <span className="an__badge an__badge--up"><ArrowUp />9% vs April</span>
-          </div>
-        </div>
-        <div className="an__stat-card">
-          <div className="an__stat-label">Churn rate</div>
-          <div className="an__stat-value">4.2%</div>
-          <div className="an__stat-footer">
-            <span className="an__badge an__badge--up"><ArrowUp />0.6% vs April</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="an__charts-row">
-        <div className="an__chart-card">
-          <div className="an__chart-card-title">Avg. order value</div>
-          <OrdersBarChart data={CUSTOMER_SEGMENT_DATA} />
-        </div>
-        <div className="an__chart-card">
-          <div className="an__chart-card-title">Avg. order value</div>
-          <div className="an__donut-wrapper">
-            <DonutChart data={CUSTOMER_DONUT_DATA} />
-            <div className="an__donut-legend">
-              {CUSTOMER_DONUT_DATA.map((d, i) => (
-                <div key={i} className="an__legend-item">
-                  <span className="an__legend-dot" style={{ background: d.color }} />
-                  <span className="an__legend-text">
-                    {d.label} - ₹{d.value}L ({Math.round((d.value / customerDonutTotal) * 100)}%)
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="an__charts-row">
-        <div className="an__chart-card">
-          <div className="an__customers-list-title">Top customers by spend</div>
-          {TOP_CUSTOMERS.map((c, i) => (
-            <div key={i} className="an__customer-row">
-              <span className="an__customer-num">{i + 1}</span>
-              <div className="an__customer-info">
-                <div className="an__customer-name">{c.name}</div>
-                <div className="an__customer-sub">{c.orders} orders · {c.city}</div>
-              </div>
-              <span className="an__customer-amount">{c.amount}</span>
-            </div>
-          ))}
-        </div>
-        <div className="an__chart-card">
-          <div className="an__chart-card-title">Avg. order value</div>
-          <OrdersBarChart data={CUSTOMER_FUNNEL_DATA} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── Products Tab Data ──────────────────────────────────────────────────────
-const SALES_BY_CATEGORY = [
-  { name: "Gold Jhumka Earrings — 22K", sku: "Earrings · SKU: AJW-EAR-007", units: 42, revenue: "₹1.4L", color: "#6366f1", width: 85 },
-  { name: "Gold Jhumka Earrings — 22K", sku: "Earrings · SKU: AJW-EAR-007", units: 42, revenue: "₹1.4L", color: "#22c55e", width: 68 },
-  { name: "Gold Jhumka Earrings — 22K", sku: "Earrings · SKU: AJW-EAR-007", units: 42, revenue: "₹1.4L", color: "#06b6d4", width: 52 },
-  { name: "Gold Jhumka Earrings — 22K", sku: "Earrings · SKU: AJW-EAR-007", units: 42, revenue: "₹1.4L", color: "#ef4444", width: 40 },
-  { name: "Gold Jhumka Earrings — 22K", sku: "Earrings · SKU: AJW-EAR-007", units: 42, revenue: "₹1.4L", color: "#eab308", width: 30 },
-];
-
-const LOW_STOCK_ITEMS = [
-  { name: "Gold Jhumka", category: "Earrings", stock: 1, status: "low" },
-  { name: "Gold Jhumka", category: "Earrings", stock: 2, status: "low" },
-  { name: "Gold Jhumka", category: "Earrings", stock: 2, status: "low" },
-  { name: "Gold Jhumka", category: "Earrings", stock: 3, status: "low" },
-  { name: "Gold Jhumka", category: "Earrings", stock: 0, status: "out" },
-];
-
-const WISHLISTED_PRODUCTS = [
-  { name: "Gold Jhumka", saves: 84 },
-  { name: "Gold Jhumka", saves: 84 },
-  { name: "Gold Jhumka", saves: 84 },
-  { name: "Gold Jhumka", saves: 84 },
-  { name: "Gold Jhumka", saves: 84 },
-  { name: "Gold Jhumka", saves: 84 },
-];
-
-// ── Products Tab ───────────────────────────────────────────────────────────
-const ProductsTab = () => (
-  <div className="an__products">
-    {/* Row 1: 4 stat cards */}
-    <div className="an__stats-grid">
-      <div className="an__stat-card">
-        <div className="an__stat-label">Total Products</div>
-        <div className="an__stat-value">156</div>
-        <div className="an__stat-footer">
-          <span className="an__stat-subtext">6 categories</span>
-        </div>
-      </div>
-      <div className="an__stat-card">
-        <div className="an__stat-label">Products sold</div>
-        <div className="an__stat-value">88</div>
-        <div className="an__stat-footer">
-          <span className="an__stat-subtext">Units this month</span>
-        </div>
-      </div>
-      <div className="an__stat-card">
-        <div className="an__stat-label">Best seller</div>
-        <div className="an__stat-value an__stat-value--md">Gold Jhumka</div>
-        <div className="an__stat-footer">
-          <span className="an__stat-subtext">42 units sold</span>
-        </div>
-      </div>
-      <div className="an__stat-card">
-        <div className="an__stat-label">Low stock items</div>
-        <div className="an__stat-value an__stat-value--red">8</div>
-        <div className="an__stat-footer">
-          <span className="an__badge an__badge--action">Restock Needed</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Row 2: 2 stat cards */}
-    <div className="an__stats-grid">
-      <div className="an__stat-card">
-        <div className="an__stat-label">Out Of Stock</div>
-        <div className="an__stat-value an__stat-value--red">8</div>
-        <div className="an__stat-footer">
-          <span className="an__badge an__badge--action">Restock Needed</span>
-        </div>
-      </div>
-      <div className="an__stat-card">
-        <div className="an__stat-label">Wishlist saves</div>
-        <div className="an__stat-value">312</div>
-        <div className="an__stat-footer">
-          <span className="an__badge an__badge--up"><ArrowUp />21% vs April</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Sales by category */}
-    <div className="an__chart-card">
-      <div className="an__products-section-title">Sales by category</div>
-      <div className="an__products-category-list">
-        {SALES_BY_CATEGORY.map((item, i) => (
-          <div key={i} className="an__products-category-row">
-            <div className="an__products-category-info">
-              <div className="an__products-category-name">{item.name}</div>
-              <div className="an__products-category-sku">{item.sku}</div>
-              <div className="an__products-category-bar-track">
-                <div
-                  className="an__products-category-bar-fill"
-                  style={{ width: `${item.width}%`, background: item.color }}
-                />
-              </div>
-            </div>
-            <div className="an__products-category-stats">
-              <div className="an__products-category-units">{item.units} units</div>
-              <div className="an__products-category-revenue">{item.revenue}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    {/* Bottom row: Low stock + Wishlisted */}
-    <div className="an__charts-row">
-      <div className="an__chart-card">
-        <div className="an__products-section-title">Low And Out of Stock</div>
-        <div className="an__products-stock-list">
-          {LOW_STOCK_ITEMS.map((item, i) => (
-            <div key={i} className="an__products-stock-row">
-              <div className="an__products-stock-info">
-                <div className="an__products-stock-name">{item.name}</div>
-                <div className="an__products-stock-category">{item.category}</div>
-              </div>
-              {item.status === "out" ? (
-                <span className="an__products-stock-badge an__products-stock-badge--out">Out Of Stock</span>
-              ) : (
-                <span className="an__products-stock-badge an__products-stock-badge--low">{item.stock} left</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="an__chart-card">
-        <div className="an__products-section-title">Most wishlisted products</div>
-        <div className="an__products-wishlist-list">
-          {WISHLISTED_PRODUCTS.map((item, i) => (
-            <div key={i} className="an__products-wishlist-row">
-              <span className="an__products-wishlist-name">{item.name}</span>
-              <span className="an__products-wishlist-saves">{item.saves} Saves</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// ── Overview Data ──────────────────────────────────────────────────────────
-const PERIOD_DATA = {
-  Today: {
-    revenue: "₹18,400", orders: 12, avgOrder: "₹1,533", newCustomers: 3,
-    returning: 8, conversion: "1.4%", cancelled: 1, returns: 0,
-    returnRate: "0%", orderChange: "5.2%", revenueChange: "8.1%", returningPct: "66.7%",
-  },
-  "7 Days": {
-    revenue: "₹1.1L", orders: 84, avgOrder: "₹2,780", newCustomers: 9,
-    returning: 62, conversion: "2.8%", cancelled: 4, returns: 2,
-    returnRate: "2.4%", orderChange: "12.4%", revenueChange: "15.3%", returningPct: "73.8%",
-  },
-  "This Month": {
-    revenue: "₹4.2L", orders: 156, avgOrder: "₹3,270", newCustomers: 21,
-    returning: 117, conversion: "3.2%", cancelled: 8, returns: 6,
-    returnRate: "3.8%", orderChange: "37.8%", revenueChange: "37.8%", returningPct: "84.6%",
-  },
-  "Last Month": {
-    revenue: "₹3.6L", orders: 132, avgOrder: "₹2,950", newCustomers: 18,
-    returning: 98, conversion: "2.9%", cancelled: 6, returns: 4,
-    returnRate: "3.0%", orderChange: "22.1%", revenueChange: "19.5%", returningPct: "74.2%",
-  },
-  Custom: {
-    revenue: "₹4.2L", orders: 156, avgOrder: "₹3,270", newCustomers: 21,
-    returning: 117, conversion: "3.2%", cancelled: 8, returns: 6,
-    returnRate: "3.8%", orderChange: "37.8%", revenueChange: "37.8%", returningPct: "84.6%",
-  },
-};
-
-const BAR_DATA = [
-  { label: "Delivered", value: 95, color: "#22c55e" },
-  { label: "Shipped",   value: 72, color: "#3b82f6" },
-  { label: "Confirmed", value: 58, color: "#06b6d4" },
-  { label: "Pending",   value: 35, color: "#f59e0b" },
-  { label: "Cancelled", value: 18, color: "#ef4444" },
-];
-
-const DONUT_DATA = [
-  { label: "Necklaces", value: 1.4, color: "#f87171" },
-  { label: "Bangles",   value: 1.4, color: "#fb923c" },
-  { label: "Rings",     value: 1.4, color: "#3b82f6" },
-  { label: "Earings",   value: 1.4, color: "#facc15" },
-];
-
 const TABS    = ["Overview", "Orders", "Customers", "Products"];
 const PERIODS = ["Today", "7 Days", "This Month", "Last Month", "Custom"];
 
-// ── Analytics Page ─────────────────────────────────────────────────────────
-const Analytics = () => {
+// Helper to format currency
+const fmtVal = (val) => {
+  if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+  if (val >= 1000)   return `₹${(val / 1000).toFixed(1)}K`;
+  return `₹${Number(val || 0).toLocaleString('en-IN')}`;
+};
+
+// ── Main Analytics Component ───────────────────────────────────────────────
+const Analytics = ({ orders = [], customers = [], products = [], loading = false }) => {
   const [activeTab, setActiveTab]       = useState("Overview");
   const [activePeriod, setActivePeriod] = useState("This Month");
   const [startDate, setStartDate]       = useState("");
   const [endDate, setEndDate]           = useState("");
 
-  const d = PERIOD_DATA[activePeriod];
-  const total = DONUT_DATA.reduce((s, x) => s + x.value, 0);
   const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+
+  // Filter orders by active date period
+  const filteredOrders = useMemo(() => {
+    const now = new Date();
+    return orders.filter((o) => {
+      const dateStr = o.created_at || o.createdAt || o.date;
+      if (!dateStr) return true;
+      const d = new Date(dateStr);
+
+      if (activePeriod === "Today") {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return d >= start;
+      }
+      if (activePeriod === "7 Days") {
+        const start = new Date();
+        start.setDate(now.getDate() - 7);
+        return d >= start;
+      }
+      if (activePeriod === "This Month") {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return d >= start;
+      }
+      if (activePeriod === "Last Month") {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return d >= start && d <= end;
+      }
+      if (activePeriod === "Custom" && (startDate || endDate)) {
+        const s = startDate ? new Date(startDate) : new Date(0);
+        const e = endDate ? new Date(endDate) : new Date();
+        e.setHours(23, 59, 59, 999);
+        return d >= s && d <= e;
+      }
+      return true;
+    });
+  }, [orders, activePeriod, startDate, endDate]);
+
+  // Derived Overview metrics
+  const totalRevenue = useMemo(() => {
+    return filteredOrders
+      .filter((o) => !["cancelled", "returned"].includes(o.status?.toLowerCase()))
+      .reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+  }, [filteredOrders]);
+
+  const totalOrdersCount = filteredOrders.length;
+  const avgOrderVal = totalOrdersCount > 0 ? totalRevenue / totalOrdersCount : 0;
+
+  const cancelledCount = useMemo(() => {
+    return filteredOrders.filter((o) => o.status?.toLowerCase() === "cancelled").length;
+  }, [filteredOrders]);
+
+  const returnsCount = useMemo(() => {
+    return filteredOrders.filter((o) => ["return", "returned"].includes(o.status?.toLowerCase())).length;
+  }, [filteredOrders]);
+
+  const completedCount = useMemo(() => {
+    return filteredOrders.filter((o) => o.status?.toLowerCase() === "delivered").length;
+  }, [filteredOrders]);
+
+  const pendingCount = useMemo(() => {
+    return filteredOrders.filter((o) => ["pending", "confirmed"].includes(o.status?.toLowerCase())).length;
+  }, [filteredOrders]);
+
+  const returnRate = totalOrdersCount > 0 ? ((returnsCount / totalOrdersCount) * 100).toFixed(1) : "0.0";
+  const conversionRate = totalOrdersCount > 0 ? ((completedCount / totalOrdersCount) * 100).toFixed(1) : "0.0";
+
+  // Customer metrics
+  const activeCustomerIds = useMemo(() => {
+    return new Set(filteredOrders.map((o) => o.user_id).filter(Boolean));
+  }, [filteredOrders]);
+
+  const newCustomersCount = useMemo(() => {
+    return customers.length > 0 ? Math.min(customers.length, activeCustomerIds.size || customers.length) : activeCustomerIds.size;
+  }, [customers, activeCustomerIds]);
+
+  const returningCustomersCount = useMemo(() => {
+    const userOrderCounts = {};
+    orders.forEach((o) => {
+      if (o.user_id) userOrderCounts[o.user_id] = (userOrderCounts[o.user_id] || 0) + 1;
+    });
+    return Object.values(userOrderCounts).filter((cnt) => cnt > 1).length;
+  }, [orders]);
+
+  // Bar Data - Order Status distribution
+  const statusBarData = useMemo(() => {
+    const countStatus = (st) => filteredOrders.filter((o) => o.status?.toLowerCase() === st.toLowerCase()).length;
+    return [
+      { label: "Delivered", value: countStatus("Delivered"), color: "#22c55e" },
+      { label: "Shipped",   value: countStatus("Shipped"),   color: "#3b82f6" },
+      { label: "Confirmed", value: countStatus("Confirmed"), color: "#06b6d4" },
+      { label: "Pending",   value: countStatus("Pending"),   color: "#f59e0b" },
+      { label: "Cancelled", value: cancelledCount + returnsCount, color: "#ef4444" },
+    ];
+  }, [filteredOrders, cancelledCount, returnsCount]);
+
+  // Donut Data - Category Revenue split
+  const categoryDonutData = useMemo(() => {
+    const catMap = {};
+    filteredOrders.forEach((o) => {
+      if (["cancelled", "returned"].includes(o.status?.toLowerCase())) return;
+      const baseItemName = o.item_name?.split(" + ")[0] || "";
+      const matchedProd  = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
+      const cat = matchedProd?.category || o.category || "General";
+      catMap[cat] = (catMap[cat] || 0) + Number(o.total_price || 0);
+    });
+
+    const colors = ["#f87171", "#fb923c", "#3b82f6", "#facc15", "#a855f7", "#10b981"];
+    const entries = Object.entries(catMap);
+    if (entries.length === 0) {
+      return [{ label: "All Items", value: totalRevenue || 1, color: "#3b82f6" }];
+    }
+    return entries.map(([label, value], i) => ({
+      label,
+      value: value / 100000 || value / 1000 || value || 1,
+      color: colors[i % colors.length]
+    }));
+  }, [filteredOrders, products, totalRevenue]);
+
+  const donutTotalVal = categoryDonutData.reduce((s, x) => s + x.value, 0);
+
+  // Sparkline data for week/month
+  const sparklineData = useMemo(() => {
+    const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+    const revs = [0, 0, 0, 0, 0, 0, 0];
+    const custs = [0, 0, 0, 0, 0, 0, 0];
+
+    filteredOrders.forEach((o) => {
+      const dateStr = o.created_at || o.createdAt || o.date;
+      if (!dateStr) return;
+      const d = new Date(dateStr);
+      let dayIdx = d.getDay() - 1;
+      if (dayIdx < 0) dayIdx = 6;
+      revs[dayIdx] += Number(o.total_price || 0);
+      custs[dayIdx] += 1;
+    });
+
+    return { labels: days, revenueData: revs, customerData: custs };
+  }, [filteredOrders]);
+
+  // Orders Tab - Day & Time breakdowns
+  const dayOfWeekData = useMemo(() => {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const colors = ["#22c55e", "#06b6d4", "#a855f7", "#eab308", "#ef4444", "#6366f1", "#f97316"];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+
+    filteredOrders.forEach((o) => {
+      const d = new Date(o.created_at || o.createdAt || Date.now());
+      let idx = d.getDay() - 1;
+      if (idx < 0) idx = 6;
+      counts[idx]++;
+    });
+
+    return days.map((label, i) => ({ label, value: counts[i], color: colors[i] }));
+  }, [filteredOrders]);
+
+  const timeOfDayData = useMemo(() => {
+    const times = [
+      { label: "6am - 9am", color: "#22c55e" },
+      { label: "9am - 12pm", color: "#06b6d4" },
+      { label: "12pm - 3pm", color: "#a855f7" },
+      { label: "3pm - 6pm", color: "#eab308" },
+      { label: "6pm - 9pm", color: "#ef4444" },
+      { label: "9pm - 12am", color: "#6366f1" },
+      { label: "12am - 6am", color: "#f97316" },
+    ];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+
+    filteredOrders.forEach((o) => {
+      const d = new Date(o.created_at || o.createdAt || Date.now());
+      const h = d.getHours();
+      if (h >= 6 && h < 9) counts[0]++;
+      else if (h >= 9 && h < 12) counts[1]++;
+      else if (h >= 12 && h < 15) counts[2]++;
+      else if (h >= 15 && h < 18) counts[3]++;
+      else if (h >= 18 && h < 21) counts[4]++;
+      else if (h >= 21 && h < 24) counts[5]++;
+      else counts[6]++;
+    });
+
+    return times.map((t, i) => ({ ...t, value: counts[i] }));
+  }, [filteredOrders]);
+
+  // Customers Tab - Top spenders & segments
+  const topCustomersList = useMemo(() => {
+    const custMap = {};
+    orders.forEach((o) => {
+      const name = o.customer?.name || "Customer #" + (o.user_id?.slice(0, 6) || "N/A");
+      if (!custMap[name]) {
+        custMap[name] = { name, orders: 0, amount: 0, city: o.customer?.city || "India" };
+      }
+      custMap[name].orders += 1;
+      if (!["cancelled", "returned"].includes(o.status?.toLowerCase())) {
+        custMap[name].amount += Number(o.total_price || 0);
+      }
+    });
+
+    return Object.values(custMap)
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+      .map((c) => ({ ...c, amount: fmtVal(c.amount) }));
+  }, [orders]);
+
+  const customerSegments = useMemo(() => {
+    const userCounts = {};
+    orders.forEach((o) => {
+      if (o.user_id) userCounts[o.user_id] = (userCounts[o.user_id] || 0) + 1;
+    });
+    const values = Object.values(userCounts);
+    const vip = values.filter((v) => v >= 5).length;
+    const regular = values.filter((v) => v >= 2 && v < 5).length;
+    const oneTime = values.filter((v) => v === 1).length;
+    const noOrders = Math.max(0, customers.length - values.length);
+
+    return [
+      { label: "VIP (5+ orders)", value: vip, color: "#22c55e" },
+      { label: "Regular (2–4)",   value: regular, color: "#06b6d4" },
+      { label: "One-time (1)",    value: oneTime, color: "#a855f7" },
+      { label: "No orders yet",   value: noOrders, color: "#eab308" },
+    ];
+  }, [orders, customers]);
+
+  // Products Tab Data
+  const productsSoldUnits = useMemo(() => {
+    return filteredOrders.reduce((sum, o) => sum + Number(o.quantity || 1), 0);
+  }, [filteredOrders]);
+
+  const bestSellerProduct = useMemo(() => {
+    const itemMap = {};
+    filteredOrders.forEach((o) => {
+      const name = o.item_name?.split(" + ")[0] || "Jewelry Item";
+      itemMap[name] = (itemMap[name] || 0) + Number(o.quantity || 1);
+    });
+    let bestName = "None";
+    let maxUnits = 0;
+    Object.entries(itemMap).forEach(([name, units]) => {
+      if (units > maxUnits) {
+        maxUnits = units;
+        bestName = name;
+      }
+    });
+    return { name: bestName, units: maxUnits };
+  }, [filteredOrders]);
+
+  const lowStockItems = useMemo(() => {
+    return products
+      .filter((p) => p.stock !== undefined && p.stock <= 5)
+      .map((p) => ({
+        name: p.name,
+        category: p.category || "Jewelry",
+        stock: p.stock,
+        status: p.stock === 0 ? "out" : "low",
+      }));
+  }, [products]);
+
+  const salesByCategoryList = useMemo(() => {
+    const catMap = {};
+    filteredOrders.forEach((o) => {
+      const baseItemName = o.item_name?.split(" + ")[0] || "";
+      const matchedProd  = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
+      const cat = matchedProd?.category || o.category || "Jewelry";
+      if (!catMap[cat]) catMap[cat] = { units: 0, revenue: 0 };
+      catMap[cat].units += Number(o.quantity || 1);
+      if (!["cancelled", "returned"].includes(o.status?.toLowerCase())) {
+        catMap[cat].revenue += Number(o.total_price || 0);
+      }
+    });
+
+    const colors = ["#6366f1", "#22c55e", "#06b6d4", "#ef4444", "#eab308"];
+    const entries = Object.entries(catMap);
+    const maxRev = Math.max(...entries.map(([, v]) => v.revenue), 1);
+
+    return entries.map(([name, v], i) => ({
+      name,
+      sku: `${name} Category`,
+      units: v.units,
+      revenue: fmtVal(v.revenue),
+      color: colors[i % colors.length],
+      width: Math.max(15, Math.round((v.revenue / maxRev) * 100)),
+    }));
+  }, [filteredOrders, products]);
 
   return (
     <div className="an">
@@ -718,40 +567,35 @@ const Analytics = () => {
         <>
           <div className="an__stats-container">
             <div className="an__stats-grid">
-              <StatCard label="Total Revenue"    value={d.revenue}      change={d.revenueChange} changeType="up" subtext="this week" />
-              <StatCard label="Total Order"      value={d.orders}       change={d.orderChange}   changeType="up" subtext="this week" />
-              <StatCard label="Avg. order value" value={d.avgOrder}     change="37.8%"           changeType="up" subtext="this week" />
-              <StatCard label="New Customers"    value={d.newCustomers} change="37.8%"           changeType="up" subtext="this week" />
+              <StatCard label="Total Revenue"    value={fmtVal(totalRevenue)} change={`${totalOrdersCount} orders`} changeType="up" subtext="in period" />
+              <StatCard label="Total Order"      value={totalOrdersCount}     change={`${completedCount} delivered`} changeType="up" subtext="in period" />
+              <StatCard label="Avg. order value" value={fmtVal(avgOrderVal)} change="Live" changeType="up" subtext="average" />
+              <StatCard label="New Customers"    value={newCustomersCount}    change="Live" changeType="up" subtext="in period" />
             </div>
             <div className="an__stats-divider" />
             <div className="an__stats-grid">
-              <StatCard label="Returning Customers" value={d.returning}  subtext={`${d.returningPct} of Orders`} />
-              <StatCard label="Conversion rate"     value={d.conversion} change="37.8%" changeType="up" subtext="this week" />
-              <StatCard
-                label="Cancelled Ordrs"
-                value={d.cancelled}
-                change={d.cancelled > 2 ? `${d.cancelled - 2} Vs April` : undefined}
-                changeType="warn"
-                subtext={d.cancelled <= 2 ? "Vs April" : undefined}
-              />
-              <StatCard label="Returns" value={d.returns} subtext={`${d.returnRate} return rate`} />
+              <StatCard label="Returning Customers" value={returningCustomersCount} subtext={`${orders.length ? Math.round((returningCustomersCount / orders.length) * 100) : 0}% of Total`} />
+              <StatCard label="Completion Rate"     value={`${conversionRate}%`} change="Delivered" changeType="up" subtext="fulfillment" />
+              <StatCard label="Cancelled Orders"    value={cancelledCount}      changeType="warn" subtext="cancelled" />
+              <StatCard label="Returns"             value={returnsCount}        subtext={`${returnRate}% return rate`} />
             </div>
           </div>
+
           <div className="an__charts-row">
             <div className="an__chart-card">
-              <div className="an__chart-card-title">Avg. order value</div>
-              <HorizontalBarChart data={BAR_DATA} />
+              <div className="an__chart-card-title">Order Status Distribution</div>
+              <HorizontalBarChart data={statusBarData} />
             </div>
             <div className="an__chart-card">
-              <div className="an__chart-card-title">Avg. order value</div>
+              <div className="an__chart-card-title">Revenue Share by Category</div>
               <div className="an__donut-wrapper">
-                <DonutChart data={DONUT_DATA} />
+                <DonutChart data={categoryDonutData} />
                 <div className="an__donut-legend">
-                  {DONUT_DATA.map((d, i) => (
+                  {categoryDonutData.map((d, i) => (
                     <div key={i} className="an__legend-item">
                       <span className="an__legend-dot" style={{ background: d.color }} />
                       <span className="an__legend-text">
-                        {d.label} - ₹{d.value}L ({Math.round((d.value / total) * 100)}%)
+                        {d.label} - {donutTotalVal ? Math.round((d.value / donutTotalVal) * 100) : 0}%
                       </span>
                     </div>
                   ))}
@@ -762,9 +606,214 @@ const Analytics = () => {
         </>
       )}
 
-      {activeTab === "Orders"    && <OrdersTab />}
-      {activeTab === "Customers" && <CustomersTab />}
-      {activeTab === "Products"  && <ProductsTab />}
+      {activeTab === "Orders" && (
+        <div className="an__orders">
+          <div className="an__orders-stats">
+            <div className="an__orders-stat-card">
+              <div className="an__orders-stat-label">Total Orders</div>
+              <div className="an__orders-stat-value">{totalOrdersCount}</div>
+              <div className="an__orders-stat-footer">
+                <span className="an__badge an__badge--up"><ArrowUp />{completedCount} Delivered</span>
+              </div>
+            </div>
+            <div className="an__orders-stat-card">
+              <div className="an__orders-stat-label">Completed</div>
+              <div className="an__orders-stat-value">{completedCount}</div>
+              <div className="an__orders-stat-footer">
+                <span className="an__stat-subtext">{conversionRate}% Completion Rate</span>
+              </div>
+            </div>
+            <div className="an__orders-stat-card">
+              <div className="an__orders-stat-label">Pending / Confirmed</div>
+              <div className="an__orders-stat-value">{pendingCount}</div>
+              <div className="an__orders-stat-footer">
+                <span className="an__badge an__badge--action">Needs Action</span>
+              </div>
+            </div>
+            <div className="an__orders-stat-card">
+              <div className="an__orders-stat-label">Cancelled</div>
+              <div className="an__orders-stat-value">{cancelledCount}</div>
+              <div className="an__orders-stat-footer">
+                <span className="an__badge an__badge--action">{totalOrdersCount ? ((cancelledCount / totalOrdersCount) * 100).toFixed(1) : 0}% Cancel Rate</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="an__orders-charts-row">
+            <div className="an__chart-card an__chart-card--review">
+              <div className="an__review-header">
+                <div>
+                  <div className="an__review-title" style={{ fontSize: "20px", fontWeight: "700", color: "#1c1c1e", marginBottom: "10px" }}>Revenue &amp; Orders Trend</div>
+                  <div className="an__review-value" style={{ fontSize: "34px", fontWeight: "700", letterSpacing: "-0.02em", color: "#1c1c1e", margin: "0 0 6px" }}>{fmtVal(totalRevenue)}</div>
+                </div>
+              </div>
+              <Sparkline labels={sparklineData.labels} revenueData={sparklineData.revenueData} customerData={sparklineData.customerData} />
+            </div>
+
+            <div className="an__chart-card">
+              <div className="an__chart-card-title">Orders by Status</div>
+              <OrdersBarChart data={statusBarData} />
+            </div>
+          </div>
+
+          <div className="an__chart-card an__chart-card--bottom">
+            <div className="an__bottom-section-title">Top Order Days &amp; Peak Hours</div>
+            <div className="an__bottom-charts-row">
+              <div className="an__bottom-chart">
+                <div className="an__bottom-chart-label">Orders by Day of Week</div>
+                <OrdersBarChart data={dayOfWeekData} />
+              </div>
+              <div className="an__bottom-chart-divider" />
+              <div className="an__bottom-chart">
+                <div className="an__bottom-chart-label">Orders by Time of Day</div>
+                <OrdersBarChart data={timeOfDayData} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "Customers" && (
+        <div className="an__customers">
+          <div className="an__stats-grid">
+            <div className="an__stat-card">
+              <div className="an__stat-label">Total Customers</div>
+              <div className="an__stat-value">{customers.length || activeCustomerIds.size}</div>
+              <div className="an__stat-footer">
+                <span className="an__badge an__badge--up"><ArrowUp />{newCustomersCount} active in period</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">New Customers</div>
+              <div className="an__stat-value">{newCustomersCount}</div>
+              <div className="an__stat-footer">
+                <span className="an__badge an__badge--up">New registrations</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">Returning</div>
+              <div className="an__stat-value">{returningCustomersCount}</div>
+              <div className="an__stat-footer">
+                <span className="an__stat-subtext--green">Repeat buyers</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">VIP Customers</div>
+              <div className="an__stat-value">{customerSegments[0]?.value || 0}</div>
+              <div className="an__stat-footer">
+                <span className="an__stat-subtext">5+ Orders Each</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="an__charts-row">
+            <div className="an__chart-card">
+              <div className="an__chart-card-title">Customer Segmentation</div>
+              <OrdersBarChart data={customerSegments} />
+            </div>
+            <div className="an__chart-card">
+              <div className="an__customers-list-title">Top Customers by Spend</div>
+              {topCustomersList.length === 0 ? (
+                <p style={{ color: '#888', fontSize: '13px' }}>No customer purchase history yet.</p>
+              ) : (
+                topCustomersList.map((c, i) => (
+                  <div key={i} className="an__customer-row">
+                    <span className="an__customer-num">{i + 1}</span>
+                    <div className="an__customer-info">
+                      <div className="an__customer-name">{c.name}</div>
+                      <div className="an__customer-sub">{c.orders} orders · {c.city}</div>
+                    </div>
+                    <span className="an__customer-amount">{c.amount}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "Products" && (
+        <div className="an__products">
+          <div className="an__stats-grid">
+            <div className="an__stat-card">
+              <div className="an__stat-label">Total Products</div>
+              <div className="an__stat-value">{products.length}</div>
+              <div className="an__stat-footer">
+                <span className="an__stat-subtext">In store catalog</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">Products Sold</div>
+              <div className="an__stat-value">{productsSoldUnits}</div>
+              <div className="an__stat-footer">
+                <span className="an__stat-subtext">Units sold in period</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">Best Seller</div>
+              <div className="an__stat-value an__stat-value--md">{bestSellerProduct.name}</div>
+              <div className="an__stat-footer">
+                <span className="an__stat-subtext">{bestSellerProduct.units} units sold</span>
+              </div>
+            </div>
+            <div className="an__stat-card">
+              <div className="an__stat-label">Low / Out of Stock</div>
+              <div className="an__stat-value an__stat-value--red">{lowStockItems.length}</div>
+              <div className="an__stat-footer">
+                <span className="an__badge an__badge--action">Restock Needed</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="an__chart-card">
+            <div className="an__products-section-title">Sales by Category</div>
+            {salesByCategoryList.length === 0 ? (
+              <p style={{ color: '#888', fontSize: '13px' }}>No category sales data yet.</p>
+            ) : (
+              <div className="an__products-category-list">
+                {salesByCategoryList.map((item, i) => (
+                  <div key={i} className="an__products-category-row">
+                    <div className="an__products-category-info">
+                      <div className="an__products-category-name">{item.name}</div>
+                      <div className="an__products-category-sku">{item.sku}</div>
+                      <div className="an__products-category-bar-track">
+                        <div className="an__products-category-bar-fill" style={{ width: `${item.width}%`, background: item.color }} />
+                      </div>
+                    </div>
+                    <div className="an__products-category-stats">
+                      <div className="an__products-category-units">{item.units} units</div>
+                      <div className="an__products-category-revenue">{item.revenue}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="an__chart-card">
+            <div className="an__products-section-title">Low And Out of Stock Items</div>
+            {lowStockItems.length === 0 ? (
+              <p style={{ color: '#16a34a', fontSize: '13px', margin: '8px 0' }}>All products are well stocked!</p>
+            ) : (
+              <div className="an__products-stock-list">
+                {lowStockItems.map((item, i) => (
+                  <div key={i} className="an__products-stock-row">
+                    <div className="an__products-stock-info">
+                      <div className="an__products-stock-name">{item.name}</div>
+                      <div className="an__products-stock-category">{item.category}</div>
+                    </div>
+                    {item.status === "out" ? (
+                      <span className="an__products-stock-badge an__products-stock-badge--out">Out Of Stock</span>
+                    ) : (
+                      <span className="an__products-stock-badge an__products-stock-badge--low">{item.stock} left</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

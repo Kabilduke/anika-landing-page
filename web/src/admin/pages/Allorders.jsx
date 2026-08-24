@@ -134,6 +134,8 @@ const FilterDropdown = ({ value, options, onChange }) => {
 const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDetail }) => {
   const [category, setCategory] = useState("All Category");
   const [status,   setStatus]   = useState("All Status");
+  const [paymentFilter, setPaymentFilter] = useState("All Payment");
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [search,   setSearch]   = useState("");
   const [selected, setSelected] = useState([]);
   const [page,     setPage]     = useState(1);
@@ -149,6 +151,8 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
     ]);
     return Array.from(unique);
   }, [products]);
+
+  const PAYMENT_OPTIONS = ["All Payment", "Paid", "COD"];
 
   /* ── Derived lists ── */
   const displayOrders = activeTab === "return"
@@ -171,6 +175,12 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
       }
       return o.status?.toLowerCase() === status.toLowerCase();
     })();
+
+    const matchPayment = (() => {
+      if (paymentFilter === "All Payment") return true;
+      return o.payment?.toUpperCase() === paymentFilter.toUpperCase();
+    })();
+
     const matchSearch =
       !search ||
       (o.id || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -178,7 +188,7 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
       (o.customer?.email || "").toLowerCase().includes(search.toLowerCase()) ||
       (o.item_name || "").toLowerCase().includes(search.toLowerCase());
 
-    return matchCategory && matchStatus && matchSearch;
+    return matchCategory && matchStatus && matchPayment && matchSearch;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
@@ -234,11 +244,12 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
   const inTransit    = count('Shipped');
   const problems     = count('Cancelled') + count('Returned');
 
-  const hasActiveFilters = category !== "All Category" || status !== "All Status" || search !== "";
+  const hasActiveFilters = category !== "All Category" || status !== "All Status" || paymentFilter !== "All Payment" || search !== "";
 
   const handleResetFilters = () => {
     setCategory("All Category");
     setStatus("All Status");
+    setPaymentFilter("All Payment");
     setSearch("");
     setPage(1);
   };
@@ -451,15 +462,33 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
             { label: 'Delivered', val: count('Delivered'), color: '#16a34a', bg: '#f0fdf4' },
             { label: 'Cancelled', val: count('Cancelled'), color: '#dc2626', bg: '#fef2f2' },
             { label: 'Returned',  val: count('Returned'), color: '#dc2626', bg: '#fef2f2' },
-          ].map(({ label, val, color, bg }) => (
-            <div key={label} className="ao__pill" style={{ '--pill-color': color, '--pill-bg': bg }}>
-              <span className="ao__pill-dot" />
-              <span className="ao__pill-label">{label}</span>
-              <span className={`ao__pill-val${loading ? ' ao__pill-val--loading' : ''}`}>
-                {loading ? '—' : val}
-              </span>
-            </div>
-          ))}
+          ].map(({ label, val, color, bg }) => {
+            const isActive = status.toLowerCase() === label.toLowerCase();
+            return (
+              <div 
+                key={label} 
+                className={`ao__pill${isActive ? ' ao__pill--active' : ''}`}
+                style={{ 
+                  '--pill-color': color, 
+                  '--pill-bg': bg, 
+                  cursor: 'pointer',
+                  outline: isActive ? `2px solid ${color}` : 'none',
+                  outlineOffset: '-1px'
+                }}
+                onClick={() => {
+                  setStatus(isActive ? "All Status" : label);
+                  setPage(1);
+                }}
+                title={`Filter by ${label}`}
+              >
+                <span className="ao__pill-dot" />
+                <span className="ao__pill-label">{label}</span>
+                <span className={`ao__pill-val${loading ? ' ao__pill-val--loading' : ''}`}>
+                  {loading ? '—' : val}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
       </div>
@@ -469,26 +498,97 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
       <div className="ao__toolbar">
         <FilterDropdown value={category} options={categoryOptions} onChange={(v) => { setCategory(v); setPage(1); }} />
         <FilterDropdown value={status}   options={STATUSES}   onChange={(v) => { setStatus(v);   setPage(1); }} />
-        {hasActiveFilters ? (
+        <FilterDropdown value={paymentFilter} options={PAYMENT_OPTIONS} onChange={(v) => { setPaymentFilter(v); setPage(1); }} />
+        
+        <button 
+          className={`ao__filter-btn${filterPanelOpen || hasActiveFilters ? ' ao__filter-btn--active' : ''}`} 
+          onClick={() => setFilterPanelOpen(o => !o)}
+          style={hasActiveFilters ? { background: '#f5f3ff', color: '#4f46e5', borderColor: '#c7d2fe' } : {}}
+        >
+          <FilterIcon />
+          <span>Filter{hasActiveFilters ? ` (Active)` : ''}</span>
+          <ChevronDownIcon />
+        </button>
+
+        {hasActiveFilters && (
           <button className="ao__filter-btn" onClick={handleResetFilters} style={{ background: '#fef2f2', color: '#ef4444', borderColor: '#fca5a5' }}>
             Clear Filters
           </button>
-        ) : (
-          <button className="ao__filter-btn" onClick={handleResetFilters}>
-            <FilterIcon />
-            Filter
-          </button>
         )}
+
         <div className="ao__search">
           <SearchIcon />
           <input
             className="ao__search-input"
-            placeholder="Search orders"
+            placeholder="Search orders (ID, Customer, Item)"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
       </div>
+
+      {/* Expanded Filter Panel */}
+      {filterPanelOpen && (
+        <div className="ao__filter-panel" style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '12px',
+          alignItems: 'center',
+          background: '#fff',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb',
+          marginBottom: '16px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '600', color: '#666' }}>Category</span>
+            <FilterDropdown value={category} options={categoryOptions} onChange={(v) => { setCategory(v); setPage(1); }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '600', color: '#666' }}>Status</span>
+            <FilterDropdown value={status} options={STATUSES} onChange={(v) => { setStatus(v); setPage(1); }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '600', color: '#666' }}>Payment Method</span>
+            <FilterDropdown value={paymentFilter} options={PAYMENT_OPTIONS} onChange={(v) => { setPaymentFilter(v); setPage(1); }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: 'auto', gap: '8px', paddingTop: '16px' }}>
+            {hasActiveFilters && (
+              <button 
+                onClick={handleResetFilters}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12.5px',
+                  background: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fca5a5',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Reset All Filters
+              </button>
+            )}
+            <button 
+              onClick={() => setFilterPanelOpen(false)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '12.5px',
+                background: '#111',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              Close Panel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Table ── */}
       <div className="ao__table-wrap">

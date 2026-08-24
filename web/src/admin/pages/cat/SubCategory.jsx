@@ -3,15 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { productService } from "../../../services/productService";
 import "./SubCategory.css";
 
+const CheckerPlaceholder = () => (
+  <div style={{
+    width: "100%", height: "100%",
+    backgroundImage: "repeating-conic-gradient(#d8d8d8 0% 25%, #e8e8e8 0% 50%)",
+    backgroundSize: "16px 16px",
+  }} />
+);
+
 const SubcategoryCard = ({ sub, productCount, onEdit, onDelete }) => (
   <div className="subcat-card">
-    <div className="subcat-card-image">
-      {sub.image_url
-        ? <img src={sub.image_url} alt={sub.name} />
-        : <div style={{ width: "100%", height: "100%", background: "#eee" }} />}
+    <div className="subcat-card-image-wrap">
+      <div className="subcat-card-image">
+        {sub.image_url
+          ? <img src={sub.image_url} alt={sub.name} />
+          : <CheckerPlaceholder />}
+      </div>
     </div>
     <div className="subcat-card-body">
-      <div className="subcat-card-name">{sub.name}</div>
+      <div className="subcat-card-name" title={sub.name}>{sub.name}</div>
       <div className="subcat-card-meta">{productCount} products</div>
     </div>
     <div className="subcat-card-actions">
