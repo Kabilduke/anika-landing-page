@@ -195,21 +195,38 @@ export const useStore = create((set, get) => ({
     try {
       const productsData = await productService.getProductsByCategoryName(categoryName);
       const mapped = (productsData || []).map(p => {
-        const sellingPrice = Number(p.price) || 0;
-        const mrp = Number(p.compare_price) || 0;
+        const variants = p.product_variants || [];
+        const hasVariants = !!p.has_variants && variants.length > 0;
+
+        const sellingPrice = hasVariants
+          ? Math.min(...variants.map(v => Number(v.price) || Infinity).filter(isFinite))
+          : (Number(p.price) || 0);
+
+        const mrp = hasVariants
+          ? Math.max(...variants.map(v => Number(v.compare_price) || 0))
+          : (Number(p.compare_price) || 0);
+
+        const totalStock = hasVariants
+          ? variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+          : (Number(p.stock) || 0);
+
+        const firstVariantImage = hasVariants
+          ? variants.find(v => v.images?.length > 0)?.images?.[0]
+          : null;
 
         return {
           id: p.product_id || p.id,
           productId: p.product_id || p.id,
-          img: p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
+          img: firstVariantImage || p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
           name: p.name,
           desc: p.description,
           price: sellingPrice,
           compare_price: mrp,
-          sizes: p.sizes || [],
-          stock: p.stock > 0 ? 'in-stock' : 'out-of-stock',
+          sizes: p.sizes || variants.map(v => v.size).filter(Boolean),
+          stock: totalStock > 0 ? 'in-stock' : 'out-of-stock',
           subcategory: p.subcategory || p.subcategories?.name || null,
           subcategory_id: p.subcategory_id || null,
+          has_variants: hasVariants,
         };
       });
       set(state => ({

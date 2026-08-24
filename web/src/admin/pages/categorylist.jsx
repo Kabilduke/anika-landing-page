@@ -476,8 +476,8 @@ const CategoryList = ({
                 <MobileCard
                   key={cat.id}
                   cat={cat}
-                  selected={selectedCategories.includes(cat.category_id || cat.id)}
-                  onSelect={() => handleSelectCategory(cat)}
+                  selected={selectedIds.includes(cat.category_id || cat.id)}
+                  onSelect={() => toggleOne(cat.category_id || cat.id)}
                   // onSelect={() => toggleOne(cat.id)}
                   onEdit={onEditCategory}
                   onDelete={handleDeleteClick}

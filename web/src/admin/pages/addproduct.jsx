@@ -188,7 +188,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: form.colors.length > 0 ? form.colors : null,
+        colors: initialData.colors || [],
         care: initialData.care || "",
       });
       setImages(initialData.images || []);
@@ -292,7 +292,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       material: form.material,
       weight: parseFloat(form.weight) || null,
       sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
-      colors: form.colors.length > 0 ? form.colors : null,
+      colors: initialData.colors || [],
       care: form.care,
       image_url: urls[0] || null,
       images: urls,

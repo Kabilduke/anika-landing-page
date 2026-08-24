@@ -709,7 +709,16 @@ const Dashboard = () => {
   // Normalize a raw Supabase product row into the shape productlist.jsx expects
   const normalizeProductRow = (row) => {
     const variants = row.product_variants || [];
-    const prices = variants.map(v => v.price).filter(Boolean);
+    const prices = variants.map(v => Number(v.price)).filter(n => !isNaN(n));
+    const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+
+    const priceDisplay = row.has_variants
+      ? (prices.length
+        ? (Math.min(...prices) === Math.max(...prices)
+        ? `₹${Math.min(...prices).toLocaleString('en-IN')}`
+        : `₹${Math.min(...prices).toLocaleString('en-IN')} – ₹${Math.max(...prices).toLocaleString('en-IN')}`)
+        : "No variants" )
+      : `₹${Number(row.price || 0).toLocaleString('en-IN')}`;
 
     return {
       ...row,
@@ -719,22 +728,12 @@ const Dashboard = () => {
       category: row.categories?.name || row.category || "",
       subcategory: row.subcategories?.name || null,
       status: row.is_active ? "Visible" : "Draft",
-      priceDisplay: row.has_variants && prices.length
-        ? (Math.min(...prices) === Math.max(...prices)
-          ? `₹${Math.min(...prices)}`
-          : `₹${Math.min(...prices)} – ₹${Math.max(...prices)}`)
-        : `₹${row.price}`,
-        totalStock: row.has_variants
-          ? variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-          : row.stock,
+      price: row.has_variants ? (prices.length ? Math.min(...prices) : 0) : row.price,
+      priceDisplay,
+      stock: row.has_variants ? totalStock : row.stock,
+      variants,
+      variantCount: variants.length,
     };
-    // ...row,
-    // id: row.product_id ?? row.id,
-    // images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
-    // image: row.image_url || null,
-    // category: row.categories?.name || row.category || "",
-    // subcategory: row.subcategories?.name || null,
-    // status: row.is_active ? "Visible" : "Draft",
   };
 
   // ── Fetch products on mount ─────────────────────
@@ -793,6 +792,26 @@ const Dashboard = () => {
     );
   }
 
+  function EditMultipleProductWrapper({ categories, subcategoriesCache, fetchSubcategoriesForParent, onSave, navigate }){
+    const location = useLocation();
+    const editingProductId = location.state?.editingProductId;
+
+    if (!editingProductId){
+      return <Navigate to="/admin/products" replace />;
+    }
+    return (
+      <ProductVariant
+        editingProductId={editingProductId}
+        categories={categories}
+        onGoToRoot={() => navigate("/admin/categories")}
+        onBack={() => navigate("/admin/products")}
+        onSave={onSave}
+        subcategoriesCache={subcategoriesCache}
+        onFetchSubcategories={fetchSubcategoriesForParent}
+      />
+    );
+  }
+
   // ── Handlers ──────────────────────────────────────────────────
   const goToAddProduct = () => {
     setEditingProduct(null);
@@ -809,8 +828,12 @@ const Dashboard = () => {
   };
 
   const handleEditProduct = (product) => {
-    setEditingProduct(product);
-    navigate("/admin/products/add");
+    if (product.has_variants){
+      navigate("/admin/products/edit-multiple", { state: { editingProductId: product.id } });
+    } else {
+      setEditingProduct(product);
+      navigate("/admin/products/add");
+    }
   };
 
   const handleDeleteProduct = async (id) => {
@@ -884,7 +907,7 @@ const Dashboard = () => {
     navigate(`/admin/subcategories?parentId=${data.parent_id}`);
   };
 
-  const handleSaveMultipleProduct = ( product, variant ) => {
+  const handleSaveMultipleProduct = ({ product, variants }) => {
     const normalized = normalizeProductRow({
       ...product, 
       images: variants[0]?.images || [],
@@ -892,7 +915,13 @@ const Dashboard = () => {
      });
     setProducts((p) => [normalized, ...p]);
     navigate("/admin/products");
-  }
+  };
+
+  const handleUpdateMultipleProduct = ({ product, variants}) => {
+    const normalized = normalizeProductRow({ ...product, product_variants: variants });
+    setProducts((p) => p.map((x) => (x.id === normalized.id ? normalized : x)));
+    navigate("/admin/products");
+  };
 
   const handleEditCategory = (cat) => {
     setEditingCategory(cat);
@@ -1165,6 +1194,7 @@ const Dashboard = () => {
             <Route path="/products" element={
               <ProductList 
                 products={products} 
+                categories={categories}
                 onAddProduct={goToAddProduct} 
                 onEditProduct={handleEditProduct} 
                 onDeleteProduct={handleDeleteProduct} 
@@ -1187,6 +1217,16 @@ const Dashboard = () => {
                 subcategoriesCache={subcategoriesCache}
                 onFetchSubcategories={fetchSubcategoriesForParent}
               />} />
+
+            <Route path="/products/edit-multiple" element={
+              <EditMultipleProductWrapper
+                categories={categories}
+                subcategoriesCache={subcategoriesCache}
+                fetchSubcategoriesForParent={fetchSubcategoriesForParent}
+                onSave={handleUpdateMultipleProduct}
+                navigate={navigate}
+              />
+            } />
 
             {/* Categories */}
             <Route path="/categories" element={

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Zoom } from "swiper/modules";
+import { Navigation} from "swiper/modules";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../lib/supabase';
@@ -54,6 +54,13 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
+
+  useEffect(() => {
+    if (swiperRef.current){
+      swiperRef.current.update();
+      swiperRef.current.slideTo(0, 0);
+    }
+  }, [thumbs])
 
   const goToIndex = (i) => {
     const clamped = Math.max(0, Math.min(thumbs.length-1, i));
@@ -119,10 +126,10 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
           </button>
 
           <Swiper
-            modules={[Navigation, Zoom]}
+            modules={[Navigation]}
             navigation={false}
             // pagination = {{ clickable: true }}
-            zoom= {true}
+            // zoom= {true}
             onSwiper={(swiper) => (swiperRef.current = swiper)}
             onSlideChange={(swiper) => setActiveThumb(swiper.activeIndex)}
             speed={500}
@@ -180,7 +187,6 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   );
 });
    
-
 const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClick }) => {
   const visibleRelated = showAll ? relatedItems : relatedItems.slice(0, 4);
   return (
@@ -250,7 +256,6 @@ export default function ProductPage({ onBack }) {
   const [warrantyOpen, setWarrantyOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
-
   const [productImages, setProductImages] = useState([]);
   const [showAll, setShowAll] = useState(false);
   const [productPrices, setProductPrice] = useState(null);
@@ -259,74 +264,24 @@ export default function ProductPage({ onBack }) {
   const [toastMsg, setToastMsg] = useState("");
   const [toastType, setToastType] = useState("success");
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedLength, setSelectedLength] = useState("");
   const [showSizeChart, setShowSizeChart] = useState(false);
 
   // Dynamic sizes/lengths fetched from database
   const [size, setSize] = useState([]);
-  const [length, setLength] = useState([]);
 
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState([]);
   const [selectedColor, setSelectedColor] = useState("");
 
-  // useEffect(() => {
-  //   const productId = selectedProduct?.productId || selectedProduct?.id;
-  //   if (!productId) return;
+  const SIZE_CHART_BY_CATEGORY = {
+    Bangles: SizeChart,
+    Anklets: LengthChart,
+  }
 
-  //   const fetchImages = async () => {
-  //     const { data, error } = await supabase
-  //       .from('products')
-  //       .select('images', 'image_url')
-  //       .eq('product_id', productId)
-  //       .single()
-
-  //       if (error || !data) return;
-
-  //       const imgs = Array.isArray(data.images) && data.images.length > 0
-  //         ? data.images
-  //         : (data.image_url ? [data.image_url] : []);
-      
-  //       setProductImages(imgs)
-  //   };
-
-  //   const fetchPrices = async () => {
-  //     const { data, error } = await supabase
-  //       .from('products')
-  //       .select('price, compare_price, sku, stock, stock_alert')
-  //       .eq('product_id', productId)
-  //       .single();
-
-  //     if (error || !data) return;
-  //     setProductPrice(data)
-  //   };
-
-  //   const fetchSizes = async () => {
-  //     const { data, error } = await supabase
-  //       .from('products')
-  //       .select('sizes')
-  //       .eq('product_id', productId)
-  //       .single();
-
-  //     if (error || !data?.sizes?.length) return;
-
-  //     if (cat === 'Bangles') {
-  //       setSize(data.sizes);
-  //       setSelectedSize(data.sizes[0] || "");
-  //     } else if (cat === 'Anklets') {
-  //       setLength(data.sizes);
-  //       setSelectedLength(data.sizes[0] || "");
-  //     }
-  //   };
-
-  //   setSize([]);
-  //   setLength([]);
-  //   setProductImages([]); 
-  //   setProductPrice(null);
-  //   fetchPrices();
-  //   fetchSizes();
-  //   fetchImages();
-  // }, [selectedProduct, cat]);
+  const SIZE_LABEL_BY_CATEGORY = {
+    Bangles: "Size",
+    Anklets: "Length",
+  }
 
   useEffect(() => {
     const productId = selectedProduct?.productId || selectedProduct?.id;
@@ -368,13 +323,8 @@ export default function ProductPage({ onBack }) {
           const sizes = [...new Set(variantRows.map(v => v.size).filter(Boolean))];
           const firstVariant = variantRows[0];
 
-          if(cat === 'Bangles'){
-            setSize(sizes);
-            setSelectedSize(firstVariant?.size || "");
-          } else if (cat === 'Anklets'){
-            setLength(sizes);
-            setSelectedLength(firstVariant?.size || "");
-          }
+          setSize(sizes);
+          setSelectedSize(firstVariant?.size || "");
           setSelectedColor(firstVariant?.color || "");
         } catch (err) {
           console.error("Failed to load variants:", err);
@@ -383,18 +333,12 @@ export default function ProductPage({ onBack }) {
       } else {
         setProductPrice(data);
         if (data.sizes?.length){
-          if (cat === 'Bangles'){
             setSize(data.sizes);
             setSelectedSize(data.sizes[0] || "");
-          } else if(cat === "Anklets"){
-            setLength(data.sizes);
-            setSelectedLength(data.sizes[0] || "");
-          }
         }
       }
     };
     setSize([]);
-    setLength([]);
     setProductImages([]);
     setProductPrice(null);
     setVariants([]);
@@ -415,7 +359,7 @@ export default function ProductPage({ onBack }) {
   }, [wishlistItems, selectedProduct]);
 
   // const rawDiscount = productPrices?.discount_price ?? 0;
-  const activeSizeValue = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
+  const activeSizeValue = selectedSize;
 
   const selectedVariant = useMemo(() => {
     if (!hasVariants || variants.length === 0) return null;
@@ -485,13 +429,32 @@ export default function ProductPage({ onBack }) {
   }, [hasVariants, variants, activeSizeValue]);
 
   const dynamicThumbs = useMemo(() => {
-    const imgs = productImages.length > 0 ? productImages : [displayImage];
+    let imgs = [];
+
+    if (hasVariants){
+      if(selectedVariant?.images.length > 0){
+        imgs = selectedVariant.images;
+      } else {
+        const anyVariantWithImages = variants.find(v => v.images?.length > 0);
+        if (anyVariantWithImages) {
+          imgs = anyVariantWithImages.images;
+        }
+      }
+    }
+
+    if (imgs.length === 0 && productImages.length > 0){
+      imgs = productImages;
+    }
+
+    if(imgs.length == 0){
+      imgs = [displayImage];
+    }
     return imgs.map((img, i) => ({
       id: i + 1,
       img,
-      alt : `${displayName} view ${i + 1}` 
+      alt: `${displayName} view ${i + 1}`
     }));
-  }, [productImages, displayImage, displayName]);
+  }, [productImages, displayImage, displayName, hasVariants, selectedVariant, variants])
 
   // Fetch related products from DB when category changes
   useEffect(() => {
@@ -591,7 +554,8 @@ export default function ProductPage({ onBack }) {
     }
     if (!canAddToCart) return;
 
-    const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
+    const sizeParam = selectedSize || null;
+
     navigate("/shipping", {
       state: {
         product: {
@@ -605,7 +569,7 @@ export default function ProductPage({ onBack }) {
         }
       }
     });
-  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct, selectedSize, selectedLength]);
+  }, [displayName, displayPrice, qty, displayImage, cat, selectedProduct, selectedSize]);
 
   const handleShare = useCallback(async () => {
     const shareData = {
@@ -637,6 +601,7 @@ export default function ProductPage({ onBack }) {
       <section className="pp-detail-section">
         <div className="pp-detail-card">
           <ProductGallery
+            key={selectedProduct?.productId || selectedProduct?.id} 
             activeThumb={activeThumb}
             setActiveThumb={handleThumbClick}
             displayImage={displayImage}
@@ -681,38 +646,41 @@ export default function ProductPage({ onBack }) {
             </div>
             <p className="pp-tax-note">Inclusive of all taxes</p>
 
-            {/* {cat == 'Bangles' && (
+            {size.length > 0 && (
               <div className='pp-size'>
                 <div className='pp-size-row'>
-                  <h4>Size: {selectedSize}</h4>
-                  <a href="#" className="pp-size-link"
-                    onClick={(e) => { e.preventDefault(); setShowSizeChart(true) }}
-                  >Size Chart</a>
+                  <h4>{SIZE_LABEL_BY_CATEGORY[cat] || "Size"}: {selectedSize}</h4>
+                  {SIZE_CHART_BY_CATEGORY[cat] && (
+                    <a href='#' className='pp-size-link'
+                      onClick={(e) => { e.preventDefault(); setShowSizeChart(true) }}
+                    >
+                      Size Chart
+                    </a>
+                  )}
                 </div>
-
-                {showSizeChart && (
+                {showSizeChart && SIZE_CHART_BY_CATEGORY[cat] && (
                   <div className='pp-size-chart-overlay' onClick={() => setShowSizeChart(false)}>
                     <div className='pp-size-chart-modal' onClick={(e) => e.stopPropagation()}>
-                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>
-                        x
-                      </button>
-                      <img src={SizeChart} alt="Size Chart" />
+                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>x</button>
+                      <img src={SIZE_CHART_BY_CATEGORY[cat]} alt="Size Chart" />
                     </div>
                   </div>
                 )}
+
                 <div className='pp-size-buttons'>
-                  {size.map((size) => (
+                  {size.map((s) => (
                     <button
-                      key={size}
-                      className={`pp-size-btn ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => setSelectedSize(size)}
+                      key={s}
+                      className={`pp-size-btn ${selectedSize === s ? 'active' : ''}`}
+                      onClick={() => setSelectedSize(s)}
                     >
-                      {size}
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
+
             {hasVariants && availableColorForSize.length > 0 && (
               <div className='pp-color-picker'>
                 <h4>Color</h4>
@@ -730,57 +698,6 @@ export default function ProductPage({ onBack }) {
                 </div>
               </div>
             )}
-{/* 
-            {cat == 'Anklets' && (
-              <div className='pp-size'>
-                <div className='pp-size-row'>
-                  <h4>Size: {selectedLength}</h4>
-                  <a href="#" className="pp-size-link"
-                    onClick={(e) => { e.preventDefault(); setShowSizeChart(true) }}
-                  >Size Chart</a>
-                </div>
-
-                {showSizeChart && (
-                  <div className='pp-size-chart-overlay' onClick={() => setShowSizeChart(false)}>
-                    <div className='pp-size-chart-modal' onClick={(e) => e.stopPropagation()}>
-                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>
-                        x
-                      </button>
-                      <img src={LengthChart} alt="Size Chart" />
-                    </div>
-                  </div>
-                )}
-                <div className='pp-size-buttons'>
-                  {length.map((size) => (
-                    <button
-                      key={size}
-                      className={`pp-size-btn ${selectedLength === size ? 'active' : ''}`}
-                      onClick={() => setSelectedLength(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )} */}
-            {hasVariants && availableColorForSize.length > 0 && (
-              <div className='pp-color-picker'>
-                <h4>Color</h4>
-                <div className='pp-color-buttons'>
-                  {availableColorForSize.map((c) =>(
-                    <button
-                      key={c}
-                      type='button'
-                      className={`pp-color-swatch${selectedColor === c ? ' pp-color-swatch--selected' : ''}${c === '#FFFFFF' ? ' pp-color-swatch--white' : ''}`}
-                      style={{ backgroundColor: c }}
-                      onClick={() => setSelectedColor(c)}
-                      aria-label={`Select color ${c}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
 
             {stockCount != null && (
               <div className="pp-stock">
@@ -824,7 +741,7 @@ export default function ProductPage({ onBack }) {
                   if (!canAddToCart) return;
 
                   if (selectedProduct) {
-                    const sizeParam = cat === 'Bangles' ? selectedSize : (cat === 'Anklets' ? selectedLength : null);
+                    const sizeParam = selectedSize || null;;
                     await addToCart(selectedProduct, qty, sizeParam);
                     showToast(`Added "${displayName}" to cart!`);
                   }

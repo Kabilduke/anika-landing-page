@@ -426,7 +426,6 @@ button {
   flex-direction: row;
   gap: 10px;
   margin-top: 5px;
-  margin-bottom: 10px;
 }
 
 .pp-size-link {
@@ -1175,8 +1174,16 @@ button {
   color: #E52B50;
 }
 
-.pp-color-picker { margin-top: 12px; }
-.pp-color-buttons { display: flex; gap: 8px; margin-top: 6px; }
+.pp-color-picker { 
+  margin-bottom: 6px;
+}
+
+.pp-color-buttons { 
+  display: flex; 
+  margin-left: 8px;
+  margin-top: 6px; 
+}
+
 .pp-color-swatch {
   width: 26px; height: 26px; border-radius: 50%;
   border: 1px solid rgba(0,0,0,0.1); cursor: pointer; padding: 0;

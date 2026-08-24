@@ -69,7 +69,6 @@ const makeVariant = () => ({
 
 const CreateMultipleProduct = ({
   categories = [],
-  categoryName = "",
   categoryPath = [],
   onGoToRoot,
   onBreadcrumbClick,
@@ -77,12 +76,15 @@ const CreateMultipleProduct = ({
   onSave,
   subcategoriesCache = {},
   onFetchSubcategories,
+  editingProductId = null,
 }) => {
+  const isEditing = !!editingProductId;
+  const [loading, setLoading] = useState(isEditing);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
-//   const [subcategories, setSubcategories] = useState([]);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const subcategories = subcategoriesCache[category] || [];
 
@@ -94,16 +96,57 @@ const CreateMultipleProduct = ({
   const mediaInputRefs = useRef({});
 
   const [saving, setSaving] = useState(false);
+  const [deletedVariantIds, setDeletedVariantIds] = useState([]);
 
-  useEffect(() =>{
-    
+  // ── Load existing product + variants when editing ──
+  useEffect(() => {
+    if (!editingProductId) return;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { product, variants: existingVariants } = await variantService.getProductWithVariants(editingProductId);
+        setTitle(product.name || "");
+        setDescription(product.description || "");
+        setCategory(product.category_id != null ? String(product.category_id) : "");
+        setSubCategory(product.subcategory_id != null ? String(product.subcategory_id) : "");
+        setShowOnStore(!!product.is_active);
+        setFeaturedProduct(!!product.is_featured);
+        setVariants(
+          existingVariants.length > 0
+            ? existingVariants.map(v => ({
+                id: v.variant_id,
+                variant_id: v.variant_id,
+                sizeDimension: v.size || "",
+                stockQuantity: String(v.stock ?? ""),
+                minStockAlert: String(v.stock_alert ?? ""),
+                price: String(v.compare_price ?? ""),
+                sellingPrice: String(v.price ?? ""),
+                color: v.color || COLOR_SWATCHES[0],
+                sku: v.sku || "",
+                images: v.images || [],
+                media: [],
+              }))
+            : [makeVariant()]
+        );
+      } catch (err) {
+        console.error("Failed to load product for editing:", err);
+        alert("Failed to load product: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [editingProductId]);
+
+  useEffect(() => {
+    if (!category) return;
     if (subcategoriesCache[category]) return;
 
-    const fetchSubcategories = async () =>{
+    const fetchSubcategories = async () => {
       setLoadingSubcategories(true);
-      try{
+      try {
         await onFetchSubcategories?.(category);
-      } catch (err){
+      } catch (err) {
         console.error("Failed to load subcategories:", err);
       } finally {
         setLoadingSubcategories(false);
@@ -143,7 +186,14 @@ const CreateMultipleProduct = ({
   };
 
   const handleRemoveVariant = (id) => {
-    setVariants((prev) => (prev.length > 1 ? prev.filter((v) => v.id !== id) : prev));
+    setVariants((prev) => {
+      if (prev.length <= 1) return prev;
+      const removed = prev.find((v) => v.id === id);
+      if (removed?.variant_id) {
+        setDeletedVariantIds((ids) => [...ids, removed.variant_id]);
+      }
+      return prev.filter((v) => v.id !== id);
+    });
     setErrors((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -173,6 +223,16 @@ const CreateMultipleProduct = ({
         v.id === variantId
           ? { ...v, media: v.media.filter((m) => m.id !== mediaId) }
           : v
+      )
+    );
+  };
+
+  const handleRemoveExistingImage = (variantId, index) => {
+    setVariants((prev) =>
+      prev.map((v) => 
+        v.id === variantId
+        ? { ...v, images: (v.images || []).filter((_, i) => i !== index) }
+        : v
       )
     );
   };
@@ -216,24 +276,7 @@ const CreateMultipleProduct = ({
     return Object.keys(topErrors).length === 0 && Object.keys(variantErrors).length === 0;
   };
 
-//   const handleSave = () => {
-//     if (!validate()) return;
-//     const categoryObj = categories.find((c) => (c.category_id ?? c.id) === category);
-//     const subCategoryObj = subcategories.find((s) => s.subcategory_id === subCategory);
-
-//     onSave?.({
-//       title,
-//       description,
-//       category_id: category,
-//       category_name: categoryObj?.name,
-//       subcategory_id: subCategory || null,
-//       subcategory_name: subCategoryObj?.name,
-//       variants,
-//       showOnStore,
-//       featuredProduct,
-//     });
-//   };
-  const handleSave = async () =>{
+  const handleSave = async () => {
     if (!validate()) return;
 
     const productData = {
@@ -247,21 +290,27 @@ const CreateMultipleProduct = ({
 
     setSaving(true);
     try {
-      const result = await variantService.createProductWithVariants(productData, variants);
+      const result = isEditing
+        ? await variantService.updateProductWithVariants(editingProductId, productData, variants, deletedVariantIds)
+        : await variantService.createProductWithVariants({ ...productData, has_variants: true }, variants);
       onSave?.(result);
-    } catch (err){
+    } catch (err) {
       console.error("Failed to save variant product:", err);
       alert("Failed to save product: " + err.message);
     } finally {
       setSaving(false);
     }
   };
+  
+  if (loading){
+    return <main className="dashboard-content cmp-page"><p style={{ padding: 24 }}>Loading product…</p></main>;
+  }
 
   return (
         <main className="dashboard-content cmp-page">
           <div className="cmp-header">
             <div>
-              <h1 className="cmp-title">Create Multiple Product</h1>
+              <h1 className="cmp-title">{isEditing ? "Edit Multiple Product" : "Create Multiple Product"}</h1>
               <div className="cmp-breadcrumb">
                 <a
                   href="#"
@@ -517,6 +566,20 @@ const CreateMultipleProduct = ({
                         hidden
                         onChange={(e) => handleMediaSelect(v.id, e)}
                       />
+                      {(v.images || []).map((url, i) => (
+                        <div className="cmp-media-thumb" key={`existing-${v.id}-${i}`}>
+                          <img src={url} alt="Variant"/>
+                          <button
+                            type="button"
+                            className="cmp-media-remove"
+                            onClick={() => handleRemoveExistingImage(v.id, i)}
+                            aria-label="Remove image"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      ))}
+
                       {v.media.map((m) => (
                         <div className="cmp-media-thumb" key={m.id}>
                           <img src={m.url} alt="Variant media" />

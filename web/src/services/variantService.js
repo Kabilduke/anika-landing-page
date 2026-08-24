@@ -1,20 +1,28 @@
 import { supabase } from '../lib/supabase';
 
-const generateSku = (productName, size, color) => {
-  const base = productName.replace(/\s+/g, '-').toUpperCase().slice(0, 10);
-  const sizePart = size ? size.replace(/\s+/g, '').toUpperCase() : 'STD';
-  const colorPart = color ? color.replace('#', '') : 'DEF';
-  return `${base}-${sizePart}-${colorPart}-${Date.now().toString().slice(-4)}`;
+// ── SKU generation ──────────────────────────────────────────
+const generateBaseSku = (productName) => {
+  const words = productName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'PRD';
+
+  const initials = words
+    .slice(0, -1)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase();
+
+  const lastWordPart = words[words.length - 1].slice(0, 3).toUpperCase();
+
+  return (initials + lastWordPart).slice(0, 8) || 'PRD';
 };
+
+const generateVariantSku = (baseSku, index) => `${baseSku}-V${index + 1}`;
 
 export const variantService = {
   /**
    * Creates a base product plus all its variants in one flow.
-   * @param {object} productData - base product row (name, category_id, description, is_active, is_featured, etc.)
-   * @param {any[]} variants - array from ProductVariant.jsx form state
    */
   async createProductWithVariants(productData, variants) {
-    // 1. Insert the base/parent product
     const { data: product, error: productError } = await supabase
       .from('products')
       .insert([{ ...productData, has_variants: true }])
@@ -22,18 +30,20 @@ export const variantService = {
       .single();
     if (productError) throw productError;
 
-    // 2. Upload each variant's images, then build variant rows
+    const baseSku = product.sku?.trim() || generateBaseSku(product.name);
+
     const variantRows = [];
-    for (const v of variants) {
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
       const imageUrls = await this._uploadVariantImages(v.media, product.name);
 
       variantRows.push({
         product_id: product.product_id,
-        sku: v.sku?.trim() || generateSku(product.name, v.sizeDimension, v.color),
+        sku: v.sku?.trim() || generateVariantSku(baseSku, i),
         size: v.sizeDimension || null,
         color: v.color || null,
-        price: parseFloat(v.sellingPrice) || 0,      // actual selling price
-        compare_price: parseFloat(v.price) || null,  // MRP
+        price: parseFloat(v.sellingPrice) || 0,
+        compare_price: parseFloat(v.price) || null,
         stock: parseInt(v.stockQuantity) || 0,
         stock_alert: parseInt(v.minStockAlert) || null,
         images: imageUrls,
@@ -41,38 +51,117 @@ export const variantService = {
       });
     }
 
-    // 3. Insert all variants together
     const { data: insertedVariants, error: variantError } = await supabase
       .from('product_variants')
       .insert(variantRows)
       .select();
 
     if (variantError) {
-      // Roll back the orphaned parent product if variant insert fails
       await supabase.from('products').delete().eq('product_id', product.product_id);
       throw variantError;
+    }
+
+    // ── Sync base product images from the first variant that has any ──
+    const firstWithImages = insertedVariants.find(v => v.images?.length > 0);
+    if (firstWithImages) {
+      const { data: updatedProduct, error: syncError } = await supabase
+        .from('products')
+        .update({ images: firstWithImages.images, image_url: firstWithImages.images[0] })
+        .eq('product_id', product.product_id)
+        .select()
+        .single();
+      if (!syncError && updatedProduct) {
+        return { product: updatedProduct, variants: insertedVariants };
+      }
     }
 
     return { product, variants: insertedVariants };
   },
 
-  async _uploadVariantImages(mediaItems, productName) {
-    if (!mediaItems || mediaItems.length === 0) return [];
-    const urls = [];
-    for (const item of mediaItems) {
-      const fileExt = item.file.name.split('.').pop();
-      const fileName = `${productName.replace(/\s+/g, '-').toLowerCase()}-variant-${Date.now()}.${fileExt}`;
-      const filePath = `products/variants/${fileName}`;
-      const { error } = await supabase.storage.from('product_img').upload(filePath, item.file);
-      if (error) throw error;
-      const { data } = supabase.storage.from('product_img').getPublicUrl(filePath);
-      urls.push(data.publicUrl);
-    }
-    return urls;
+  /**
+   * Fetches a product plus its variants — for the edit form.
+   */
+  async getProductWithVariants(productId) {
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('product_id', productId)
+      .single();
+    if (productError) throw productError;
+
+    const variants = await this.getVariantsByProductId(productId);
+    return { product, variants };
   },
 
   /**
-   * Retrieves all variants for a product.
+   * Updates an existing product plus its variants (create/update/delete in one call).
+   */
+  async updateProductWithVariants(productId, productData, variants, deletedVariantIds = []) {
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .update(productData)
+      .eq('product_id', productId)
+      .select()
+      .single();
+    if (productError) throw productError;
+
+    if (deletedVariantIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('product_variants')
+        .delete()
+        .in('variant_id', deletedVariantIds);
+      if (deleteError) throw deleteError;
+    }
+
+    const baseSku = product.sku?.trim() || generateBaseSku(product.name);
+    const rows = [];
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
+      const imageUrls = v.media?.length
+        ? await this._uploadVariantImages(v.media, product.name)
+        : (v.images || []);
+
+      const row = {
+        product_id: productId,
+        sku: v.sku?.trim() || generateVariantSku(baseSku, i),
+        size: v.sizeDimension || null,
+        color: v.color || null,
+        price: parseFloat(v.sellingPrice) || 0,
+        compare_price: parseFloat(v.price) || null,
+        stock: parseInt(v.stockQuantity) || 0,
+        stock_alert: parseInt(v.minStockAlert) || null,
+        images: imageUrls,
+        is_active: true,
+      };
+      if (v.variant_id) row.variant_id = v.variant_id;
+      rows.push(row);
+    }
+
+    const { data: savedVariants, error: variantError } = await supabase
+      .from('product_variants')
+      .upsert(rows, { onConflict: 'variant_id' })
+      .select();
+    if (variantError) throw variantError;
+
+    // ── Keep base product images in sync on edit too ──
+    const firstWithImages = savedVariants.find(v => v.images?.length > 0);
+    if (firstWithImages) {
+      const { data: updatedProduct, error: syncError } = await supabase
+        .from('products')
+        .update({ images: firstWithImages.images, image_url: firstWithImages.images[0] })
+        .eq('product_id', productId)
+        .select()
+        .single();
+      if (!syncError && updatedProduct) {
+        return { product: updatedProduct, variants: savedVariants };
+      }
+    }
+
+    return { product, variants: savedVariants };
+  },
+
+  /**
+   * Retrieves all active variants for a product.
    */
   async getVariantsByProductId(productId) {
     const { data, error } = await supabase
@@ -101,5 +190,23 @@ export const variantService = {
       .delete()
       .eq('variant_id', variantId);
     if (error) throw error;
+  },
+
+  async _uploadVariantImages(mediaItems, productName) {
+    if (!mediaItems || mediaItems.length === 0) return [];
+    const urls = [];
+    for (const item of mediaItems) {
+      const fileExt = item.file.name.split('.').pop();
+      const fileName = `${productName.replace(/\s+/g, '-').toLowerCase()}-variant-${Date.now()}.${fileExt}`;
+      const filePath = `products/variants/${fileName}`;
+      const { error } = await supabase.storage.from('product_img').upload(filePath, item.file);
+      if (error) throw error;
+
+      const { data } = supabase.storage.from('product_img').getPublicUrl(filePath, {
+        transform: { width: 1200, height: 1200, resize: 'cover', quality: 80 }
+      });
+      urls.push(data.publicUrl);
+    }
+    return urls;
   },
 };

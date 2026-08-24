@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import "./productlist.css";
 import searchEmpty from "../../assets/admin/search.png";
 import editIcon from "../../assets/admin/Edit.png";
@@ -23,8 +23,12 @@ const getCategoryStyle = (category) => {
 };
 
 /* ── Mobile card view for very small screens ── */
-const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSelectRow }) => {
+const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSelectRow, expandedRows, toggleExpand }) => {
   const isChecked = selectedRows.includes(product.id);
+  const isExpanded = expandedRows.includes(product.id);
+  const hasVariants = product.has_variants && product.variants?.length > 0;
+
+
   return (
     <div className={`pl-mobile-card${isChecked ? " pl-mobile-card--selected" : ""}`}>
       <div className="pl-mobile-card__top">
@@ -44,6 +48,13 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
         <div className="pl-mobile-card__info">
           <span className="pl-mobile-card__name">{product.name}</span>
           <span className="pl-mobile-card__sku">SKU: {product.sku}</span>
+          {hasVariants && (
+            <div className="pl-color-dots">
+              {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
+                <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
+              ))}
+            </div>
+          )}
         </div>
         <div className="pl-mobile-card__actions">
           <button className="pl-action-btn" aria-label="Edit" onClick={() => onEdit(product)}>
@@ -56,6 +67,7 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
       </div>
       <div className="pl-mobile-card__meta">
         <span className="pl-category-badge" style={getCategoryStyle(product.category)}>{product.category}</span>
+
         {product.subcategory && (
           <span className="pl-subcategory-badge">{product.subcategory}</span>  
         )}
@@ -63,11 +75,43 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
         <span className={`pl-status-badge ${product.status === "Visible" ? "pl-status-visible" : product.status === "Draft" ? "pl-status-draft" : ""}`}>{product.status}</span>
         <span className="pl-mobile-card__price">{"Rs." + getFinalPrice(product).toLocaleString()}</span>
       </div>
+      {hasVariants && (
+        <>
+          <button className="pl-variant-toggle pl-variant-toggle--mobile" onClick={() => toggleExpand(product.id)}>
+            {product.variants.length} variants {isExpanded ? "▲" : "▼"}
+          </button>
+
+          {isExpanded && (
+            <div className="pl-mobile-variant-list">
+              {product.variants.map(v => (
+                <div key={v.variant_id} className="pl-mobile-variant-row">
+                  <img
+                    src={v.images?.[0] || searchEmpty}
+                    alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
+                    className="pl-variant-img"
+                    onError={(e) => { e.target.src = searchEmpty; }}
+                  />
+                  <div className="pl-mobile-variant-details">
+                    <span>
+                      <span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color} {v.size ? `• ${v.size}` : ''}
+                    </span>
+                    <span className="pl-mobile-variant-sku">SKU: {v.sku}</span>
+                  </div>
+                  <div className="pl-mobile-variant-price">
+                    <span>₹{Number(v.price).toLocaleString()}</span>
+                    <span className="pl-mobile-variant-stock">{v.stock} left</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
 
-const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], loading = false, onBack }) => {
+const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = [], categories =[], loading = false, onBack }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
@@ -86,13 +130,26 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [stockOpen, setStockOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
-  const CATEGORIES = ["All", "Rings", "Earrings", "Bangles", "Necklaces", "Bracelets", "Anklets"];
+  const [expandedRows, setExpandedRows] = useState([]);
+
   const STATUSES = ["All", "Visible", "Draft"];
   const STOCKS = ["All", "In Stock", "Low Stock", "Out of Stock"];
 
-  const SUBCATEGORIES = ["All", ...new Set(
-    products.map((p) => p.subcategory).filter(Boolean)
-  )];
+  const CATEGORIES = useMemo(() => [
+    "All",
+    ...new Set(categories.map(c => c.name).filter(Boolean))
+  ], [categories]);
+
+  const SUBCATEGORIES = useMemo(() => {
+    const scoped = selectedCategory === "All"
+      ? products
+      : products.filter(p => p.category === selectedCategory);
+    return ["All", ...new Set(scoped.map(p => p.subcategory).filter(Boolean))];
+  }, [products, selectedCategory]);
+
+  const toggleExpand = (id) =>{
+    setExpandedRows((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
 
   // Detect mobile card breakpoint
   const [isMobileCard, setIsMobileCard] = useState(window.innerWidth <= 540);
@@ -217,7 +274,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
             <div className="pl-dropdown-menu">
               {CATEGORIES.map(c => (
                 <div key={c} className={`pl-dropdown-item ${selectedCategory === c ? 'active' : ''}`}
-                  onClick={() => { setSelectedCategory(c); setCategoryOpen(false); setCurrentPage(1); }}>
+                  onClick={() => { setSelectedCategory(c); setCategoryOpen(false); setCurrentPage(1); setSelectedSubcategory("All");}}>
                   {c}
                 </div>
               ))}
@@ -238,7 +295,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
             <div className="pl-dropdown-menu">
               {SUBCATEGORIES.map(s => (
                 <div  key={s} className= {`pl-dropdown-item ${selectedSubcategory === s ? 'active' : ''}`}
-                onClick={() => { setSelectedSubcategory(s); setSubcategoryOpen(false); setCurrentPage(1); }}>
+                onClick={() => { setSelectedSubcategory(s); setSubcategoryOpen(false); setCurrentPage(1);}}>
                   {s}
                 </div>
               ))}
@@ -346,6 +403,8 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                 onDelete={requestDelete}
                 selectedRows={selectedRows}
                 toggleSelectRow={toggleSelectRow}
+                expandedRows={expandedRows}
+                toggleExpand={toggleExpand}
               />
             ))
           )}
@@ -391,6 +450,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                 </tr>
               ) : (
                 currentProducts.map((product) => (
+                 <React.Fragment key={product.id}>
                   <tr key={product.id}>
                     <td className="pl-checkbox-col">
                       <input
@@ -408,8 +468,26 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                           onError={(e) => { e.target.src = searchEmpty; }}
                         />
                         <div className="pl-product-details">
-                          <span className="pl-product-name">{product.name}</span>
+                          <span className="pl-product-name">
+                            {product.name}
+                            {product.has_variants && product.variants?.length > 0 && (
+                              <button
+                                className="pl-variant-toggle"
+                                onClick={() => toggleExpand(product.id)}
+                              >
+                                {product.variants.length} variants {expandedRows.includes(product.id) ? "▲" : "▼"}
+                              </button>
+                            )}
+
+                          </span>
                           <span className="pl-product-sku">SKU: {product.sku}</span>
+                          {product.has_variants && product.variants?.length > 0 &&(
+                            <div className="pl-color-dots">
+                              {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
+                                <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -460,6 +538,44 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                       </button>
                     </td>
                   </tr>
+
+                  {product.has_variants && expandedRows.includes(product.id) && (
+                    <tr className="pl-variant-subrow">
+                      <td></td>
+                      <td colSpan='6'>
+                        <table className="pl-variant-table">
+                          <thead>
+                            <tr>
+                              <th>Image</th>
+                              <th>Color</th>
+                              <th>Size</th>
+                              <th>SKU</th>
+                              <th>Price</th>
+                              <th>Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {product.variants.map(v => (
+                              <tr key={v.variant_id}>
+                                <img
+                                  src={v.images?.[0] || searchEmpty}
+                                  alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
+                                  className="pl-variant-img"
+                                  onError={(e) => { e.target.src = searchEmpty; }}
+                                />
+                                <td><span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}</td>
+                                <td>{v.size || '—'}</td>
+                                <td>{v.sku}</td>
+                                <td>₹{Number(v.price).toLocaleString()}</td>
+                                <td>{v.stock}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                 </React.Fragment>
                 ))
               )}
             </tbody>

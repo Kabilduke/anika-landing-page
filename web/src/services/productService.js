@@ -55,7 +55,7 @@ export const productService = {
   async getProducts() {
     const { data, error } = await supabase
       .from('products')
-      .select('*, categories(name), subcategories(name), product_variants(price, stock)')
+      .select('*, categories(name), subcategories(name), product_variants(variant_id, price, compare_price, stock, sku, color, size, images)')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
@@ -267,7 +267,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, subcategories(name)')
+        .select('*, subcategories(name), product_variants(price, compare_price, stock, images, )')
         .eq('category_id', catData.category_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -285,7 +285,7 @@ export const productService = {
     if (!queryData) {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, product_variants(price, compare_price, stock, images)')
         .eq('category_id', catData.category_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
