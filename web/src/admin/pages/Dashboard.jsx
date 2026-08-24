@@ -4,6 +4,7 @@ import { productService } from "../../services/productService";
 import { useAdminData } from "../../hooks/useAdminData";
 import { Routes, Route, Link, useNavigate, useLocation, Navigate, useSearchParams } from "react-router-dom";
 import { useStore } from "../../hooks/useStore";
+import { getUserInitials } from "../../utils/avatarUtils";
 import "./Dashboard.css";
 
 
@@ -473,7 +474,7 @@ const TopCustomers = ({ customers, loading }) => {
       <div className="dc__card-title">Top customers</div>
       <div className="dc__customer-list">
         {top.map((c, i) => {
-          const initials = c.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'CU';
+          const initials = getUserInitials(c.name, 'CU');
           const avatarColor = colors[i % colors.length];
           return (
             <div key={c.id} className="dc__customer-item">
@@ -720,6 +721,11 @@ const Dashboard = () => {
     const prices = variants.map(v => Number(v.price)).filter(n => !isNaN(n));
     const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
 
+    const variantImages = variants.flatMap(v => v.images || []).filter(Boolean);
+    const images = Array.isArray(row.images) && row.images.length > 0 
+      ? row.images 
+      : (row.image_url ? [row.image_url] : (variantImages.length > 0 ? variantImages : []));
+
     const priceDisplay = row.has_variants
       ? (prices.length
         ? (Math.min(...prices) === Math.max(...prices)
@@ -731,10 +737,10 @@ const Dashboard = () => {
     return {
       ...row,
       id: row.product_id ?? row.id,
-      images: Array.isArray(row.images) ? row.images : (row.image_url ? [row.image_url] : []),
-      image: row.image_url || null,
+      images,
+      image: row.image_url || images[0] || null,
       category: row.categories?.name || row.category || "",
-      subcategory: row.subcategories?.name || null,
+      subcategory: row.subcategories?.name || row.subcategory || null,
       status: row.is_active ? "Visible" : "Draft",
       price: row.has_variants ? (prices.length ? Math.min(...prices) : 0) : row.price,
       priceDisplay,
@@ -916,17 +922,29 @@ const Dashboard = () => {
   };
 
   const handleSaveMultipleProduct = ({ product, variants }) => {
+    const matchedCategory = categories.find(c => String(c.id || c.category_id) === String(product.category_id));
+    const firstWithImages = variants?.find(v => v.images?.length > 0);
     const normalized = normalizeProductRow({
       ...product, 
-      images: variants?.[0]?.images || [],
-      product_variants: (variants || []).map(v => ({ price: v.price, stock: v.stock })),
-     });
+      category: matchedCategory?.name || product.category || "",
+      images: (product.images && product.images.length > 0) ? product.images : (firstWithImages?.images || []),
+      image_url: product.image_url || firstWithImages?.images?.[0] || null,
+      product_variants: variants || [],
+    });
     setProducts((p) => [normalized, ...p]);
     navigate("/admin/products");
   };
 
-  const handleUpdateMultipleProduct = ({ product, variants}) => {
-    const normalized = normalizeProductRow({ ...product, product_variants: variants });
+  const handleUpdateMultipleProduct = ({ product, variants }) => {
+    const matchedCategory = categories.find(c => String(c.id || c.category_id) === String(product.category_id));
+    const firstWithImages = variants?.find(v => v.images?.length > 0);
+    const normalized = normalizeProductRow({
+      ...product,
+      category: matchedCategory?.name || product.category || "",
+      images: (product.images && product.images.length > 0) ? product.images : (firstWithImages?.images || []),
+      image_url: product.image_url || firstWithImages?.images?.[0] || null,
+      product_variants: variants || [],
+    });
     setProducts((p) => p.map((x) => (x.id === normalized.id ? normalized : x)));
     navigate("/admin/products");
   };
@@ -1121,7 +1139,7 @@ const Dashboard = () => {
           <Link to="/" style={{ textDecoration: 'none' }}>
             <button className="db__profile-btn" aria-label="Admin Profile" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div className="db__profile-avatar-img" style={{
-                backgroundColor: '#c48a73',
+                backgroundColor: '#8b0030',
                 color: '#fff',
                 borderRadius: '50%',
                 width: '22px',
@@ -1132,7 +1150,7 @@ const Dashboard = () => {
                 fontWeight: '600',
                 fontSize: '11px'
               }}>
-                {adminName ? adminName.charAt(0).toUpperCase() : 'A'}
+                {getUserInitials(adminName, 'A')}
               </div>
               <span>{adminName}</span>
             </button>

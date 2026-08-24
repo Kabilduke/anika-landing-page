@@ -267,6 +267,112 @@
   transform: rotate(180deg);
 }
 
+/* Filter sort select */
+.filter-sort-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-dark);
+  background-color: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-sort-select:focus {
+  border-color: var(--brand-crimson);
+}
+
+/* Price Range Inputs */
+.filter-price-range-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-price-inputs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-price-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-price-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.filter-price-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-currency-symbol {
+  position: absolute;
+  left: 9px;
+  font-size: 13px;
+  color: #888;
+  pointer-events: none;
+  font-weight: 500;
+}
+
+.filter-price-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 6px 0 22px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-dark);
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.filter-price-input:focus {
+  border-color: var(--brand-crimson);
+}
+
+.filter-price-separator {
+  color: #aaa;
+  font-weight: 500;
+  margin-top: 16px;
+}
+
+.filter-price-clear-btn {
+  background: none;
+  border: none;
+  color: var(--brand-crimson);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: left;
+  font-family: inherit;
+  align-self: flex-start;
+  text-decoration: underline;
+}
+
+.filter-price-clear-btn:hover {
+  opacity: 0.85;
+}
+
 /* Filter checkboxes list */
 .filter-options-content {
   display: flex;

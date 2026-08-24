@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { orderService } from "../services/orderService";
 import { productService } from "../services/productService";
 import { useStore } from "../hooks/useStore";
+import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaOrders.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -151,10 +152,7 @@ export default function AnikaOrders() {
         {/* ── USER INFO — real data ── */}
         <div className="ao-user-section">
           <div className="ao-avatar">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            {getUserInitials(user?.user_metadata?.name || user?.email)}
           </div>
           <div className="ao-user-text">
             <span className="ao-user-name">{user?.user_metadata?.name || "User"}</span>

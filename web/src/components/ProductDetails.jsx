@@ -343,6 +343,8 @@ export default function ProductPage({ onBack }) {
     setProductPrice(null);
     setVariants([]);
     setSelectedColor("");
+    setSelectedSize("");
+    setQty(1);
     fetchProductBase();
     fetchImages();
   }, [selectedProduct, cat]);
@@ -469,7 +471,12 @@ export default function ProductPage({ onBack }) {
       infoCol.scrollTop = 0;
     }
     setActiveThumb(-1);
+    setQty(1);
   }, [selectedProduct]);
+
+  useEffect(() => {
+    setQty(1);
+  }, [selectedVariant?.variant_id]);
 
   const dynamicRelated = useMemo(() => {
     const dbProducts = productsCache[cat] || [];
@@ -515,8 +522,15 @@ export default function ProductPage({ onBack }) {
   }, []);
 
   const handleQtyChange = useCallback((delta) => {
-    setQty(prev => Math.max(1, prev + delta));
-  }, []);
+    setQty(prev => {
+      const next = prev + delta;
+      if (next < 1) return 1;
+      if (stockCount != null && stockCount > 0 && next > stockCount) {
+        return stockCount;
+      }
+      return next;
+    });
+  }, [stockCount]);
 
   const toggleDesc = useCallback(() => setDescOpen(o => !o), []);
   const toggleAddl = useCallback(() => setAddlOpen(o => !o), []);

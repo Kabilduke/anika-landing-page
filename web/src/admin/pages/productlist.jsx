@@ -40,7 +40,7 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
           />
         </label>
         <img
-          src={product.images?.[0] || product.image || searchEmpty}
+          src={product.images?.[0] || product.image || product.variants?.[0]?.images?.[0] || searchEmpty}
           alt={product.name}
           className="pl-mobile-card__img"
           onError={(e) => { e.target.src = searchEmpty; }}
@@ -128,8 +128,23 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
+  const [priceOpen, setPriceOpen] = useState(false);
+  const [selectedSort, setSelectedSort] = useState("default");
+  const [sortOpen, setSortOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [expandedRows, setExpandedRows] = useState([]);
+
+  const SORTS = [
+    { label: "Default Sort", value: "default" },
+    { label: "Price: Low to High", value: "price-asc" },
+    { label: "Price: High to Low", value: "price-desc" },
+    { label: "Name: A to Z", value: "name-asc" },
+    { label: "Name: Z to A", value: "name-desc" },
+    { label: "Stock: Low to High", value: "stock-asc" },
+    { label: "Stock: High to Low", value: "stock-desc" },
+  ];
 
   const CATEGORIES = useMemo(() => {
     const fromProps = categories.map((c) => (typeof c === "string" ? c : c?.name || c?.title)).filter(Boolean);
@@ -159,22 +174,37 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  const filteredProducts = products.filter((p) => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !searchQuery.trim() ||
-      p.name?.toLowerCase().includes(q) ||
-      p.sku?.toLowerCase().includes(q);
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((p) => {
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !searchQuery.trim() ||
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q);
 
-    const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
-    const matchSubcategory = selectedSubcategory === "All" || p.subcategory === selectedSubcategory; 
-    const matchStatus   = selectedStatus === "All"   || p.status === selectedStatus;
-    const matchStock    = selectedStock === "All"    ||
-      (selectedStock === "In Stock"    && p.stock > 5)  ||
-      (selectedStock === "Low Stock"   && p.stock > 0 && p.stock <= 5) ||
-      (selectedStock === "Out of Stock" && p.stock === 0);
+      const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
+      const matchSubcategory = selectedSubcategory === "All" || p.subcategory === selectedSubcategory; 
+      const matchStatus   = selectedStatus === "All"   || p.status === selectedStatus;
+      const matchStock    = selectedStock === "All"    ||
+        (selectedStock === "In Stock"    && p.stock > 5)  ||
+        (selectedStock === "Low Stock"   && p.stock > 0 && p.stock <= 5) ||
+        (selectedStock === "Out of Stock" && p.stock === 0);
 
-    return matchSearch && matchCategory && matchSubcategory && matchStatus && matchStock; 
-  });
+      const pPrice = Number(p.price) || 0;
+      const matchPriceFrom = !priceFrom || isNaN(Number(priceFrom)) || pPrice >= Number(priceFrom);
+      const matchPriceTo = !priceTo || isNaN(Number(priceTo)) || pPrice <= Number(priceTo);
+
+      return matchSearch && matchCategory && matchSubcategory && matchStatus && matchStock && matchPriceFrom && matchPriceTo; 
+    });
+
+    if (selectedSort === "price-asc") result.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    if (selectedSort === "price-desc") result.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    if (selectedSort === "name-asc") result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    if (selectedSort === "name-desc") result.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+    if (selectedSort === "stock-asc") result.sort((a, b) => (Number(a.stock) || 0) - (Number(b.stock) || 0));
+    if (selectedSort === "stock-desc") result.sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0));
+
+    return result;
+  }, [products, searchQuery, selectedCategory, selectedSubcategory, selectedStatus, selectedStock, priceFrom, priceTo, selectedSort]);
 
   const totalItems = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -322,19 +352,71 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
           )}
         </div>
 
-        {/* Stock Dropdown */}
+        {/* Price Dropdown (From - To) */}
         <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setStockOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
-            <span>{selectedStock === "All" ? "All Stock" : selectedStock}</span>
+          <div className="pl-dropdown" onClick={() => { setPriceOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setSortOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            <span>{priceFrom || priceTo ? `₹${priceFrom || 0} – ₹${priceTo || '∞'}` : "Price: All"}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
           </div>
-          {stockOpen && (
+          {priceOpen && (
+            <div className="pl-dropdown-menu pl-price-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+              <div className="pl-price-filter-popover">
+                <div className="pl-price-inputs-row">
+                  <div className="pl-price-input-col">
+                    <label className="pl-price-label">From (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Min"
+                      value={priceFrom}
+                      onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
+                      className="pl-price-input"
+                    />
+                  </div>
+                  <div className="pl-price-input-col">
+                    <label className="pl-price-label">To (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Max"
+                      value={priceTo}
+                      onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
+                      className="pl-price-input"
+                    />
+                  </div>
+                </div>
+                {(priceFrom || priceTo) && (
+                  <button
+                    type="button"
+                    className="pl-price-clear-btn"
+                    onClick={() => { setPriceFrom(""); setPriceTo(""); setCurrentPage(1); }}
+                  >
+                    Clear Price
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+          <div className="pl-dropdown" onClick={() => { setSortOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setPriceOpen(false); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18M7 12h10M10 18h4" />
+            </svg>
+            <span>{SORTS.find(s => s.value === selectedSort)?.label || "Sort"}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </div>
+          {sortOpen && (
             <div className="pl-dropdown-menu">
-              {STOCKS.map(s => (
-                <div key={s} className={`pl-dropdown-item ${selectedStock === s ? 'active' : ''}`}
-                  onClick={() => { setSelectedStock(s); setStockOpen(false); setCurrentPage(1); }}>
-                  {s}
+              {SORTS.map(s => (
+                <div key={s.value} className={`pl-dropdown-item ${selectedSort === s.value ? 'active' : ''}`}
+                  onClick={() => { setSelectedSort(s.value); setSortOpen(false); setCurrentPage(1); }}>
+                  {s.label}
                 </div>
               ))}
             </div>
@@ -462,7 +544,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                     <td className="pl-product-col">
                       <div className="pl-product-info">
                         <img
-                          src={product.images?.[0] || product.image || searchEmpty}
+                          src={product.images?.[0] || product.image || product.variants?.[0]?.images?.[0] || searchEmpty}
                           alt={product.name}
                           className="pl-product-img"
                           onError={(e) => { e.target.src = searchEmpty; }}
@@ -557,12 +639,14 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                           <tbody>
                             {product.variants.map(v => (
                               <tr key={v.variant_id}>
-                                <img
-                                  src={v.images?.[0] || searchEmpty}
-                                  alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
-                                  className="pl-variant-img"
-                                  onError={(e) => { e.target.src = searchEmpty; }}
-                                />
+                                <td>
+                                  <img
+                                    src={v.images?.[0] || searchEmpty}
+                                    alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
+                                    className="pl-variant-img"
+                                    onError={(e) => { e.target.src = searchEmpty; }}
+                                  />
+                                </td>
                                 <td><span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}</td>
                                 <td>{v.size || '—'}</td>
                                 <td>{v.sku}</td>

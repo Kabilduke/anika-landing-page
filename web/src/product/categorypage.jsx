@@ -25,7 +25,12 @@ export default function CategoryPage({ category }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [stockStatus, setStockStatus] = useState({ inStock: true, outOfStock: false });
   const [selectedSizes, setSelectedSizes] = useState([]);
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
+  const [sortBy, setSortBy] = useState("featured");
   const [sizeMenuOpen, setSizeMenuOpen] = useState(true);
+  const [priceMenuOpen, setPriceMenuOpen] = useState(true);
+  const [sortMenuOpen, setSortMenuOpen] = useState(true);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState("");
@@ -69,6 +74,9 @@ export default function CategoryPage({ category }) {
     setSearchInput("");
     setSearchQuery("");
     setSelectedSizes([]);
+    setPriceFrom("");
+    setPriceTo("");
+    setSortBy("featured");
     setCurrentPage(1);
   }, [category]);
 
@@ -144,9 +152,9 @@ export default function CategoryPage({ category }) {
 
   const toggleFilterPanel = () => setFilterPanelOpen(prev => !prev);
 
-  // Filter products
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
+    let result = products.filter(product => {
       // Filter by subcategory URL parameter if present (?sub=SubcategoryName)
       if (subcategoryParam.trim()) {
         const targetSub = subcategoryParam.trim().toLowerCase();
@@ -163,8 +171,8 @@ export default function CategoryPage({ category }) {
         if (!matchesName && !matchesDesc) return false;
       }
 
-      const inStockMatch = stockStatus.inStock && product.stock === "in-stock";
-      const outOfStockMatch = stockStatus.outOfStock && product.stock === "out-of-stock";
+      const inStockMatch = stockStatus.inStock && (product.stock === "in-stock" || (typeof product.stock === "number" && product.stock > 0));
+      const outOfStockMatch = stockStatus.outOfStock && (product.stock === "out-of-stock" || (typeof product.stock === "number" && product.stock === 0));
       if (!stockStatus.inStock && !stockStatus.outOfStock) return false;
       if (stockStatus.inStock && !stockStatus.outOfStock && !inStockMatch) return false;
       if (!stockStatus.inStock && stockStatus.outOfStock && !outOfStockMatch) return false;
@@ -174,9 +182,31 @@ export default function CategoryPage({ category }) {
         if (!hasMatchingSize) return false;
       }
 
+      // Price filter (From / To)
+      const pPrice = Number(product.price) || 0;
+      if (priceFrom !== "" && !isNaN(Number(priceFrom))) {
+        if (pPrice < Number(priceFrom)) return false;
+      }
+      if (priceTo !== "" && !isNaN(Number(priceTo))) {
+        if (pPrice > Number(priceTo)) return false;
+      }
+
       return true;
     });
-  }, [products, searchQuery, stockStatus, selectedSizes, subcategoryParam]);
+
+    // Sorting
+    if (sortBy === "price-low-high") {
+      result = [...result].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    } else if (sortBy === "price-high-low") {
+      result = [...result].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    } else if (sortBy === "name-asc") {
+      result = [...result].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    } else if (sortBy === "name-desc") {
+      result = [...result].sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+    }
+
+    return result;
+  }, [products, searchQuery, stockStatus, selectedSizes, subcategoryParam, priceFrom, priceTo, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
 
@@ -276,6 +306,86 @@ export default function CategoryPage({ category }) {
 
           {filterPanelOpen && (
             <>
+              {/* ─── Sort By Section ─── */}
+              <div className="sidebar-filter-section border-top">
+                <button type="button" onClick={() => setSortMenuOpen(prev => !prev)} className="filter-collapse-header-btn">
+                  <span className="filter-title-text">Sort By</span>
+                  <svg className={`filter-chevron-icon ${sortMenuOpen ? "rotated" : ""}`} viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 15l-6-6-6 6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {sortMenuOpen && (
+                  <div className="filter-options-content">
+                    <select
+                      className="filter-sort-select"
+                      value={sortBy}
+                      onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+                    >
+                      <option value="featured">Featured / Default</option>
+                      <option value="price-low-high">Price: Low to High</option>
+                      <option value="price-high-low">Price: High to Low</option>
+                      <option value="name-asc">Name: A to Z</option>
+                      <option value="name-desc">Name: Z to A</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* ─── Price Filter Section (From / To) ─── */}
+              <div className="sidebar-filter-section border-top">
+                <button type="button" onClick={() => setPriceMenuOpen(prev => !prev)} className="filter-collapse-header-btn">
+                  <span className="filter-title-text">Price (₹)</span>
+                  <svg className={`filter-chevron-icon ${priceMenuOpen ? "rotated" : ""}`} viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 15l-6-6-6 6" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {priceMenuOpen && (
+                  <div className="filter-price-range-container">
+                    <div className="filter-price-inputs-row">
+                      <div className="filter-price-field">
+                        <label className="filter-price-label">From</label>
+                        <div className="filter-price-input-wrapper">
+                          <span className="filter-currency-symbol">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Min"
+                            value={priceFrom}
+                            onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
+                            className="filter-price-input"
+                          />
+                        </div>
+                      </div>
+                      <span className="filter-price-separator">–</span>
+                      <div className="filter-price-field">
+                        <label className="filter-price-label">To</label>
+                        <div className="filter-price-input-wrapper">
+                          <span className="filter-currency-symbol">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Max"
+                            value={priceTo}
+                            onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
+                            className="filter-price-input"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {(priceFrom !== "" || priceTo !== "") && (
+                      <button
+                        type="button"
+                        onClick={() => { setPriceFrom(""); setPriceTo(""); setCurrentPage(1); }}
+                        className="filter-price-clear-btn"
+                      >
+                        Clear price
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ─── Stock Status Section ─── */}
               <div className="sidebar-filter-section border-top">
                 <h3 className="filter-title-no-collapse">Stock Status</h3>
                 <div className="filter-options-content">
@@ -292,6 +402,7 @@ export default function CategoryPage({ category }) {
                 </div>
               </div>
 
+              {/* ─── Size Section ─── */}
               {sizeOptions.length > 0 && (
                 <div className="sidebar-filter-section border-top">
                   <button type="button" onClick={toggleSizeMenu} className="filter-collapse-header-btn">
@@ -368,6 +479,9 @@ export default function CategoryPage({ category }) {
                   setSearchQuery("");
                   setSelectedSizes([]);
                   setStockStatus({ inStock: true, outOfStock: false });
+                  setPriceFrom("");
+                  setPriceTo("");
+                  setSortBy("featured");
                 }} className="empty-state-reset-btn">
                   Reset Filters
                 </button>

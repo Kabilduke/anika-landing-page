@@ -4,6 +4,7 @@ import { authService } from "../services/authService";
 import { useStore } from "../hooks/useStore";
 import { productService } from "../services/productService";
 import { supabase } from "../lib/supabase";
+import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaProfile.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -173,10 +174,7 @@ export default function AnikaProfile() {
           {/* User Info */}
           <div className="anika-user-info">
             <div className="anika-avatar">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.5">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
+              {getUserInitials(customerDetails.name || user?.user_metadata?.name || user?.email)}
             </div>
             <div className="anika-user-text">
               <span className="anika-user-name">{customerDetails.name}</span>

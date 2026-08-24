@@ -55,11 +55,17 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: #e8e8e8;
+  background: #8b0030;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(123, 29, 29, 0.2);
 }
 
 .aw-user-text {

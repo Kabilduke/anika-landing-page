@@ -267,7 +267,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, subcategories(name), product_variants(price, compare_price, stock, images, )')
+        .select('*, subcategories(name), product_variants(price, compare_price, stock, images)')
         .eq('category_id', catData.category_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });

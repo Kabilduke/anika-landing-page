@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../hooks/useStore";
 import { authService } from "../services/authService";
 import { orderService } from "../services/orderService";
+import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaAccount.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
@@ -95,10 +96,7 @@ export default function AnikaAccount() {
         {/* User info */}
         <div className="acct-user-section">
           <div className="acct-avatar">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            {getUserInitials(user?.user_metadata?.name || user?.email)}
           </div>
           <div className="acct-user-text">
             <span className="acct-user-name">{user?.user_metadata?.name || "User"}</span>

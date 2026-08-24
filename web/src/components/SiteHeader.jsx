@@ -4,6 +4,7 @@ import { authService } from "../services/authService";
 import { useAdmin } from "../hooks/useAdmin";
 import { useStore } from "../hooks/useStore";
 import { getNavPath } from "../services/categoryRoute";
+import { getUserInitials } from "../utils/avatarUtils";
 import "./SiteHeader.css";
 import LogoImg from "../assets/offers/logo.svg";
 import UserIcon from "../assets/header/User.png";
@@ -68,18 +69,33 @@ const LoginDropdown = () => {
     navigate("/");
   };
 
+  const initials = getUserInitials(user?.user_metadata?.name || user?.email, "U");
+
   return (
     <div className="login-wrapper" ref={ref}>
-      <button className="icon-btn" aria-label="Account" onClick={() => setOpen(!open)}>
-        <img src={UserIcon} alt="Account" className="header-icon" />
+      <button className="icon-btn header-user-btn" aria-label="Account" onClick={() => setOpen(!open)}>
+        {user ? (
+          <div className="header-avatar-circle" title={user.user_metadata?.name || user.email}>
+            {initials}
+          </div>
+        ) : (
+          <img src={UserIcon} alt="Account" className="header-icon" />
+        )}
       </button>
 
       {open && (
         <div className="login-dropdown">
           {user ? (
             <>
-              <p className="dropdown-name">{user.user_metadata?.name || "User"}</p>
-              <p className="dropdown-email">{user.email}</p>
+              <div className="dropdown-user-header">
+                <div className="dropdown-avatar-circle">
+                  {initials}
+                </div>
+                <div className="dropdown-user-info">
+                  <p className="dropdown-name">{user.user_metadata?.name || "User"}</p>
+                  <p className="dropdown-email">{user.email}</p>
+                </div>
+              </div>
               <hr />
               <Link to="/profile" onClick={() => setOpen(false)}>My Profile</Link>
               {isAdmin && (
