@@ -396,8 +396,8 @@ export default function CategoryPage({ category }) {
                       <h3 className="product-card-title-text">{product.name}</h3>
                       {/* <p className="product-card-subtitle-desc">{product.desc}</p> */}
                       <div className="product-card-price-row">
-                        <span className="price-tag-now">₹{product.price}.00</span>
-                        <span className="price-tag-was">MRP: ₹{product.compare_price}.00</span>
+                        <span className="price-tag-now">₹{product.price}</span>
+                        <span className="price-tag-was">MRP: ₹{product.compare_price}</span>
                       </div>
                     </div>
                   </article>

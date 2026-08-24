@@ -461,8 +461,9 @@ button {
 }
 
 .pp-size-buttons button {
-  width: 35px;
+  min-width: 35px;
   height: 25px;
+  padding: 0 10px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -471,6 +472,8 @@ button {
   background: white;
   cursor: pointer;
   font-weight: bold;
+  white-space: nowrap;
+  font-size: 11px;
 }
 
 .pp-size-chart-overlay {
