@@ -4,20 +4,25 @@ import "./ProductVariant.css";
 
 const COLOR_SWATCHES = [
   "#EF4444", // red
-  "#F5A623", // orange
-  "#E5C100", // yellow
-  "#8B5E34", // brown
-  "#8BC34A", // light green
-  "#3C8B0A", // green
+  "#9B111E", // ruby red
+  "#E75480", //Pink
+  "#FFC0CB", //bady pink
+  "#734F96", //lavender
   "#8B2FC9", // purple
-  "#C026D3", // magenta
-  "#3B82F6", // blue
-  "#2DD4BF", // teal
-  "#A7F3D0", // pale green
+  "#87CEEB", // sky blue
+  "#4169E1", // royal blue
+  "#040273", // deep blue
+  "#429E9D", // mint blue
+  "#05C3DD", // aqua blue
+  "#008000", // green
+  "#50C878", //emerald green
+  "#98FF98", // mint green
+  "#FFFF00", // yellow
+  "#FFA500", // orange
   "#111827", // black
-  "#9CA3AF", // gray
-  "#E5E7EB", // light gray
   "#FFFFFF", // white
+  "#9CA3AF", // gray
+  "#2DD4BF", // teal
 ];
 
 const FieldError = ({ children }) => (
