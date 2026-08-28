@@ -35,7 +35,7 @@ export default {
       const razorpayService = new RazorpayService(ctx.supabaseAdmin);
 
       if (action === "create_order") {
-        const { items } = body;
+        const { items, discountCode, discountPct, shippingFee } = body;
         if (!items || !Array.isArray(items) || items.length === 0) {
           return new Response(
             JSON.stringify({ error: "Missing or empty items array" }),
@@ -43,7 +43,12 @@ export default {
           );
         }
 
-        const orderDetails = await razorpayService.createOrder(items);
+        const orderDetails = await razorpayService.createOrder({
+          items,
+          discountCode,
+          discountPct,
+          shippingFee,
+        });
         return new Response(
           JSON.stringify({
             success: true,
@@ -63,6 +68,9 @@ export default {
           razorpay_signature,
           items,
           addressId,
+          discountCode,
+          discountPct,
+          shippingFee,
         } = body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !items || !Array.isArray(items) || items.length === 0) {
@@ -79,6 +87,9 @@ export default {
           razorpay_signature,
           items,
           addressId,
+          discountCode,
+          discountPct,
+          shippingFee,
         });
 
         return new Response(

@@ -434,7 +434,7 @@ export default function ShippingAddress() {
         // Insert order items
         const orderItemsToInsert = checkoutItems.map(item => ({
           order_id: generatedOrderId,
-          product_id: typeof (item.productId || item.id) === 'number' ? (item.productId || item.id) : null,
+          product_id: item.productId || item.id || null,
           product_name: item.name,
           quantity: item.qty || 1,
           price: parsePrice(item.price),
@@ -488,7 +488,8 @@ export default function ShippingAddress() {
         }
 
         const paymentItems = checkoutItems.map(item => ({
-          productId: typeof (item.productId || item.id) === 'number' ? (item.productId || item.id) : null,
+          productId: item.productId || item.id || null,
+          price: parsePrice(item.price),
           quantity: item.qty || 1,
           size: item.size || null,
           color: item.color || null,

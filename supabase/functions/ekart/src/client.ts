@@ -151,7 +151,7 @@ export class EkartClient {
       const sellerPin = Number(Deno.env.get("SELLER_PIN") || "629001");
 
       const totalAmount = details.amount;
-      const taxValue = 800; // Flat tax/fee
+      const taxValue = Math.round(totalAmount - (totalAmount / 1.03)); // 3% inclusive GST on jewelry
       const taxableAmount = Math.max(0, totalAmount - taxValue);
       const codAmount = details.paymentMethod === "COD" ? totalAmount : 0;
 
