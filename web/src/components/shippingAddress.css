@@ -292,6 +292,32 @@ body {
   cursor: pointer;
 }
 
+.checkout-accordion-item--cod {
+  position: relative;
+}
+
+.checkout-option-disabled {
+  filter: blur(1px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.checkout-option-sticker {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: #7b1d1d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .payment-method-name {
   font-size: 14px;
   font-weight: 500;

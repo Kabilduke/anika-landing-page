@@ -80,6 +80,8 @@ export default function ShippingAddress() {
   const hasAddresses = addresses.length > 0;
   const selectedAddress = addresses.find((a) => a.address_id === selectedId);
 
+  const isCODAvailable = false;
+
   const checkEkartServiceability = (pincode) => {
     if (!pincode || pincode.length !== 6) return Promise.resolve(false);
     if (serviceabilityPromiseCache[pincode]) {
@@ -849,20 +851,26 @@ export default function ShippingAddress() {
                     </div>
 
                     {/* Cash on Delivery (COD) */}
-                    <div className={`checkout-accordion-item ${paymentMethod === 'COD' ? 'active' : ''}`}>
-                      <label className="checkout-accordion-header" onClick={() => setPaymentMethod('COD')}>
+                    <div className={`checkout-accordion-item checkout-accordion-item--cod ${paymentMethod === 'COD' ? 'active' : ''}`}>
+                      <label 
+                        className={`checkout-accordion-header ${!isCODAvailable ?  'checkout-option-disabled': ''}`}
+                        onClick={() => isCODAvailable && setPaymentMethod('COD')}
+                      >
                         <div className="checkout-radio-wrap">
                           <input
                             type="radio"
                             name="paymentMethod"
                             checked={paymentMethod === 'COD'}
-                            onChange={() => setPaymentMethod('COD')}
+                            onChange={() => isCODAvailable && setPaymentMethod('COD')}
+                            disabled={!isCODAvailable}
                             className="checkout-radio"
                           />
                           <span className="payment-method-name">Cash on Delivery (COD)</span>
                         </div>
                       </label>
-                      
+                      {!isCODAvailable && (
+                        <span className="checkout-option-sticker">Currently Not Available</span>
+                      )}
                       {paymentMethod === 'COD' && (
                         <div className="checkout-accordion-body">
                           <p>Pay with cash upon delivery.</p>
