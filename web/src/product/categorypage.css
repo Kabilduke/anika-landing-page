@@ -962,4 +962,38 @@
     display: none;
   }
 
+  .pagination-bar-wrapper{
+    gap: 10px;
+    margin: 24px auto 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination-number-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .pagination-arrow-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+  }
+
+  .pagination-arrow-button svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pagination-ellipsis {
+    padding: 0 1px;
+    font-size: 13px;
+  }
+
+  .pagination-numbers-row{
+    gap: 5px;
+  }
+
 }
