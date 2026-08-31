@@ -215,6 +215,25 @@ export default function CategoryPage({ category }) {
     return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProducts, currentPage]);
 
+
+  const getPageNumbers = (current, total) => {
+    const delta = 1;
+    const pages = [];
+
+    const range = [];
+    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++){
+      range.push(i);
+    }
+
+    pages.push(1);
+    if (range[0] > 2) pages.push("...");
+    pages.push(...range);
+    if (range[range.length - 1] < total - 1) pages.push("...");
+    if (total > 1) pages.push(total);
+
+    return pages;
+  }
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(prev => prev - 1);
@@ -519,22 +538,49 @@ export default function CategoryPage({ category }) {
               </div>
 
               <div className="pagination-bar-wrapper">
-                <div className="pagination-info-box">
-                  <span className="pagination-current-page-num">{currentPage < 10 ? `0${currentPage}` : currentPage}</span>
-                  <span className="pagination-of-text">of {totalPages < 10 ? `0${totalPages}` : totalPages}</span>
+                <button
+                  type= "button"
+                  onClick={() => handlePageChange("prev")}
+                  disabled={currentPage === 1}
+                  className="pagination-arrow-button"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+
+                <div className="pagination-numbers-row">
+                  {getPageNumbers(currentPage, totalPages).map((p, i) => 
+                    p == "..." ? (
+                      <span key={`ellipsis-${i}`} className="pagination-ellipsis">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setCurrentPage(p);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className={`pagination-number-btn ${currentPage === p ? "active" : ""}`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
                 </div>
-                <div className="pagination-control-arrows">
-                  <button type="button" onClick={() => handlePageChange("prev")} disabled={currentPage === 1} className="pagination-arrow-button">
-                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                  </button>
-                  <button type="button" onClick={() => handlePageChange("next")} disabled={currentPage === totalPages} className="pagination-arrow-button">
-                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange("next")}
+                  disabled={currentPage === totalPages}
+                  className="pagination-arrow-button"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+
+                </button>
               </div>
             </>
           )}

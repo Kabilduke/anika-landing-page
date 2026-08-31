@@ -685,9 +685,70 @@
 .pagination-bar-wrapper {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  margin-top: 20px;
+  justify-content: center;
+  gap: 18px;
+  margin: 22px auto 0;
+}
+
+.pagination-numbers-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pagination-number-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px; /* rounded square instead of a circle */
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pagination-number-btn:hover {
+  background: #f2f2f2;
+}
+
+.pagination-number-btn.active {
+  background: #4a4a4a;
+  color: #fff;
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  color: #888;
+  padding: 0 4px;
+  user-select: none;
+}
+
+.pagination-arrow-button {
+  background: #fff;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px; /* rounded square */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: #222;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.pagination-arrow-button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.pagination-arrow-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .pagination-info-box {
@@ -717,30 +778,6 @@
 .pagination-control-arrows {
   display: flex;
   gap: 8px;
-}
-
-.pagination-arrow-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  border: none;
-  background-color: var(--brand-crimson);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pagination-arrow-button:hover:not(:disabled) {
-  background-color: var(--brand-maroon-light);
-}
-
-.pagination-arrow-button:disabled {
-  background-color: #e5e5e5;
-  color: #aaa;
-  cursor: not-allowed;
 }
 
 /* ─── Empty state ─── */
@@ -925,8 +962,4 @@
     display: none;
   }
 
-  .pagination-bar-wrapper {
-    justify-content: center;
-    width: 100%;
-  }
 }
