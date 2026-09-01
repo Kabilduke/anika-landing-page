@@ -679,8 +679,13 @@ export default function ProductPage({ onBack }) {
                 {showSizeChart && SIZE_CHART_BY_CATEGORY[cat] && (
                   <div className='pp-size-chart-overlay' onClick={() => setShowSizeChart(false)}>
                     <div className='pp-size-chart-modal' onClick={(e) => e.stopPropagation()}>
-                      <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)}>x</button>
-                      <img src={SIZE_CHART_BY_CATEGORY[cat]} alt="Size Chart" />
+                      <div className='pp-size-chart-header'>
+                        <h3>Size Guide ({cat})</h3>
+                        <button className='pp-size-chart-close' onClick={() => setShowSizeChart(false)} aria-label="Close size chart">✕</button>
+                      </div>
+                      <div className='pp-size-chart-body'>
+                        <img src={SIZE_CHART_BY_CATEGORY[cat]} alt={`${cat} Size Chart`} />
+                      </div>
                     </div>
                   </div>
                 )}

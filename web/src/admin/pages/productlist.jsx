@@ -69,7 +69,7 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
         <span className="pl-category-badge" style={getCategoryStyle(product.category)}>{product.category}</span>
 
         {product.subcategory && (
-          <span className="pl-subcategory-badge">{product.subcategory}</span>  
+          <span className="pl-subcategory-badge">{product.subcategory}</span>
         )}
         <span className="pl-stock-low">{product.stock} left</span>
         <span className={`pl-status-badge ${product.status === "Visible" ? "pl-status-visible" : product.status === "Draft" ? "pl-status-draft" : ""}`}>{product.status}</span>
@@ -115,7 +115,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 8;
 
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -182,18 +182,18 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
         p.sku?.toLowerCase().includes(q);
 
       const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
-      const matchSubcategory = selectedSubcategory === "All" || p.subcategory === selectedSubcategory; 
-      const matchStatus   = selectedStatus === "All"   || p.status === selectedStatus;
-      const matchStock    = selectedStock === "All"    ||
-        (selectedStock === "In Stock"    && p.stock > 5)  ||
-        (selectedStock === "Low Stock"   && p.stock > 0 && p.stock <= 5) ||
+      const matchSubcategory = selectedSubcategory === "All" || p.subcategory === selectedSubcategory;
+      const matchStatus = selectedStatus === "All" || p.status === selectedStatus;
+      const matchStock = selectedStock === "All" ||
+        (selectedStock === "In Stock" && p.stock > 5) ||
+        (selectedStock === "Low Stock" && p.stock > 0 && p.stock <= 5) ||
         (selectedStock === "Out of Stock" && p.stock === 0);
 
       const pPrice = Number(p.price) || 0;
       const matchPriceFrom = !priceFrom || isNaN(Number(priceFrom)) || pPrice >= Number(priceFrom);
       const matchPriceTo = !priceTo || isNaN(Number(priceTo)) || pPrice <= Number(priceTo);
 
-      return matchSearch && matchCategory && matchSubcategory && matchStatus && matchStock && matchPriceFrom && matchPriceTo; 
+      return matchSearch && matchCategory && matchSubcategory && matchStatus && matchStock && matchPriceFrom && matchPriceTo;
     });
 
     if (selectedSort === "price-asc") result.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
@@ -293,137 +293,137 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
       {/* Filters + Search */}
       <div className="pl-filters">
         <div className="pl-filter-group">
-        {/* Category Dropdown */}
-        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setCategoryOpen(o => !o); setStatusOpen(false); setStockOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-            <span>{selectedCategory === "All" ? "All categories" : selectedCategory}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
-          {categoryOpen && (
-            <div className="pl-dropdown-menu">
-              {CATEGORIES.map(c => (
-                <div key={c} className={`pl-dropdown-item ${selectedCategory === c ? 'active' : ''}`}
-                  onClick={() => { setSelectedCategory(c); setCategoryOpen(false); setCurrentPage(1); setSelectedSubcategory("All");}}>
-                  {c}
-                </div>
-              ))}
+          {/* Category Dropdown */}
+          <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+            <div className="pl-dropdown" onClick={() => { setCategoryOpen(o => !o); setStatusOpen(false); setStockOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+              <span>{selectedCategory === "All" ? "All categories" : selectedCategory}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
-          )}
-        </div>
-
-        {/* Subcategory Dropdown — new */}
-        <div className="pl-dropdown-wrap" style={{ position: 'relative'}}>
-          <div className="pl-dropdown" onClick={() => { setSubcategoryOpen(o => !o); setCategoryOpen(false); setStatusOpen(false); setStockOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18M3 12h12M3 18h6" />
-            </svg>
-            <span>{selectedSubcategory === "All" ? "All subcategories" : selectedSubcategory}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
-          {subcategoryOpen && (
-            <div className="pl-dropdown-menu">
-              {SUBCATEGORIES.map(s => (
-                <div  key={s} className= {`pl-dropdown-item ${selectedSubcategory === s ? 'active' : ''}`}
-                onClick={() => { setSelectedSubcategory(s); setSubcategoryOpen(false); setCurrentPage(1);}}>
-                  {s}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Status Dropdown */}
-        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStockOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-            <span>{selectedStatus === "All" ? "All Status" : selectedStatus}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
-          {statusOpen && (
-            <div className="pl-dropdown-menu">
-              {STATUSES.map(s => (
-                <div key={s} className={`pl-dropdown-item ${selectedStatus === s ? 'active' : ''}`}
-                  onClick={() => { setSelectedStatus(s); setStatusOpen(false); setCurrentPage(1); }}>
-                  {s}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Price Dropdown (From - To) */}
-        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setPriceOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setSortOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            <span>{priceFrom || priceTo ? `₹${priceFrom || 0} – ₹${priceTo || '∞'}` : "Price: All"}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </div>
-          {priceOpen && (
-            <div className="pl-dropdown-menu pl-price-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-              <div className="pl-price-filter-popover">
-                <div className="pl-price-inputs-row">
-                  <div className="pl-price-input-col">
-                    <label className="pl-price-label">From (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Min"
-                      value={priceFrom}
-                      onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
-                      className="pl-price-input"
-                    />
+            {categoryOpen && (
+              <div className="pl-dropdown-menu">
+                {CATEGORIES.map(c => (
+                  <div key={c} className={`pl-dropdown-item ${selectedCategory === c ? 'active' : ''}`}
+                    onClick={() => { setSelectedCategory(c); setCategoryOpen(false); setCurrentPage(1); setSelectedSubcategory("All"); }}>
+                    {c}
                   </div>
-                  <div className="pl-price-input-col">
-                    <label className="pl-price-label">To (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Max"
-                      value={priceTo}
-                      onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
-                      className="pl-price-input"
-                    />
-                  </div>
-                </div>
-                {(priceFrom || priceTo) && (
-                  <button
-                    type="button"
-                    className="pl-price-clear-btn"
-                    onClick={() => { setPriceFrom(""); setPriceTo(""); setCurrentPage(1); }}
-                  >
-                    Clear Price
-                  </button>
-                )}
+                ))}
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sort Dropdown */}
-        <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
-          <div className="pl-dropdown" onClick={() => { setSortOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setPriceOpen(false); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18M7 12h10M10 18h4" />
-            </svg>
-            <span>{SORTS.find(s => s.value === selectedSort)?.label || "Sort"}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            )}
           </div>
-          {sortOpen && (
-            <div className="pl-dropdown-menu">
-              {SORTS.map(s => (
-                <div key={s.value} className={`pl-dropdown-item ${selectedSort === s.value ? 'active' : ''}`}
-                  onClick={() => { setSelectedSort(s.value); setSortOpen(false); setCurrentPage(1); }}>
-                  {s.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-      </div>
+          {/* Subcategory Dropdown — new */}
+          <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+            <div className="pl-dropdown" onClick={() => { setSubcategoryOpen(o => !o); setCategoryOpen(false); setStatusOpen(false); setStockOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M3 12h12M3 18h6" />
+              </svg>
+              <span>{selectedSubcategory === "All" ? "All subcategories" : selectedSubcategory}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+            {subcategoryOpen && (
+              <div className="pl-dropdown-menu">
+                {SUBCATEGORIES.map(s => (
+                  <div key={s} className={`pl-dropdown-item ${selectedSubcategory === s ? 'active' : ''}`}
+                    onClick={() => { setSelectedSubcategory(s); setSubcategoryOpen(false); setCurrentPage(1); }}>
+                    {s}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Status Dropdown */}
+          <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+            <div className="pl-dropdown" onClick={() => { setStatusOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStockOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              <span>{selectedStatus === "All" ? "All Status" : selectedStatus}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+            {statusOpen && (
+              <div className="pl-dropdown-menu">
+                {STATUSES.map(s => (
+                  <div key={s} className={`pl-dropdown-item ${selectedStatus === s ? 'active' : ''}`}
+                    onClick={() => { setSelectedStatus(s); setStatusOpen(false); setCurrentPage(1); }}>
+                    {s}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Price Dropdown (From - To) */}
+          <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+            <div className="pl-dropdown" onClick={() => { setPriceOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setSortOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+              <span>{priceFrom || priceTo ? `₹${priceFrom || 0} – ₹${priceTo || '∞'}` : "Price: All"}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+            {priceOpen && (
+              <div className="pl-dropdown-menu pl-price-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                <div className="pl-price-filter-popover">
+                  <div className="pl-price-inputs-row">
+                    <div className="pl-price-input-col">
+                      <label className="pl-price-label">From (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Min"
+                        value={priceFrom}
+                        onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
+                        className="pl-price-input"
+                      />
+                    </div>
+                    <div className="pl-price-input-col">
+                      <label className="pl-price-label">To (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Max"
+                        value={priceTo}
+                        onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
+                        className="pl-price-input"
+                      />
+                    </div>
+                  </div>
+                  {(priceFrom || priceTo) && (
+                    <button
+                      type="button"
+                      className="pl-price-clear-btn"
+                      onClick={() => { setPriceFrom(""); setPriceTo(""); setCurrentPage(1); }}
+                    >
+                      Clear Price
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="pl-dropdown-wrap" style={{ position: 'relative' }}>
+            <div className="pl-dropdown" onClick={() => { setSortOpen(o => !o); setCategoryOpen(false); setSubcategoryOpen(false); setStatusOpen(false); setStockOpen(false); setPriceOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M7 12h10M10 18h4" />
+              </svg>
+              <span>{SORTS.find(s => s.value === selectedSort)?.label || "Sort"}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+            {sortOpen && (
+              <div className="pl-dropdown-menu">
+                {SORTS.map(s => (
+                  <div key={s.value} className={`pl-dropdown-item ${selectedSort === s.value ? 'active' : ''}`}
+                    onClick={() => { setSelectedSort(s.value); setSortOpen(false); setCurrentPage(1); }}>
+                    {s.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
 
 
         <div className="pl-search">
@@ -532,134 +532,134 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                 </tr>
               ) : (
                 currentProducts.map((product) => (
-                 <React.Fragment key={product.id}>
-                  <tr key={product.id}>
-                    <td className="pl-checkbox-col">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(product.id)}
-                        onChange={() => toggleSelectRow(product.id)}
-                      />
-                    </td>
-                    <td className="pl-product-col">
-                      <div className="pl-product-info">
-                        <img
-                          src={product.images?.[0] || product.image || product.variants?.[0]?.images?.[0] || searchEmpty}
-                          alt={product.name}
-                          className="pl-product-img"
-                          onError={(e) => { e.target.src = searchEmpty; }}
+                  <React.Fragment key={product.id}>
+                    <tr key={product.id}>
+                      <td className="pl-checkbox-col">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(product.id)}
+                          onChange={() => toggleSelectRow(product.id)}
                         />
-                        <div className="pl-product-details">
-                          <span className="pl-product-name">
-                            {product.name}
+                      </td>
+                      <td className="pl-product-col">
+                        <div className="pl-product-info">
+                          <img
+                            src={product.images?.[0] || product.image || product.variants?.[0]?.images?.[0] || searchEmpty}
+                            alt={product.name}
+                            className="pl-product-img"
+                            onError={(e) => { e.target.src = searchEmpty; }}
+                          />
+                          <div className="pl-product-details">
+                            <span className="pl-product-name">
+                              {product.name}
+                              {product.has_variants && product.variants?.length > 0 && (
+                                <button
+                                  className="pl-variant-toggle"
+                                  onClick={() => toggleExpand(product.id)}
+                                >
+                                  {product.variants.length} variants {expandedRows.includes(product.id) ? "▲" : "▼"}
+                                </button>
+                              )}
+
+                            </span>
+                            <span className="pl-product-sku">SKU: {product.sku}</span>
                             {product.has_variants && product.variants?.length > 0 && (
-                              <button
-                                className="pl-variant-toggle"
-                                onClick={() => toggleExpand(product.id)}
-                              >
-                                {product.variants.length} variants {expandedRows.includes(product.id) ? "▲" : "▼"}
-                              </button>
+                              <div className="pl-color-dots">
+                                {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
+                                  <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
+                                ))}
+                              </div>
                             )}
-
-                          </span>
-                          <span className="pl-product-sku">SKU: {product.sku}</span>
-                          {product.has_variants && product.variants?.length > 0 &&(
-                            <div className="pl-color-dots">
-                              {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
-                                <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
-                              ))}
-                            </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="pl-category-col">
-                      <span className="pl-category-badge" style={getCategoryStyle(product.category)}>
-                        {product.category}
-                      </span>
-                    </td>
-                    <td className="pl-category-col">
-                      {product.subcategory ? (
-                        <span className="pl-subcategory-badge">{product.subcategory}</span>
-                      ) :(
-                        <span className="pl-subcategory-none">—</span>
-                      )}
-                    </td>
-                    <td className="pl-price-col">
-                      {product.compare_price && parseFloat (product.compare_price) > parseFloat(product.price) && (
-                        <span className="pl-price-compare">
-                          Rs.{parseFloat(product.compare_price).toLocaleString()}
+                      </td>
+                      <td className="pl-category-col">
+                        <span className="pl-category-badge" style={getCategoryStyle(product.category)}>
+                          {product.category}
                         </span>
-                      )}
-                      <span className="pl-price-final">
-                        Rs.{getFinalPrice(product).toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="pl-stock-col">
-                      <span className="pl-stock-low">{product.stock} left</span>
-                    </td>
-                    <td className="pl-status-col">
-                      <span className={
-                        "pl-status-badge " +
-                        (product.status === "Visible" ? "pl-status-visible" :
-                          product.status === "Draft" ? "pl-status-draft" : "")
-                      }>
-                        {product.status}
-                      </span>
-                    </td>
-                    <td className="pl-actions-col">
-                      <button className="pl-action-btn" aria-label="Edit" onClick={() => handleEdit(product)}>
-                        <img src={editIcon} alt="Edit" className="pl-action-icon" />
-                      </button>
-                      <button
-                        className="pl-action-btn pl-action-btn--delete"
-                        aria-label="Delete"
-                        onClick={() => requestDelete(product.id)}
-                      >
-                        <img src={trashIcon} alt="Delete" className="pl-action-icon pl-action-icon--delete" />
-                      </button>
-                    </td>
-                  </tr>
-
-                  {product.has_variants && expandedRows.includes(product.id) && (
-                    <tr className="pl-variant-subrow">
-                      <td></td>
-                      <td colSpan='6'>
-                        <table className="pl-variant-table">
-                          <thead>
-                            <tr>
-                              <th>Image</th>
-                              <th>Color</th>
-                              <th>Size</th>
-                              <th>SKU</th>
-                              <th>Price</th>
-                              <th>Stock</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {product.variants.map(v => (
-                              <tr key={v.variant_id}>
-                                <td>
-                                  <img
-                                    src={v.images?.[0] || searchEmpty}
-                                    alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
-                                    className="pl-variant-img"
-                                    onError={(e) => { e.target.src = searchEmpty; }}
-                                  />
-                                </td>
-                                <td><span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}</td>
-                                <td>{v.size || '—'}</td>
-                                <td>{v.sku}</td>
-                                <td>₹{Number(v.price).toLocaleString()}</td>
-                                <td>{v.stock}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      </td>
+                      <td className="pl-category-col">
+                        {product.subcategory ? (
+                          <span className="pl-subcategory-badge">{product.subcategory}</span>
+                        ) : (
+                          <span className="pl-subcategory-none">—</span>
+                        )}
+                      </td>
+                      <td className="pl-price-col">
+                        {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                          <span className="pl-price-compare">
+                            Rs.{parseFloat(product.compare_price).toLocaleString()}
+                          </span>
+                        )}
+                        <span className="pl-price-final">
+                          Rs.{getFinalPrice(product).toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="pl-stock-col">
+                        <span className="pl-stock-low">{product.stock} left</span>
+                      </td>
+                      <td className="pl-status-col">
+                        <span className={
+                          "pl-status-badge " +
+                          (product.status === "Visible" ? "pl-status-visible" :
+                            product.status === "Draft" ? "pl-status-draft" : "")
+                        }>
+                          {product.status}
+                        </span>
+                      </td>
+                      <td className="pl-actions-col">
+                        <button className="pl-action-btn" aria-label="Edit" onClick={() => handleEdit(product)}>
+                          <img src={editIcon} alt="Edit" className="pl-action-icon" />
+                        </button>
+                        <button
+                          className="pl-action-btn pl-action-btn--delete"
+                          aria-label="Delete"
+                          onClick={() => requestDelete(product.id)}
+                        >
+                          <img src={trashIcon} alt="Delete" className="pl-action-icon pl-action-icon--delete" />
+                        </button>
                       </td>
                     </tr>
-                  )}
-                 </React.Fragment>
+
+                    {product.has_variants && expandedRows.includes(product.id) && (
+                      <tr className="pl-variant-subrow">
+                        <td></td>
+                        <td colSpan='6'>
+                          <table className="pl-variant-table">
+                            <thead>
+                              <tr>
+                                <th>Image</th>
+                                <th>Color</th>
+                                <th>Size</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {product.variants.map(v => (
+                                <tr key={v.variant_id}>
+                                  <td>
+                                    <img
+                                      src={v.images?.[0] || searchEmpty}
+                                      alt={`${product.name} ${v.color || ''} ${v.size || ''}`}
+                                      className="pl-variant-img"
+                                      onError={(e) => { e.target.src = searchEmpty; }}
+                                    />
+                                  </td>
+                                  <td><span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}</td>
+                                  <td>{v.size || '—'}</td>
+                                  <td>{v.sku}</td>
+                                  <td>₹{Number(v.price).toLocaleString()}</td>
+                                  <td>{v.stock}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>

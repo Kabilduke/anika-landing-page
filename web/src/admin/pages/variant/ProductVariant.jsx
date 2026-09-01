@@ -119,18 +119,18 @@ const CreateMultipleProduct = ({
         setVariants(
           existingVariants.length > 0
             ? existingVariants.map(v => ({
-                id: v.variant_id,
-                variant_id: v.variant_id,
-                sizeDimension: v.size || "",
-                stockQuantity: String(v.stock ?? ""),
-                minStockAlert: String(v.stock_alert ?? ""),
-                price: String(v.compare_price ?? ""),
-                sellingPrice: String(v.price ?? ""),
-                color: v.color || COLOR_SWATCHES[0],
-                sku: v.sku || "",
-                images: v.images || [],
-                media: [],
-              }))
+              id: v.variant_id,
+              variant_id: v.variant_id,
+              sizeDimension: v.size || "",
+              stockQuantity: String(v.stock ?? ""),
+              minStockAlert: String(v.stock_alert ?? ""),
+              price: String(v.compare_price ?? ""),
+              sellingPrice: String(v.price ?? ""),
+              color: v.color || COLOR_SWATCHES[0],
+              sku: v.sku || "",
+              images: v.images || [],
+              media: [],
+            }))
             : [makeVariant()]
         );
       } catch (err) {
@@ -234,10 +234,10 @@ const CreateMultipleProduct = ({
 
   const handleRemoveExistingImage = (variantId, index) => {
     setVariants((prev) =>
-      prev.map((v) => 
+      prev.map((v) =>
         v.id === variantId
-        ? { ...v, images: (v.images || []).filter((_, i) => i !== index) }
-        : v
+          ? { ...v, images: (v.images || []).filter((_, i) => i !== index) }
+          : v
       )
     );
   };
@@ -306,357 +306,356 @@ const CreateMultipleProduct = ({
       setSaving(false);
     }
   };
-  
-  if (loading){
+
+  if (loading) {
     return <main className="dashboard-content cmp-page"><p style={{ padding: 24 }}>Loading product…</p></main>;
   }
 
   return (
-        <main className="dashboard-content cmp-page">
-          <div className="cmp-header">
-            <div>
-              <h1 className="cmp-title">{isEditing ? "Edit Multiple Product" : "Create Multiple Product"}</h1>
-              <div className="cmp-breadcrumb">
+    <main className="dashboard-content cmp-page">
+      <div className="cmp-header">
+        <div>
+          <h1 className="cmp-title">{isEditing ? "Edit Multiple Product" : "Create Multiple Product"}</h1>
+          <div className="cmp-breadcrumb">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                onGoToRoot ? onGoToRoot() : onBack?.();
+              }}
+            >
+              All Categories
+            </a>
+            {categoryPath.map((c, idx) => (
+              <React.Fragment key={`${c.id ?? "crumb"}-${idx}`}>
+                <span className="cmp-breadcrumb-sep">›</span>
                 <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    onGoToRoot? onGoToRoot() : onBack?.();
+                    onBreadcrumbClick?.(idx);
                   }}
                 >
-                  All Categories
+                  {c.name}
                 </a>
-                {categoryPath.map((c, idx) => (
-                  <React.Fragment key={`${c.id ?? "crumb"}-${idx}`}>
-                    <span className="cmp-breadcrumb-sep">›</span>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onBreadcrumbClick?.(idx);
-                      }}
-                    >
-                      {c.name}
-                    </a>
-                  </React.Fragment>
-                ))}
-                <span className="cmp-breadcrumb-sep">›</span>
-                <span className="cmp-breadcrumb-current">Create Multiple Product</span>
-              </div>
-            </div>
-
-            <button type="button" className="cmp-save-btn" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
+              </React.Fragment>
+            ))}
+            <span className="cmp-breadcrumb-sep">›</span>
+            <span className="cmp-breadcrumb-current">Create Multiple Product</span>
           </div>
+        </div>
 
-          {/* Title / Description / Category / Sub Category */}
-          <div className="cmp-card">
-            <label className="cmp-field">
-              <span className="cmp-label">Title</span>
-              <input
-                type="text"
-                className={`cmp-input${errors.title ? " cmp-input--error" : ""}`}
-                placeholder="Necklace"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  clearTopError("title");
-                }}
-              />
-              {errors.title?.map((msg) => (
-                <FieldError key={msg}>{msg}</FieldError>
+        <button type="button" className="cmp-save-btn" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
+
+      {/* Title / Description / Category / Sub Category */}
+      <div className="cmp-card">
+        <label className="cmp-field">
+          <span className="cmp-label">Title</span>
+          <input
+            type="text"
+            className={`cmp-input${errors.title ? " cmp-input--error" : ""}`}
+            placeholder="Necklace"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              clearTopError("title");
+            }}
+          />
+          {errors.title?.map((msg) => (
+            <FieldError key={msg}>{msg}</FieldError>
+          ))}
+        </label>
+
+        <label className="cmp-field">
+          <span className="cmp-label">Description</span>
+          <textarea
+            className={`cmp-textarea${errors.description ? " cmp-input--error" : ""}`}
+            placeholder="Enter Description"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              clearTopError("description");
+            }}
+          />
+          {errors.description?.map((msg) => (
+            <FieldError key={msg}>{msg}</FieldError>
+          ))}
+        </label>
+
+        <div className="cmp-row">
+          <label className="cmp-field">
+            <span className="cmp-label">Category</span>
+            <select
+              className="cmp-select"
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setSubCategory("");
+              }}
+            >
+              <option value="">Select Your Category</option>
+              {categories.map((c) => (
+                <option key={c.category_id ?? c.name} value={c.category_id ?? c.id}>
+                  {c.name}
+                </option>
               ))}
-            </label>
+            </select>
+          </label>
 
-            <label className="cmp-field">
-              <span className="cmp-label">Description</span>
-              <textarea
-                className={`cmp-textarea${errors.description ? " cmp-input--error" : ""}`}
-                placeholder="Enter Description"
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  clearTopError("description");
-                }}
-              />
-              {errors.description?.map((msg) => (
-                <FieldError key={msg}>{msg}</FieldError>
+          <label className="cmp-field">
+            <span className="cmp-label">Sub Category</span>
+            <select
+              className="cmp-select"
+              value={subCategory}
+              onChange={(e) => setSubCategory(e.target.value)}
+              disabled={!category || loadingSubcategories || subcategories.length === 0}
+            >
+              <option value="">
+                {loadingSubcategories ? "Loading…" : "Select Your Sub Category"}
+              </option>
+              {subcategories.map((sc) => (
+                <option key={sc.subcategory_id} value={sc.subcategory_id}>
+                  {sc.name}
+                </option>
               ))}
-            </label>
+            </select>
+            {category && !loadingSubcategories && subcategories.length === 0 && (
+              <InfoHint>Sub Category Not Found</InfoHint>
+            )}
+          </label>
+        </div>
+      </div>
 
-            <div className="cmp-row">
-              <label className="cmp-field">
-                <span className="cmp-label">Category</span>
-                <select
-                  className="cmp-select"
-                  value={category}
-                  onChange={(e) => {
-                    setCategory(e.target.value);
-                    setSubCategory("");
-                  }}
-                >
-                  <option value="">Select Your Category</option>
-                  {categories.map((c) => (
-                    <option key={c.category_id ?? c.name} value={c.category_id ?? c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+      {/* Variants */}
+      <div className="cmp-card">
+        <span className="cmp-section-title">Variants</span>
 
-              <label className="cmp-field">
-                <span className="cmp-label">Sub Category</span>
-                <select
-                  className="cmp-select"
-                  value={subCategory}
-                  onChange={(e) => setSubCategory(e.target.value)}
-                  disabled={!category || loadingSubcategories || subcategories.length === 0}
-                >
-                  <option value="">
-                    {loadingSubcategories ? "Loading…" : "Select Your Sub Category"}
-                  </option>
-                  {subcategories.map((sc) =>(
-                    <option key={sc.subcategory_id} value={sc.subcategory_id}>
-                      {sc.name}
-                    </option>
+        {variants.map((v, idx) => {
+          const vErrors = errors[v.id] || {};
+          return (
+            <div className="cmp-variant" key={v.id}>
+              <div className="cmp-variant-row">
+                <label className="cmp-field">
+                  <span className="cmp-label">Size/Dimension</span>
+                  <input
+                    type="text"
+                    className={`cmp-input${vErrors.sizeDimension ? " cmp-input--error" : ""}`}
+                    placeholder="Size"
+                    value={v.sizeDimension}
+                    onChange={(e) => updateVariant(v.id, "sizeDimension", e.target.value)}
+                  />
+                  {vErrors.sizeDimension?.map((msg) => (
+                    <FieldError key={msg}>{msg}</FieldError>
                   ))}
-                </select>
-                {category && !loadingSubcategories && subcategories.length === 0 && (
-                  <InfoHint>Sub Category Not Found</InfoHint>
+                </label>
+
+                <label className="cmp-field">
+                  <span className="cmp-label">Stock Quantity</span>
+                  <input
+                    type="text"
+                    className={`cmp-input${vErrors.stockQuantity ? " cmp-input--error" : ""}`}
+                    placeholder="0"
+                    value={v.stockQuantity}
+                    onChange={(e) => updateVariant(v.id, "stockQuantity", e.target.value)}
+                  />
+                  {vErrors.stockQuantity?.map((msg) => (
+                    <FieldError key={msg}>{msg}</FieldError>
+                  ))}
+                </label>
+
+                <label className="cmp-field">
+                  <span className="cmp-label">Minimum Stock Alert</span>
+                  <input
+                    type="text"
+                    className={`cmp-input${vErrors.minStockAlert ? " cmp-input--error" : ""}`}
+                    placeholder="0"
+                    value={v.minStockAlert}
+                    onChange={(e) => updateVariant(v.id, "minStockAlert", e.target.value)}
+                  />
+                  {vErrors.minStockAlert?.map((msg) => (
+                    <FieldError key={msg}>{msg}</FieldError>
+                  ))}
+                </label>
+
+                <label className="cmp-field">
+                  <span className="cmp-label">MRP Price</span>
+                  <input
+                    type="text"
+                    className={`cmp-input${vErrors.price ? " cmp-input--error" : ""}`}
+                    placeholder="₹0.00"
+                    value={v.price}
+                    onChange={(e) => updateVariant(v.id, "price", e.target.value)}
+                  />
+                  {vErrors.price?.map((msg) => (
+                    <FieldError key={msg}>{msg}</FieldError>
+                  ))}
+                </label>
+
+                <label className="cmp-field">
+                  <span className="cmp-label">Price</span>
+                  <input
+                    type="text"
+                    className={`cmp-input${vErrors.sellingPrice ? " cmp-input--error" : ""}`}
+                    placeholder="₹0.00"
+                    value={v.sellingPrice}
+                    onChange={(e) => updateVariant(v.id, "sellingPrice", e.target.value)}
+                  />
+                  {vErrors.sellingPrice?.map((msg) => (
+                    <FieldError key={msg}>{msg}</FieldError>
+                  ))}
+                </label>
+              </div>
+
+              <div className="cmp-variant-row cmp-variant-row--color-sku">
+                <div className="cmp-field">
+                  <span className="cmp-label">Color</span>
+                  <div className="cmp-color-grid">
+                    {COLOR_SWATCHES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`cmp-color-swatch${v.color === c ? " cmp-color-swatch--selected" : ""
+                          }${c === "#FFFFFF" ? " cmp-color-swatch--white" : ""}`}
+                        style={{ backgroundColor: c }}
+                        onClick={() => updateVariant(v.id, "color", c)}
+                        aria-label={`Select color ${c}`}
+                      >
+                        {v.color === c && (
+                          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                            <path
+                              d="M1 5L4.2 8.2L11 1"
+                              stroke={c === "#FFFFFF" ? "#111827" : "#fff"}
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="cmp-field">
+                  <span className="cmp-label">Sku</span>
+                  <input
+                    type="text"
+                    className="cmp-input"
+                    placeholder="Input your text"
+                    value={v.sku}
+                    onChange={(e) => updateVariant(v.id, "sku", e.target.value)}
+                  />
+                  <span className="cmp-hint">Auto Generated Or Enter Manually</span>
+                </label>
+              </div>
+
+              <div className="cmp-variant-row cmp-variant-row--media">
+                <div className="cmp-media-row">
+                  <button
+                    type="button"
+                    className="cmp-media-add"
+                    onClick={() => mediaInputRefs.current[v.id]?.click()}
+                    aria-label="Add media"
+                  >
+                    +
+                  </button>
+                  <input
+                    ref={(el) => (mediaInputRefs.current[v.id] = el)}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={(e) => handleMediaSelect(v.id, e)}
+                  />
+                  {(v.images || []).map((url, i) => (
+                    <div className="cmp-media-thumb" key={`existing-${v.id}-${i}`}>
+                      <img src={url} alt="Variant" />
+                      <button
+                        type="button"
+                        className="cmp-media-remove"
+                        onClick={() => handleRemoveExistingImage(v.id, i)}
+                        aria-label="Remove image"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                  ))}
+
+                  {v.media.map((m) => (
+                    <div className="cmp-media-thumb" key={m.id}>
+                      <img src={m.url} alt="Variant media" />
+                      <button
+                        type="button"
+                        className="cmp-media-remove"
+                        onClick={() => handleRemoveMedia(v.id, m.id)}
+                        aria-label="Remove image"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {idx > 0 && (
+                  <button
+                    type="button"
+                    className="cmp-delete-btn"
+                    onClick={() => handleRemoveVariant(v.id)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M12.5 4.5l-.6 8.4a1.5 1.5 0 0 1-1.5 1.4H5.6a1.5 1.5 0 0 1-1.5-1.4l-.6-8.4"
+                        stroke="#DC2626"
+                        strokeWidth="1.3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Delete
+                  </button>
                 )}
-              </label>
-            </div>
-          </div>
-
-          {/* Variants */}
-          <div className="cmp-card">
-            <span className="cmp-section-title">Variants</span>
-
-            {variants.map((v, idx) => {
-              const vErrors = errors[v.id] || {};
-              return (
-                <div className="cmp-variant" key={v.id}>
-                  <div className="cmp-variant-row">
-                    <label className="cmp-field">
-                      <span className="cmp-label">Size/Dimension</span>
-                      <input
-                        type="text"
-                        className={`cmp-input${vErrors.sizeDimension ? " cmp-input--error" : ""}`}
-                        placeholder="Size"
-                        value={v.sizeDimension}
-                        onChange={(e) => updateVariant(v.id, "sizeDimension", e.target.value)}
-                      />
-                      {vErrors.sizeDimension?.map((msg) => (
-                        <FieldError key={msg}>{msg}</FieldError>
-                      ))}
-                    </label>
-
-                    <label className="cmp-field">
-                      <span className="cmp-label">Stock Quantity</span>
-                      <input
-                        type="text"
-                        className={`cmp-input${vErrors.stockQuantity ? " cmp-input--error" : ""}`}
-                        placeholder="0"
-                        value={v.stockQuantity}
-                        onChange={(e) => updateVariant(v.id, "stockQuantity", e.target.value)}
-                      />
-                      {vErrors.stockQuantity?.map((msg) => (
-                        <FieldError key={msg}>{msg}</FieldError>
-                      ))}
-                    </label>
-
-                    <label className="cmp-field">
-                      <span className="cmp-label">Minimum Stock Alert</span>
-                      <input
-                        type="text"
-                        className={`cmp-input${vErrors.minStockAlert ? " cmp-input--error" : ""}`}
-                        placeholder="0"
-                        value={v.minStockAlert}
-                        onChange={(e) => updateVariant(v.id, "minStockAlert", e.target.value)}
-                      />
-                      {vErrors.minStockAlert?.map((msg) => (
-                        <FieldError key={msg}>{msg}</FieldError>
-                      ))}
-                    </label>
-
-                    <label className="cmp-field">
-                      <span className="cmp-label">MRP Price</span>
-                      <input
-                        type="text"
-                        className={`cmp-input${vErrors.price ? " cmp-input--error" : ""}`}
-                        placeholder="₹0.00"
-                        value={v.price}
-                        onChange={(e) => updateVariant(v.id, "price", e.target.value)}
-                      />
-                      {vErrors.price?.map((msg) => (
-                        <FieldError key={msg}>{msg}</FieldError>
-                      ))}
-                    </label>
-
-                    <label className="cmp-field">
-                      <span className="cmp-label">Price</span>
-                      <input
-                        type="text"
-                        className={`cmp-input${vErrors.sellingPrice ? " cmp-input--error" : ""}`}
-                        placeholder="₹0.00"
-                        value={v.sellingPrice}
-                        onChange={(e) => updateVariant(v.id, "sellingPrice", e.target.value)}
-                      />
-                      {vErrors.sellingPrice?.map((msg) => (
-                        <FieldError key={msg}>{msg}</FieldError>
-                      ))}
-                    </label>
-                  </div>
-
-                  <div className="cmp-variant-row cmp-variant-row--color-sku">
-                    <div className="cmp-field">
-                      <span className="cmp-label">Color</span>
-                      <div className="cmp-color-grid">
-                        {COLOR_SWATCHES.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            className={`cmp-color-swatch${
-                              v.color === c ? " cmp-color-swatch--selected" : ""
-                            }${c === "#FFFFFF" ? " cmp-color-swatch--white" : ""}`}
-                            style={{ backgroundColor: c }}
-                            onClick={() => updateVariant(v.id, "color", c)}
-                            aria-label={`Select color ${c}`}
-                          >
-                            {v.color === c && (
-                              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                                <path
-                                  d="M1 5L4.2 8.2L11 1"
-                                  stroke={c === "#FFFFFF" ? "#111827" : "#fff"}
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <label className="cmp-field">
-                      <span className="cmp-label">Sku</span>
-                      <input
-                        type="text"
-                        className="cmp-input"
-                        placeholder="Input your text"
-                        value={v.sku}
-                        onChange={(e) => updateVariant(v.id, "sku", e.target.value)}
-                      />
-                      <span className="cmp-hint">Auto Generated Or Enter Manually</span>
-                    </label>
-                  </div>
-
-                  <div className="cmp-variant-row cmp-variant-row--media">
-                    <div className="cmp-media-row">
-                      <button
-                        type="button"
-                        className="cmp-media-add"
-                        onClick={() => mediaInputRefs.current[v.id]?.click()}
-                        aria-label="Add media"
-                      >
-                        +
-                      </button>
-                      <input
-                        ref={(el) => (mediaInputRefs.current[v.id] = el)}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        hidden
-                        onChange={(e) => handleMediaSelect(v.id, e)}
-                      />
-                      {(v.images || []).map((url, i) => (
-                        <div className="cmp-media-thumb" key={`existing-${v.id}-${i}`}>
-                          <img src={url} alt="Variant"/>
-                          <button
-                            type="button"
-                            className="cmp-media-remove"
-                            onClick={() => handleRemoveExistingImage(v.id, i)}
-                            aria-label="Remove image"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      ))}
-
-                      {v.media.map((m) => (
-                        <div className="cmp-media-thumb" key={m.id}>
-                          <img src={m.url} alt="Variant media" />
-                          <button
-                            type="button"
-                            className="cmp-media-remove"
-                            onClick={() => handleRemoveMedia(v.id, m.id)}
-                            aria-label="Remove image"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    {idx > 0 && (
-                      <button
-                        type="button"
-                        className="cmp-delete-btn"
-                        onClick={() => handleRemoveVariant(v.id)}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                          <path
-                            d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M12.5 4.5l-.6 8.4a1.5 1.5 0 0 1-1.5 1.4H5.6a1.5 1.5 0 0 1-1.5-1.4l-.6-8.4"
-                            stroke="#DC2626"
-                            strokeWidth="1.3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        Delete
-                      </button>
-                    )}
-                  </div>
-
-                  <InfoHint>
-                    Chosen Size / Color Must Be Different From The Previous Variant.
-                  </InfoHint>
-                </div>
-              );
-            })}
-
-            <button type="button" className="cmp-add-variant-btn" onClick={handleAddVariant}>
-              <span className="cmp-add-variant-plus">+</span> Add variants
-            </button>
-          </div>
-
-          {/* Visibility Options */}
-          <div className="cmp-card">
-            <span className="cmp-section-title">Visibility Options</span>
-
-            <div className="cmp-visibility-row">
-              <div>
-                <div className="cmp-visibility-title">Show On Store</div>
-                <div className="cmp-visibility-desc">
-                  Product will be visible to customers
-                </div>
               </div>
-              <Toggle checked={showOnStore} onChange={setShowOnStore} />
-            </div>
 
-            <div className="cmp-visibility-row">
-              <div>
-                <div className="cmp-visibility-title">Featured product</div>
-                <div className="cmp-visibility-desc">
-                  Show in featured collections on home page
-                </div>
-              </div>
-              <Toggle checked={featuredProduct} onChange={setFeaturedProduct} />
+              <InfoHint>
+                Chosen Size / Color Must Be Different From The Previous Variant.
+              </InfoHint>
+            </div>
+          );
+        })}
+
+        <button type="button" className="cmp-add-variant-btn" onClick={handleAddVariant}>
+          <span className="cmp-add-variant-plus">+</span> Add variants
+        </button>
+      </div>
+
+      {/* Visibility Options */}
+      <div className="cmp-card">
+        <span className="cmp-section-title">Visibility Options</span>
+
+        <div className="cmp-visibility-row">
+          <div>
+            <div className="cmp-visibility-title">Show On Store</div>
+            <div className="cmp-visibility-desc">
+              Product will be visible to customers
             </div>
           </div>
-        </main>
+          <Toggle checked={showOnStore} onChange={setShowOnStore} />
+        </div>
+
+        <div className="cmp-visibility-row">
+          <div>
+            <div className="cmp-visibility-title">Featured product</div>
+            <div className="cmp-visibility-desc">
+              Show in featured collections on home page
+            </div>
+          </div>
+          <Toggle checked={featuredProduct} onChange={setFeaturedProduct} />
+        </div>
+      </div>
+    </main>
   );
 };
 

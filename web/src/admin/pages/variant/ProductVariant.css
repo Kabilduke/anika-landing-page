@@ -365,7 +365,7 @@
     flex-wrap: wrap;
   }
 
-  .cmp-variant-row > .cmp-field {
+  .cmp-variant-row>.cmp-field {
     min-width: 140px;
   }
 }

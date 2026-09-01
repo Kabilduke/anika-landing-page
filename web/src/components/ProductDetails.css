@@ -476,39 +476,78 @@ button {
 .pp-size-chart-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 16px;
+  backdrop-filter: blur(2px);
 }
 
 .pp-size-chart-modal {
   background: #fff;
-  border-radius: 10px;
-  padding: 24px;
-  max-width: 90vw;
+  border-radius: 14px;
+  padding: 20px 24px 24px;
+  max-width: 640px;
+  width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
 }
 
-.pp-size-chart-modal img {
-  width: 30vw;
-  height: auto;
-  display: block;
-  margin-top: 12px;
+.pp-size-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pp-size-chart-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .pp-size-chart-close {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  background: none;
+  background: #f3f4f6;
   border: none;
-  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: #555;
+  color: #374151;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.pp-size-chart-close:hover {
+  background: #e5e7eb;
+}
+
+.pp-size-chart-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pp-size-chart-body img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 /* Cart row */
@@ -682,17 +721,17 @@ button {
   padding-bottom: 10px;
 }
 
-.pp-stock{
+.pp-stock {
   color: var(--maroon);
   font-weight: 700;
 }
 
-.pp-stock-out{
+.pp-stock-out {
   color: #b3261e;
   font-weight: 700;
 }
 
-.pp-stock-ok{
+.pp-stock-ok {
   color: #1e7a3e;
   font-weight: 600;
 }
@@ -1174,23 +1213,33 @@ button {
   color: #E52B50;
 }
 
-.pp-color-picker { 
+.pp-color-picker {
   margin-bottom: 6px;
 }
 
-.pp-color-buttons { 
-  display: flex; 
+.pp-color-buttons {
+  display: flex;
   margin-left: 8px;
-  margin-top: 6px; 
+  margin-top: 6px;
 }
 
 .pp-color-swatch {
-  width: 26px; height: 26px; border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.1); cursor: pointer; padding: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  padding: 0;
 }
 
-.pp-color-swatch--white { border: 1px solid #d1d5db; }
-.pp-color-swatch--selected { outline: 2px solid #111827; outline-offset: 2px; }
+.pp-color-swatch--white {
+  border: 1px solid #d1d5db;
+}
+
+.pp-color-swatch--selected {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}
 
 /* ══════════════════════════════════════════════════════════════
    CATEGORY SECTION
@@ -1290,7 +1339,7 @@ button {
   /* Product info */
   .pp-title {
     font-size: 22px;
-      line-height: 1.5;
+    line-height: 1.5;
   }
 
   .pp-price {
@@ -1356,6 +1405,44 @@ button {
   .pp-cat {
     flex: 1 1 calc(33.33% - 8px);
     min-width: calc(33.33% - 8px);
+  }
+
+  /* Size chart modal in tablet/mobile */
+  .pp-size-chart-overlay {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.75);
+  }
+
+  .pp-size-chart-modal {
+    width: 96vw;
+    max-width: 96vw;
+    padding: 16px 14px 14px;
+    border-radius: 14px;
+    max-height: 92vh;
+  }
+
+  .pp-size-chart-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .pp-size-chart-header h3 {
+    font-size: 16px;
+  }
+
+  .pp-size-chart-body {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0;
+  }
+
+  .pp-size-chart-body img {
+    width: 100%;
+    min-width: 100%;
+    max-width: none;
+    height: auto;
+    margin-top: 0;
   }
 
   /* RESPONSIVE FOOTER REMOVED */
@@ -1672,6 +1759,53 @@ button {
 
   .pp-cat-label {
     font-size: 11px;
+  }
+
+  /* Size chart modal for mobile (maximized size) */
+  .pp-size-chart-overlay {
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  .pp-size-chart-modal {
+    width: 98vw;
+    max-width: 98vw;
+    padding: 12px 6px 10px;
+    border-radius: 12px;
+    max-height: 95vh;
+  }
+
+  .pp-size-chart-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .pp-size-chart-header h3 {
+    font-size: 15px;
+  }
+
+  .pp-size-chart-close {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .pp-size-chart-body {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0;
+  }
+
+  .pp-size-chart-body img {
+    width: 100%;
+    min-width: 100%;
+    max-width: none;
+    height: auto;
+    margin-top: 0;
+    border-radius: 6px;
   }
 
   /* RESPONSIVE FOOTER REMOVED */
