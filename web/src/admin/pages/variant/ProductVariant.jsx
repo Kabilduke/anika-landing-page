@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { variantService } from "../../../services/variantService";
+import ConfirmDialog from "../dialogs/confirmdialogs";
 import "./ProductVariant.css";
 
 const COLOR_SWATCHES = [
@@ -67,7 +68,7 @@ const makeVariant = () => ({
   minStockAlert: "",
   price: "",
   sellingPrice: "",
-  color: COLOR_SWATCHES[0],
+  color: null,
   sku: "",
   media: [],
 });
@@ -102,6 +103,7 @@ const CreateMultipleProduct = ({
 
   const [saving, setSaving] = useState(false);
   const [deletedVariantIds, setDeletedVariantIds] = useState([]);
+  const [variantToDelete, setVariantToDelete] = useState(null);
 
   // ── Load existing product + variants when editing ──
   useEffect(() => {
@@ -126,7 +128,7 @@ const CreateMultipleProduct = ({
               minStockAlert: String(v.stock_alert ?? ""),
               price: String(v.compare_price ?? ""),
               sellingPrice: String(v.price ?? ""),
-              color: v.color || COLOR_SWATCHES[0],
+              color: v.color || null,
               sku: v.sku || "",
               images: v.images || [],
               media: [],
@@ -190,7 +192,13 @@ const CreateMultipleProduct = ({
     setVariants((prev) => [...prev, makeVariant()]);
   };
 
-  const handleRemoveVariant = (id) => {
+  const requestRemoveVariant = (id) => {
+    setVariantToDelete(id);
+  };
+
+  const confirmRemoveVariant = () => {
+    if (!variantToDelete) return;
+    const id = variantToDelete;
     setVariants((prev) => {
       if (prev.length <= 1) return prev;
       const removed = prev.find((v) => v.id === id);
@@ -204,6 +212,7 @@ const CreateMultipleProduct = ({
       delete next[id];
       return next;
     });
+    setVariantToDelete(null);
   };
 
   const handleMediaSelect = (variantId, e) => {
@@ -313,6 +322,18 @@ const CreateMultipleProduct = ({
 
   return (
     <main className="dashboard-content cmp-page">
+      {variantToDelete && (
+        <ConfirmDialog
+          title="Delete Variant?"
+          message="Are you sure you want to delete this variant?"
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          isDanger={true}
+          onConfirm={confirmRemoveVariant}
+          onCancel={() => setVariantToDelete(null)}
+        />
+      )}
+
       <div className="cmp-header">
         <div>
           <h1 className="cmp-title">{isEditing ? "Edit Multiple Product" : "Create Multiple Product"}</h1>
@@ -513,6 +534,20 @@ const CreateMultipleProduct = ({
                 <div className="cmp-field">
                   <span className="cmp-label">Color</span>
                   <div className="cmp-color-grid">
+                    <button
+                      type="button"
+                      className={`cmp-color-swatch cmp-color-swatch--none${
+                        !v.color ? " cmp-color-swatch--selected" : ""
+                      }`}
+                      onClick={() => updateVariant(v.id, "color", null)}
+                      aria-label="No color (None)"
+                      title="No color (None)"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="#9CA3AF" strokeWidth="1.5" strokeDasharray="2 2" />
+                        <line x1="4.5" y1="15.5" x2="15.5" y2="4.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </button>
                     {COLOR_SWATCHES.map((c) => (
                       <button
                         key={c}
@@ -520,7 +555,7 @@ const CreateMultipleProduct = ({
                         className={`cmp-color-swatch${v.color === c ? " cmp-color-swatch--selected" : ""
                           }${c === "#FFFFFF" ? " cmp-color-swatch--white" : ""}`}
                         style={{ backgroundColor: c }}
-                        onClick={() => updateVariant(v.id, "color", c)}
+                        onClick={() => updateVariant(v.id, "color", v.color === c ? null : c)}
                         aria-label={`Select color ${c}`}
                       >
                         {v.color === c && (
@@ -599,11 +634,11 @@ const CreateMultipleProduct = ({
                   ))}
                 </div>
 
-                {idx > 0 && (
+                {variants.length > 1 && (
                   <button
                     type="button"
                     className="cmp-delete-btn"
-                    onClick={() => handleRemoveVariant(v.id)}
+                    onClick={() => requestRemoveVariant(v.id)}
                   >
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                       <path

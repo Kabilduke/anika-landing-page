@@ -93,7 +93,13 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
                   />
                   <div className="pl-mobile-variant-details">
                     <span>
-                      <span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color} {v.size ? `• ${v.size}` : ''}
+                      {v.color ? (
+                        <>
+                          <span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color} {v.size ? `• ${v.size}` : ''}
+                        </>
+                      ) : (
+                        v.size ? <span>{v.size}</span> : <span>—</span>
+                      )}
                     </span>
                     <span className="pl-mobile-variant-sku">SKU: {v.sku}</span>
                   </div>
@@ -647,7 +653,15 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                                       onError={(e) => { e.target.src = searchEmpty; }}
                                     />
                                   </td>
-                                  <td><span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}</td>
+                                  <td>
+                                    {v.color ? (
+                                      <>
+                                        <span className="pl-color-dot" style={{ backgroundColor: v.color }} /> {v.color}
+                                      </>
+                                    ) : (
+                                      '—'
+                                    )}
+                                  </td>
                                   <td>{v.size || '—'}</td>
                                   <td>{v.sku}</td>
                                   <td>₹{Number(v.price).toLocaleString()}</td>

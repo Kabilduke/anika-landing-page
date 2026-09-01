@@ -8,6 +8,7 @@ const ConfirmDialog = ({
   confirmLabel = "Save",
   cancelLabel = "Cancel",
   isLoading = false,
+  isDanger = false,
   onConfirm,
   onCancel,
 }) => {
@@ -27,11 +28,11 @@ const ConfirmDialog = ({
           </button>
           <button
             type="button"
-            className="confirm-dialog-btn confirm-dialog-btn-dark"
+            className={`confirm-dialog-btn ${isDanger ? "confirm-dialog-btn-danger" : "confirm-dialog-btn-dark"}`}
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Saving..." : confirmLabel}
+            {isLoading ? (isDanger ? "Deleting..." : "Saving...") : confirmLabel}
           </button>
         </div>
       </div>

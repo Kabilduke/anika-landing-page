@@ -309,6 +309,17 @@
   border: 1px solid #e5e7eb;
 }
 
+.cmp-color-swatch--none {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  transition: all 0.15s ease;
+}
+
+.cmp-color-swatch--none:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
 .cmp-color-swatch--selected {
   box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #111827;
 }

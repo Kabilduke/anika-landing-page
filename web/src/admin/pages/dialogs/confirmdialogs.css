@@ -80,3 +80,12 @@
 .confirm-dialog-btn-dark:hover {
   background: #2a2a2e;
 }
+
+.confirm-dialog-btn-danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.confirm-dialog-btn-danger:hover {
+  background: #b91c1c;
+}
