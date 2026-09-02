@@ -24,6 +24,8 @@ export default function ProductSection({ onProductClick }) {
           compare_price,
           discount_price,
           images,
+          has_variants,
+          product_variants(price, compare_price, stock),
           categories!inner(name)
         `)
         .eq('is_active', true)
@@ -39,18 +41,27 @@ export default function ProductSection({ onProductClick }) {
         return;
       }
 
-      const mapped = (data || []).map(p => ({
-        id: p.product_id,
-        img: p.images?.[0] || '',
-        name: p.name,
-        category: p.categories?.name || '',
-        price: p.discount_price
-          ? `₹${Number(p.price - p.discount_price).toLocaleString('en-IN')}`
-          : `₹${Number(p.price).toLocaleString('en-IN')}`,
-        original: p.compare_price
-          ? `₹${Number(p.compare_price).toLocaleString('en-IN')}`
-          : '',
-      }));
+      const mapped = (data || []).map(p => {
+        const variants = p.product_variants || [];
+        const hasVariants = !!p.has_variants && variants.length > 0;
+
+        const sellingPrice = hasVariants
+          ? Math.min(...variants.map(v => Number(v.price) || Infinity).filter(isFinite))
+          : (Number(p.price) || 0);
+
+        const mrp = hasVariants
+          ? Math.max(...variants.map(v => Number(v.compare_price) || 0))
+          : (Number(p.compare_price) || 0);
+
+        return {
+          id: p.product_id,
+          img: p.images?.[0] || '',
+          name: p.name,
+          category: p.categories?.name || '',
+          price: sellingPrice ? `₹${sellingPrice.toLocaleString('en-IN')}` : '',
+          original: mrp ? `₹${mrp.toLocaleString('en-IN')}` : '',
+        };
+      });
 
       setProducts(mapped);
       setLoading(false);
