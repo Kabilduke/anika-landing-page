@@ -690,6 +690,26 @@ const CreateMultipleProduct = ({
           <Toggle checked={featuredProduct} onChange={setFeaturedProduct} />
         </div>
       </div>
+
+      {/* Bottom Footer Actions */}
+      <div className="cmp-footer">
+        <button
+          type="button"
+          className="cmp-cancel-btn"
+          onClick={onBack}
+          disabled={saving}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="cmp-save-btn cmp-save-btn--bottom"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
     </main>
   );
 };

@@ -9,7 +9,8 @@ import "./categorypage.css";
 
 import { getNavPath } from "../services/categoryRoute";
 
-const ITEMS_PER_PAGE = 9;
+const DESKTOP_ITEMS_PER_PAGE = 9;
+const MOBILE_ITEMS_PER_PAGE = 10;
 const EMPTY_PRODUCTS = [];
 
 // ─── Loading Skeleton ─────────────────────────────────────────
@@ -19,6 +20,21 @@ export default function CategoryPage({ category }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const subcategoryParam = searchParams.get("sub") || "";
+
+  // Viewport detection for responsive items per page (Desktop: 9, Mobile: 10)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const itemsPerPage = isMobile ? MOBILE_ITEMS_PER_PAGE : DESKTOP_ITEMS_PER_PAGE;
 
   // Search and filter states
   const [searchInput, setSearchInput] = useState("");
@@ -208,12 +224,18 @@ export default function CategoryPage({ category }) {
     return result;
   }, [products, searchQuery, stockStatus, selectedSizes, subcategoryParam, priceFrom, priceTo, sortBy]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
 
   const getPageNumbers = (current, total) => {

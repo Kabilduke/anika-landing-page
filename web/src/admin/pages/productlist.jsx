@@ -22,12 +22,26 @@ const getCategoryStyle = (category) => {
   return styles[category] || { background: "#f0e6ff", color: "#7c3aed" };
 };
 
+const getProductColors = (product) => {
+  if (!product) return [];
+  if (product.has_variants && product.variants?.length > 0) {
+    return [...new Set(product.variants.map((v) => v.color).filter(Boolean))];
+  }
+  if (Array.isArray(product.colors)) {
+    return product.colors.filter(Boolean);
+  }
+  if (typeof product.colors === "string") {
+    return product.colors.split(",").map((c) => c.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 /* ── Mobile card view for very small screens ── */
 const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSelectRow, expandedRows, toggleExpand }) => {
   const isChecked = selectedRows.includes(product.id);
   const isExpanded = expandedRows.includes(product.id);
   const hasVariants = product.has_variants && product.variants?.length > 0;
-
+  const colors = getProductColors(product);
 
   return (
     <div className={`pl-mobile-card${isChecked ? " pl-mobile-card--selected" : ""}`}>
@@ -48,9 +62,9 @@ const MobileProductCard = ({ product, onEdit, onDelete, selectedRows, toggleSele
         <div className="pl-mobile-card__info">
           <span className="pl-mobile-card__name">{product.name}</span>
           <span className="pl-mobile-card__sku">SKU: {product.sku}</span>
-          {hasVariants && (
+          {colors.length > 0 && (
             <div className="pl-color-dots">
-              {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
+              {colors.map((c) => (
                 <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
               ))}
             </div>
@@ -569,9 +583,9 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
 
                             </span>
                             <span className="pl-product-sku">SKU: {product.sku}</span>
-                            {product.has_variants && product.variants?.length > 0 && (
+                            {getProductColors(product).length > 0 && (
                               <div className="pl-color-dots">
-                                {[...new Set(product.variants.map(v => v.color).filter(Boolean))].map((c) => (
+                                {getProductColors(product).map((c) => (
                                   <span key={c} className="pl-color-dot" style={{ backgroundColor: c }} title={c} />
                                 ))}
                               </div>

@@ -303,7 +303,7 @@ export default function ProductPage({ onBack }) {
     const fetchProductBase = async () =>{
       const { data, error } = await supabase
         .from("products")
-        .select('price, compare_price, sku, stock, stock_alert, sizes, has_variants')
+        .select('price, compare_price, sku, stock, stock_alert, sizes, colors, has_variants')
         .eq('product_id', productId)
         .single();
 
@@ -335,6 +335,12 @@ export default function ProductPage({ onBack }) {
         if (data.sizes?.length){
             setSize(data.sizes);
             setSelectedSize(data.sizes[0] || "");
+        }
+        const parsedColors = Array.isArray(data.colors)
+          ? data.colors
+          : (typeof data.colors === "string" ? data.colors.split(",").map((s) => s.trim()).filter(Boolean) : []);
+        if (parsedColors.length > 0){
+            setSelectedColor(parsedColors[0]);
         }
       }
     };
@@ -421,14 +427,19 @@ export default function ProductPage({ onBack }) {
 
 
   const availableColorForSize = useMemo(() => {
-    if (!hasVariants) return;
-    return [...new Set(
-      variants
-        .filter(v => !activeSizeValue || v.size === activeSizeValue)
-        .map(v => v.color)
-        .filter(Boolean)
-    )];
-  }, [hasVariants, variants, activeSizeValue]);
+    if (hasVariants) {
+      return [...new Set(
+        variants
+          .filter(v => !activeSizeValue || v.size === activeSizeValue)
+          .map(v => v.color)
+          .filter(Boolean)
+      )];
+    }
+    const rawColors = productPrices?.colors || selectedProduct?.colors;
+    if (Array.isArray(rawColors)) return rawColors.filter(Boolean);
+    if (typeof rawColors === 'string') return rawColors.split(',').map(c => c.trim()).filter(Boolean);
+    return [];
+  }, [hasVariants, variants, activeSizeValue, productPrices, selectedProduct]);
 
   const dynamicThumbs = useMemo(() => {
     let imgs = [];
@@ -704,19 +715,26 @@ export default function ProductPage({ onBack }) {
               </div>
             )}
 
-            {hasVariants && availableColorForSize.length > 0 && (
-              <div className='pp-color-picker'>
-                <h4>Color</h4>
+            {availableColorForSize && availableColorForSize.length > 0 && (
+              <div className='pp-color'>
+                <div className='pp-color-row'>
+                  <h4>Color</h4>
+                </div>
                 <div className='pp-color-buttons'>
                   {availableColorForSize.map((c) => (
                     <button
                       key={c}
                       type='button'
-                      className={`pp-color-swatch${selectedColor === c ? ' pp-color-swatch--selected' : ''}${c === '#FFFFFF' ? ' pp-color-swatch--white' : ''}`}
-                      style={{ backgroundColor: c }}
+                      className={`pp-color-swatch-ring${selectedColor === c ? ' active' : ''}`}
                       onClick={() => setSelectedColor(c)}
                       aria-label={`Select color ${c}`}
-                    />
+                      title={c}
+                    >
+                      <span
+                        className={`pp-color-swatch-circle${c === '#FFFFFF' ? ' pp-color-swatch--white' : ''}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    </button>
                   ))}
                 </div>
               </div>

@@ -108,7 +108,11 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: initialData.colors || [],
+        colors: Array.isArray(initialData.colors)
+          ? initialData.colors
+          : (typeof initialData.colors === "string"
+            ? initialData.colors.split(",").map((s) => s.trim()).filter(Boolean)
+            : []),
         care: initialData.care || "",
       }
       : EMPTY_FORM
@@ -193,7 +197,11 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
         material: initialData.material || "",
         weight: initialData.weight || "",
         sizes: initialData.sizes?.join(", ") || "",
-        colors: initialData.colors || [],
+        colors: Array.isArray(initialData.colors)
+          ? initialData.colors
+          : (typeof initialData.colors === "string"
+            ? initialData.colors.split(",").map((s) => s.trim()).filter(Boolean)
+            : []),
         care: initialData.care || "",
       });
       setImages(initialData.images || []);
@@ -235,14 +243,22 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
   const toggleVis = (i) =>
     setVisibility((v) => v.map((val, idx) => (idx === i ? !val : val)));
 
-  const toggleColor = (hex) =>{
+  const toggleColor = (hex) => {
     setForm((f) => {
-      const exists = f.colors.includes(hex);
+      const currentColors = Array.isArray(f.colors) ? f.colors : [];
+      const exists = currentColors.includes(hex);
       return {
         ...f,
-        colors: exists ? f.colors.filter((c) => c !== hex) : [...f.colors, hex],
+        colors: exists ? currentColors.filter((c) => c !== hex) : [...currentColors, hex],
       };
     });
+  };
+
+  const clearColors = () => {
+    setForm((f) => ({
+      ...f,
+      colors: [],
+    }));
   };
 
   // ── Upload All Images to Supabase ────────────────────────────
@@ -297,7 +313,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       material: form.material,
       weight: parseFloat(form.weight) || null,
       sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
-      colors: initialData.colors || [],
+      colors: form.colors || [],
       care: form.care,
       image_url: urls[0] || null,
       images: urls,
@@ -308,7 +324,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
     try {
       if (isEditing) {
         // Update existing product
-        const data = await productService.updateProduct(initialData.product_id, productData);
+        const productId = initialData?.product_id || initialData?.id;
+        const data = await productService.updateProduct(productId, productData);
         return { data: data[0], error: null };
       } else {
         // Insert new product
@@ -620,18 +637,32 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
           <div className="field">
             <label>Colors</label>
             <div className="ap-color-grid">
-              {COLOR_SWATCHES.map((c) =>(
+              <button
+                type="button"
+                className={`ap-color-swatch ap-color-swatch--none${
+                  !(form.colors && form.colors.length) ? " ap-color-swatch--selected" : ""
+                }`}
+                onClick={clearColors}
+                aria-label="No color (None)"
+                title="No color (None)"
+              >
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="#9CA3AF" strokeWidth="1.5" strokeDasharray="2 2" />
+                  <line x1="4.5" y1="15.5" x2="15.5" y2="4.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+              {COLOR_SWATCHES.map((c) => (
                 <button
                   key={c}
                   type="button"
                   className={`ap-color-swatch${
-                    form.colors.includes(c) ? " ap-color-swatch--selected" : ""
+                    (form.colors || []).includes(c) ? " ap-color-swatch--selected" : ""
                   }${c === "#FFFFFF" ? " ap-color-swatch--white" : ""}`}
                   style={{ backgroundColor: c }}
                   onClick={() => toggleColor(c)}
                   aria-label={`Toggle color ${c}`}
                 >
-                  {form.colors.includes(c) && (
+                  {(form.colors || []).includes(c) && (
                     <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
                       <path
                         d="M1 5L4.2 8.2L11 1"
@@ -644,7 +675,6 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
                   )}
                 </button>
               ))}
-
             </div>
           </div>
           <div className="field">

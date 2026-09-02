@@ -370,6 +370,37 @@
   display: block;
 }
 
+/* Bottom Actions Footer */
+.cmp-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-bottom: 32px;
+}
+
+.cmp-cancel-btn {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cmp-cancel-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.cmp-save-btn--bottom {
+  min-width: 110px;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .cmp-variant-row {
