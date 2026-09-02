@@ -366,7 +366,11 @@ select {
 .wishlist-item-img {
   width: 130px;
   height: 130px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #faf8f5;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   flex-shrink: 0;
 }

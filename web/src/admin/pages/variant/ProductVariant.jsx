@@ -251,6 +251,32 @@ const CreateMultipleProduct = ({
     );
   };
 
+  const handleReorderExistingImages = (variantId, sourceIdx, targetIdx) => {
+    if (sourceIdx === targetIdx) return;
+    setVariants((prev) =>
+      prev.map((v) => {
+        if (v.id !== variantId) return v;
+        const next = [...(v.images || [])];
+        const [moved] = next.splice(sourceIdx, 1);
+        next.splice(targetIdx, 0, moved);
+        return { ...v, images: next };
+      })
+    );
+  };
+
+  const handleReorderMedia = (variantId, sourceIdx, targetIdx) => {
+    if (sourceIdx === targetIdx) return;
+    setVariants((prev) =>
+      prev.map((v) => {
+        if (v.id !== variantId) return v;
+        const next = [...v.media];
+        const [moved] = next.splice(sourceIdx, 1);
+        next.splice(targetIdx, 0, moved);
+        return { ...v, media: next };
+      })
+    );
+  };
+
   const validate = () => {
     const topErrors = {};
     if (!title.trim()) topErrors.title = ["Title Cannot Be Empty"];
@@ -606,7 +632,30 @@ const CreateMultipleProduct = ({
                     onChange={(e) => handleMediaSelect(v.id, e)}
                   />
                   {(v.images || []).map((url, i) => (
-                    <div className="cmp-media-thumb" key={`existing-${v.id}-${i}`}>
+                    <div
+                      className="cmp-media-thumb"
+                      key={`existing-${v.id}-${i}`}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "existing", index: i }));
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        try {
+                          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+                          if (data.type === "existing") {
+                            handleReorderExistingImages(v.id, data.index, i);
+                          }
+                        } catch (err) {}
+                      }}
+                      title="Drag to reorder"
+                      style={{ cursor: "grab" }}
+                    >
                       <img src={url} alt="Variant" />
                       <button
                         type="button"
@@ -619,8 +668,31 @@ const CreateMultipleProduct = ({
                     </div>
                   ))}
 
-                  {v.media.map((m) => (
-                    <div className="cmp-media-thumb" key={m.id}>
+                  {v.media.map((m, i) => (
+                    <div
+                      className="cmp-media-thumb"
+                      key={m.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "new", index: i }));
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        try {
+                          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+                          if (data.type === "new") {
+                            handleReorderMedia(v.id, data.index, i);
+                          }
+                        } catch (err) {}
+                      }}
+                      title="Drag to reorder"
+                      style={{ cursor: "grab" }}
+                    >
                       <img src={m.url} alt="Variant media" />
                       <button
                         type="button"

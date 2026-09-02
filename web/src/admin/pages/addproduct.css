@@ -210,8 +210,38 @@
 /* ── Thumbnails ── */
 .thumbs { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
 .thumb-placeholder { width: 72px; height: 72px; border-radius: 8px; background: #e0e0e0; flex-shrink: 0; }
-.thumb-wrapper { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
-.thumb { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; border: 1px solid #e0e0e0; display: block; }
+.thumb-wrapper {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.thumb-wrapper:active {
+  cursor: grabbing;
+}
+.thumb-wrapper--dragging {
+  opacity: 0.4;
+  transform: scale(0.92);
+}
+.thumb-cover-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  pointer-events: none;
+  letter-spacing: 0.04em;
+  z-index: 1;
+}
+.thumb { width: 72px; height: 72px; border-radius: 8px; object-fit: contain; background: #faf8f5; padding: 2px; box-sizing: border-box; border: 1px solid #e0e0e0; display: block; }
 .thumb-del {
   position: absolute; top: -6px; right: -6px;
   width: 18px; height: 18px; border-radius: 50%;
@@ -317,7 +347,7 @@
 .popup-row span { color: #666; }
 .popup-row strong { color: #333; font-weight: 500; text-align: right; }
 .popup-images { display: flex; gap: 8px; flex-wrap: wrap; }
-.popup-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+.popup-thumb { width: 60px; height: 60px; object-fit: contain; background: #faf8f5; padding: 2px; box-sizing: border-box; border-radius: 8px; border: 1px solid #eee; }
 .popup-timestamp { text-align: center; color: #999; font-size: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
 .popup-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; }
 .btn-ok {

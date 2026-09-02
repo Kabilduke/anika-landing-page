@@ -61,11 +61,11 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
   const [form, setForm] = useState(() =>
     initialData
       ? {
-          name: initialData.name || "",
-          slug: initialData.slug || "",
-          sort_order: initialData.sort_order?.toString() || "",
-          description: initialData.description || "",
-        }
+        name: initialData.name || "",
+        slug: initialData.slug || "",
+        sort_order: initialData.sort_order?.toString() || "",
+        description: initialData.description || "",
+      }
       : EMPTY_FORM
   );
 
@@ -257,7 +257,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       {/* ── Name & Details ── */}
       <div className="ap-card">
         <div className="ap-card-title">Category Details</div>
-        
+
         <div className="ap-field">
           <label>Category Name</label>
           <input
@@ -266,7 +266,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
             onChange={set("name")}
           />
         </div>
-        
+
         <div className="ap-field">
           <label>Description</label>
           <input
@@ -275,7 +275,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
             onChange={set("description")}
           />
         </div>
-        
+
         <div className="ap-row-2">
           <div className="ap-field">
             <label>Display Order</label>
@@ -302,7 +302,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
       {/* ── Category Image ── */}
       <div className="ap-card">
         <div className="ap-card-title">Category Image</div>
-        
+
         <div
           className={`ap-drop-zone ${uploading ? "uploading" : ""}`}
           onDragOver={(e) => e.preventDefault()}
@@ -319,7 +319,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
           </div>
           <div className="ap-drop-hint">SVG, PNG or WEBP • Max 2 MB</div>
         </div>
-        
+
         <input
           ref={fileRef}
           type="file"
@@ -343,7 +343,7 @@ export default function AddCategory({ onBack, onPublish, onSaveDraft, initialDat
           </div>
         )}
       </div>
- 
+
       {/* ── Visibility ── */}
       <div className="ap-card">
         <div className="ap-card-title">Visibility</div>

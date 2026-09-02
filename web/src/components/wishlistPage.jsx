@@ -4,6 +4,7 @@ import "./WishlistPage.css";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import { useStore } from "../hooks/useStore";
+import { getOriginalImageUrl } from "../services/imageUtils";
 
 export default function WishlistPage({ onBack }) {
   const navigate = useNavigate();
@@ -166,7 +167,7 @@ export default function WishlistPage({ onBack }) {
                     onChange={() => toggleSelect(item.id)}
                   />
                   <img
-                    src={item.image}
+                    src={getOriginalImageUrl(item.image)}
                     alt={item.name}
                     className="wishlist-item-img"
                     onClick={() => handleViewProduct(item)}

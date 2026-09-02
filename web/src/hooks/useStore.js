@@ -14,6 +14,23 @@ const parsePrice = (v) => {
   return isNaN(n) ? 0 : n;
 };
 
+const getOriginalImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return url;
+  let clean = url.replace('/storage/v1/render/image/public/', '/storage/v1/object/public/');
+  if (clean.includes('?')) {
+    const [baseUrl, query] = clean.split('?');
+    const params = new URLSearchParams(query);
+    params.delete('width');
+    params.delete('height');
+    params.delete('resize');
+    params.delete('quality');
+    params.delete('format');
+    const remaining = params.toString();
+    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+  }
+  return clean;
+};
+
 export const useStore = create((set, get) => ({
   // --- Authentication State ---
   session: null,
@@ -217,7 +234,7 @@ export const useStore = create((set, get) => ({
         return {
           id: p.product_id || p.id,
           productId: p.product_id || p.id,
-          img: firstVariantImage || p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp',
+          img: getOriginalImageUrl(firstVariantImage || p.image_url || (p.images && p.images[0]) || '/src/assets/cart/bangle1.webp'),
           name: p.name,
           desc: p.description,
           price: sellingPrice,

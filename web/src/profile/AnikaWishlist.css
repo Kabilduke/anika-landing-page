@@ -266,12 +266,14 @@ body {
 .aw-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  padding: 6px;
+  box-sizing: border-box;
+  display: block;
 }
 
 .aw-img-wrap:hover .aw-img {
-  transform: scale(1.04);
+  transform: none;
 }
 
 .aw-img-placeholder {

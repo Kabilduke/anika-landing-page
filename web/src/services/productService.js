@@ -202,17 +202,10 @@ export const productService = {
    * @param {string} filePath 
    * @returns {string}
    */
-  getProductImagePublicUrl(filePath, width = 600) {
+  getProductImagePublicUrl(filePath) {
     const { data } = supabase.storage
       .from('product_img')
-      .getPublicUrl(
-        filePath, {
-        transform: {
-          width,
-          quanlity: 75,
-          format: "webp",
-        }
-      });
+      .getPublicUrl(filePath);
     return data.publicUrl;
   },
 

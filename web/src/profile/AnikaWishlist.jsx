@@ -5,6 +5,7 @@ import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaWishlist.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
+import { getOriginalImageUrl } from "../services/imageUtils";
 
 const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 
@@ -155,7 +156,7 @@ export default function AnikaWishlist() {
                     onClick={() => handleViewProduct(item)}
                   >
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="aw-img" />
+                      <img src={getOriginalImageUrl(item.image)} alt={item.name} className="aw-img" />
                     ) : (
                       <div className="aw-img-placeholder">✨</div>
                     )}

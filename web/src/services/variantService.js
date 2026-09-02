@@ -234,9 +234,7 @@ export const variantService = {
       const { error } = await supabase.storage.from('product_img').upload(filePath, item.file);
       if (error) throw error;
 
-      const { data } = supabase.storage.from('product_img').getPublicUrl(filePath, {
-        transform: { width: 1200, height: 1200, resize: 'cover', quality: 80 }
-      });
+      const { data } = supabase.storage.from('product_img').getPublicUrl(filePath);
       urls.push(data.publicUrl);
     }
     return urls;

@@ -8,6 +8,23 @@ const parsePrice = (v) => {
   return isNaN(n) ? 0 : n;
 };
 
+const getOriginalImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return url;
+  let clean = url.replace('/storage/v1/render/image/public/', '/storage/v1/object/public/');
+  if (clean.includes('?')) {
+    const [baseUrl, query] = clean.split('?');
+    const params = new URLSearchParams(query);
+    params.delete('width');
+    params.delete('height');
+    params.delete('resize');
+    params.delete('quality');
+    params.delete('format');
+    const remaining = params.toString();
+    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+  }
+  return clean;
+};
+
 export const wishlistService = {
   /**
    * Retrieves all wishlist items for a user.
@@ -54,7 +71,7 @@ export const wishlistService = {
         originalPrice: originalPrice,
         category: product.categories?.name || '',
         qty: 1,
-        image: image,
+        image: getOriginalImageUrl(image),
         deliveryDate: '2 - 3 Days'
       };
     }).filter(Boolean);

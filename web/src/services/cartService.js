@@ -8,6 +8,23 @@ const parsePrice = (v) => {
   return isNaN(n) ? 0 : n;
 };
 
+const getOriginalImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return url;
+  let clean = url.replace('/storage/v1/render/image/public/', '/storage/v1/object/public/');
+  if (clean.includes('?')) {
+    const [baseUrl, query] = clean.split('?');
+    const params = new URLSearchParams(query);
+    params.delete('width');
+    params.delete('height');
+    params.delete('resize');
+    params.delete('quality');
+    params.delete('format');
+    const remaining = params.toString();
+    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+  }
+  return clean;
+};
+
 export const cartService = {
   /**
    * Retrieves all cart items for a user.
@@ -80,7 +97,7 @@ export const cartService = {
         qty: item.qty || 1,
         size: item.size || null,
         color: item.color || null,
-        image: image,
+        image: getOriginalImageUrl(image),
         deliveryDate: "2 - 3 days"
       };
     });

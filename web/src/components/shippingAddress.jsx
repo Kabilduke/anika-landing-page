@@ -9,6 +9,7 @@ import Navbar from "./SiteHeader";
 import Footer from "./SiteFooter";
 import Toast from "./Toast";
 import LogoImg from "../assets/offers/logo.svg";
+import { getOriginalImageUrl } from "../services/imageUtils";
 
 // Helper to dynamically load the Razorpay script
 const loadRazorpayScript = () => {
@@ -966,7 +967,7 @@ export default function ShippingAddress() {
               {/* Product list */}
               <div className="checkout-items-list">
                 {checkoutItems.map((item, idx) => {
-                  const imgUrl = item.img || item.image || (item.images && item.images[0]) || "";
+                  const imgUrl = getOriginalImageUrl(item.img || item.image || (item.images && item.images[0]) || "");
                   return (
                     <div key={idx} className="checkout-item-row">
                       <div className="checkout-item-img-wrap">

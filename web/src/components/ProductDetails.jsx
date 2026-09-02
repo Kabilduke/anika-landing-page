@@ -36,6 +36,24 @@ import PayPalIcon from '../assets/PaymentPal.webp';
 import GPayIcon from '../assets/PaymentGPay.webp';
 import RazorIcon from '../assets/PaymentRazor.webp';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+export const getOriginalImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  let clean = url.replace("/storage/v1/render/image/public/", "/storage/v1/object/public/");
+  if (clean.includes("?")) {
+    const [baseUrl, query] = clean.split("?");
+    const params = new URLSearchParams(query);
+    params.delete("width");
+    params.delete("height");
+    params.delete("resize");
+    params.delete("quality");
+    params.delete("format");
+    const remaining = params.toString();
+    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
+  }
+  return clean;
+};
+
 // ── Loading Skeleton (Placeholder for better perceived speed) ─────────────────
 const LoadingSkeleton = ({ height = '200px' }) => (
   <div className="pp-skeleton" style={{ height, background: '#f5f5f5', borderRadius: '8px', margin: '16px 0' }}>
@@ -48,7 +66,7 @@ const LoadingSkeleton = ({ height = '200px' }) => (
 const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => {
   const currentIndex = activeThumb === -1 ? 0 : activeThumb;
   const safeIndex = Math.min(currentIndex, thumbs.length - 1);
-  const currentImg = activeThumb === -1 ? displayImage : thumbs[activeThumb].img;
+  const currentImg = getOriginalImageUrl(activeThumb === -1 ? displayImage : thumbs[safeIndex]?.img || displayImage);
   const swiperRef = useRef(null);
 
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -188,7 +206,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
 });
    
 const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClick }) => {
-  const visibleRelated = showAll ? relatedItems : relatedItems.slice(0, 4);
+  const visibleRelated = showAll ? relatedItems.slice(0, 10) : relatedItems.slice(0, 4);
   return (
     <section className="pp-related">
       <h2 className="pp-related-h2">You May Also Like</h2>
@@ -464,7 +482,7 @@ export default function ProductPage({ onBack }) {
     }
     return imgs.map((img, i) => ({
       id: i + 1,
-      img,
+      img: getOriginalImageUrl(img),
       alt: `${displayName} view ${i + 1}`
     }));
   }, [productImages, displayImage, displayName, hasVariants, selectedVariant, variants])

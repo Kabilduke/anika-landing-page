@@ -118,8 +118,14 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       : EMPTY_FORM
   );
 
-  const [images, setImages] = useState(initialData?.images || []);
-  const [rawFiles, setRawFiles] = useState([]);
+  const [imageList, setImageList] = useState(() =>
+    initialData?.images?.map((url, i) => ({
+      id: `img-old-${i}-${url}`,
+      url,
+      file: null,
+    })) || []
+  );
+  const [draggedIndex, setDraggedIndex] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -138,10 +144,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
     const fetchCategories = async () => {
       try {
         const data = await productService.getCategories();
-        const activeCategories = data
-          .filter((cat) => cat.is_active)
-          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-        setCategories(activeCategories || []);
+        setCategories(data || []);
       } catch (err) {
         console.error("Failed to load categories:", err);
       }
@@ -149,32 +152,31 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
     fetchCategories();
   }, []);
 
+  // Fetch subcategories when category changes
   useEffect(() => {
-    if (!form.category_id){
-      setSubcategories([]);
-      return;
-    }
-
     const fetchSubcategories = async () => {
+      if (!form.category_id) {
+        setSubcategories([]);
+        return;
+      }
       setLoadingSubcategories(true);
       try {
-        const data = await productService.getSubCategories(form.category_id);
+        const data = await productService.getSubCategories(parseInt(form.category_id));
         setSubcategories(data || []);
       } catch (err) {
         console.error("Failed to load subcategories:", err);
-        setSubcategories([]);
       } finally {
         setLoadingSubcategories(false);
       }
     };
     fetchSubcategories();
-  }, [form.category_id])
+  }, [form.category_id]);
 
-  const validatePricing = (priceVal, comparePriceVal)=>{
+  const validatePricing = (priceVal, comparePriceVal) => {
     const price = parseFloat(priceVal);
     const comparePrice = parseFloat(comparePriceVal);
 
-    if (!isNaN(price) && !isNaN(comparePrice) && comparePrice > 0 && price >= comparePrice){
+    if (!isNaN(price) && !isNaN(comparePrice) && comparePrice > 0 && price >= comparePrice) {
       return "Price must be lower than MRP (Compare-at Price)";
     }
     return null;
@@ -204,13 +206,17 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
             : []),
         care: initialData.care || "",
       });
-      setImages(initialData.images || []);
-      setRawFiles([]);
+      setImageList(
+        initialData.images?.map((url, i) => ({
+          id: `img-old-${i}-${url}`,
+          url,
+          file: null,
+        })) || []
+      );
       setVisibility([initialData.is_active ?? false, initialData.is_featured ?? false]);
     } else {
       setForm(EMPTY_FORM);
-      setImages([]);
-      setRawFiles([]);
+      setImageList([]);
       setVisibility([false, false]);
     }
   }, [initialData]);
@@ -223,21 +229,55 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
   };
 
   const addFiles = (newFiles) => {
-    const remaining = 6 - images.length;
+    const remaining = 6 - imageList.length;
     if (remaining <= 0) return;
     const filesArray = Array.from(newFiles).slice(0, remaining);
-    const previewUrls = filesArray.map((f) => URL.createObjectURL(f));
-    setImages((prev) => [...prev, ...previewUrls].slice(0, 6));
-    setRawFiles((prev) => [...prev, ...filesArray].slice(0, 6));
+    const newItems = filesArray.map((f, i) => ({
+      id: `img-new-${Date.now()}-${i}`,
+      url: URL.createObjectURL(f),
+      file: f,
+    }));
+    setImageList((prev) => [...prev, ...newItems].slice(0, 6));
   };
 
   const removeImage = (idx) => {
-    setImages((prev) => {
-      const url = prev[idx];
-      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+    setImageList((prev) => {
+      const item = prev[idx];
+      if (item?.url?.startsWith("blob:")) URL.revokeObjectURL(item.url);
       return prev.filter((_, i) => i !== idx);
     });
-    setRawFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ── Drag & Drop to Reorder Thumbnails ─────────────────────────
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index);
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDropThumb = (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+    setImageList((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      return next;
+    });
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
   };
 
   const toggleVis = (i) =>
@@ -263,36 +303,36 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
 
   // ── Upload All Images to Supabase ────────────────────────────
   const uploadAllImages = async () => {
-    if (rawFiles.length === 0) return { urls: images, error: null };
+    if (imageList.length === 0) return { urls: [], error: null };
 
     setUploading(true);
-    const uploadedUrls = [];
-    const remainingOldUrls = images.filter(
-      (_, i) => i < images.length - rawFiles.length
-    );
+    const finalUrls = [];
 
-    for (const file of rawFiles) {
-      const compressed = await compressImage(file);
-      const { url, error } = await uploadProductImage(
-        compressed,
-        form.name || "product"
-      );
+    for (const item of imageList) {
+      if (item.file) {
+        const { url, error } = await uploadProductImage(
+          item.file,
+          form.name || "product"
+        );
 
-      if (error) {
-        setUploading(false);
-        return { urls: [], error };
+        if (error) {
+          setUploading(false);
+          return { urls: [], error };
+        }
+
+        finalUrls.push(url);
+      } else {
+        finalUrls.push(item.url);
       }
-
-      uploadedUrls.push(url);
     }
 
     setUploading(false);
-    return { urls: [...remainingOldUrls, ...uploadedUrls], error: null };
+    return { urls: finalUrls, error: null };
   };
 
   // ── Save Product to Database ─────────────────────────────────
   const saveProduct = async (status) => {
-    console.log("category_id:", form.category_id, "subcategory_id:", form.subcategory_id); 
+    console.log("category_id:", form.category_id, "subcategory_id:", form.subcategory_id);
     const { urls, error: uploadError } = await uploadAllImages();
     if (uploadError) {
       alert("Failed to upload images: " + uploadError.message);
@@ -348,17 +388,17 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
 
   const handleDraft = async () => {
     if (!form.name.trim()) { alert("Product name is required."); return; }
-    if (errors.price) { alert(errors.price); return; } 
+    if (errors.price) { alert(errors.price); return; }
     const result = await saveProduct("Draft");
     if (!result.error && onSaveDraft) onSaveDraft(result.data);
   };
 
-  const handleCategoryChange = (e) =>{
+  const handleCategoryChange = (e) => {
     const newCategoryId = e.target.value;
     setForm((f) => ({ ...f, category_id: newCategoryId, subcategory_id: "" }));
   };
 
-  const handlePriceChange  = (e) =>{
+  const handlePriceChange = (e) => {
     const value = sanitizeInteger(e.target.value);
     setForm((f) => {
       const updated = { ...f, price: value };
@@ -368,7 +408,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
     });
   };
 
-  const handleComparePriceChange = (e) =>{
+  const handleComparePriceChange = (e) => {
     const value = sanitizeInteger(e.target.value);
     setForm((f) => {
       const updated = { ...f, compare_price: value };
@@ -452,16 +492,16 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
               </select>
             ) : loadingSubcategories ? (
               <div className="auto-hint">Loading subcategories…</div>
-            ): subcategories.length > 0 ? (
+            ) : subcategories.length > 0 ? (
               <select value={form.subcategory_id} onChange={set("subcategory_id")}>
                 <option value="">No subcategory</option>
-                {subcategories.map((sub)=>(
+                {subcategories.map((sub) => (
                   <option key={sub.subcategory_id} value={sub.subcategory_id}>
                     {sub.name}
                   </option>
                 ))}
               </select>
-            ):(
+            ) : (
               <div className="auto-hint">No subcategories — listed under category directly.</div>
             )}
           </div>
@@ -507,10 +547,21 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
           onChange={(e) => addFiles(e.target.files)}
         />
         <div className="thumbs">
-          {images.map((src, i) => (
-            <div key={i} className="thumb-wrapper">
-              <img src={src} className="thumb" alt="" />
+          {imageList.map((item, i) => (
+            <div
+              key={item.id || i}
+              className={`thumb-wrapper ${draggedIndex === i ? "thumb-wrapper--dragging" : ""}`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, i)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDropThumb(e, i)}
+              onDragEnd={handleDragEnd}
+              title="Drag to reorder"
+            >
+              <img src={item.url} className="thumb" alt="" />
+              {i === 0 && <span className="thumb-cover-badge">Cover</span>}
               <button
+                type="button"
                 className="thumb-del"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -522,21 +573,22 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
               </button>
             </div>
           ))}
-          {images.length === 0 && <div className="thumb-placeholder" />}
-          {images.length < 6 && !uploading && (
+          {imageList.length === 0 && <div className="thumb-placeholder" />}
+          {imageList.length < 6 && !uploading && (
             <div
               className="add-thumb"
               onClick={(e) => {
                 e.stopPropagation();
                 fileRef.current.click();
               }}
+              title="Add image"
             >
               +
             </div>
           )}
         </div>
         <div className="thumb-hint">
-          First image will be used as thumbnail. Drag to reorder.
+          First image will be used as cover thumbnail. Drag and drop any image to reorder.
         </div>
       </div>
 
@@ -639,9 +691,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
             <div className="ap-color-grid">
               <button
                 type="button"
-                className={`ap-color-swatch ap-color-swatch--none${
-                  !(form.colors && form.colors.length) ? " ap-color-swatch--selected" : ""
-                }`}
+                className={`ap-color-swatch ap-color-swatch--none${!(form.colors && form.colors.length) ? " ap-color-swatch--selected" : ""
+                  }`}
                 onClick={clearColors}
                 aria-label="No color (None)"
                 title="No color (None)"
@@ -655,9 +706,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
                 <button
                   key={c}
                   type="button"
-                  className={`ap-color-swatch${
-                    (form.colors || []).includes(c) ? " ap-color-swatch--selected" : ""
-                  }${c === "#FFFFFF" ? " ap-color-swatch--white" : ""}`}
+                  className={`ap-color-swatch${(form.colors || []).includes(c) ? " ap-color-swatch--selected" : ""
+                    }${c === "#FFFFFF" ? " ap-color-swatch--white" : ""}`}
                   style={{ backgroundColor: c }}
                   onClick={() => toggleColor(c)}
                   aria-label={`Toggle color ${c}`}

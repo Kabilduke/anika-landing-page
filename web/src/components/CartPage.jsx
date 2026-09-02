@@ -5,6 +5,7 @@ import Footer from "./SiteFooter"
 import { useNavigate } from "react-router-dom";
 import WishlistPage from "./wishlistPage";
 import { useStore } from "../hooks/useStore";
+import { getOriginalImageUrl } from "../services/imageUtils";
 
 export default function CartPage() {
   const cartItems = useStore((state) => state.cartItems);
@@ -183,7 +184,7 @@ export default function CartPage() {
                       checked={selectedIds.includes(item.id)}
                       onChange={() => toggleSelect(item.id)}
                     />
-                    <img src={item.image} alt={item.name} className="cart-item-img" />
+                    <img src={getOriginalImageUrl(item.image)} alt={item.name} className="cart-item-img" />
                     <div className="cart-item-info">
                       <p className="cart-item-name">{item.name}</p>
                       <div className="cart-item-pricing">

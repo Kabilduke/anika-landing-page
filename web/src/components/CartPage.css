@@ -260,7 +260,11 @@ input, select { font-family: inherit; }
 .cart-item-img {
   width: 130px;
   height: 130px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #faf8f5;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   flex-shrink: 0;
 }
@@ -353,7 +357,11 @@ input, select { font-family: inherit; }
 .freq-img {
   width: 180px;
   height: 180px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #faf8f5;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
 }
 
@@ -449,7 +457,10 @@ input, select { font-family: inherit; }
 .recent-img {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
+  background: #faf8f5;
+  padding: 6px;
+  box-sizing: border-box;
   display: block;
 }
 
