@@ -570,7 +570,7 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                             onError={(e) => { e.target.src = searchEmpty; }}
                           />
                           <div className="pl-product-details">
-                            <span className="pl-product-name">
+                            <span className="pl-product-name"></span>
                               {product.name}
                               {product.has_variants && product.variants?.length > 0 && (
                                 <button
@@ -581,7 +581,6 @@ const ProductList = ({ onAddProduct, onEditProduct, onDeleteProduct, products = 
                                 </button>
                               )}
 
-                            </span>
                             <span className="pl-product-sku">SKU: {product.sku}</span>
                             {getProductColors(product).length > 0 && (
                               <div className="pl-color-dots">

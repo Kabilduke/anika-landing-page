@@ -5,6 +5,8 @@
   padding: 10px;
   border-radius: 10px;
   overflow: hidden;
+  max-width: 100%; 
+  box-sizing: border-box;
   background: #fff;
   border: 1px solid #efefef;
 }
