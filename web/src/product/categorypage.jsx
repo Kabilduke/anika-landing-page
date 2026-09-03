@@ -5,6 +5,8 @@ import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import Toast from "../components/Toast";
 import { SkeletonProductCard } from "../components/ui/Skeleton";
+import { getOriginalImageUrl } from "../utils/imageUtils";
+import { productService } from "../services/productService";
 import "./categorypage.css";
 
 import { getNavPath } from "../services/categoryRoute";
@@ -13,22 +15,6 @@ const DESKTOP_ITEMS_PER_PAGE = 9;
 const MOBILE_ITEMS_PER_PAGE = 10;
 const EMPTY_PRODUCTS = [];
 
-const getOriginalImageUrl = (url) => {
-  if (!url || typeof url !== "string") return url;
-  let clean = url.replace("/storage/v1/render/image/public/", "/storage/v1/object/public/");
-  if (clean.includes("?")) {
-    const [baseUrl, query] = clean.split("?");
-    const params = new URLSearchParams(query);
-    params.delete("width");
-    params.delete("height");
-    params.delete("resize");
-    params.delete("quality");
-    params.delete("format");
-    const remaining = params.toString();
-    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
-  }
-  return clean;
-};
 
 // ─── Loading Skeleton ─────────────────────────────────────────
 const ProductSkeleton = () => <SkeletonProductCard />;
@@ -552,7 +538,7 @@ export default function CategoryPage({ category }) {
                 {currentItems.map(product => (
                   <article key={product.id} onClick={() => handleProductCardClick(product)} className="grid-product-card">
                     <div className="product-card-image-wrapper">
-                      <img src={getOriginalImageUrl(product.img)} alt={product.name} className="product-card-image-display" loading="lazy" />
+                      <img src={productService.getResizedImageUrl(product.img, 'card')} alt={product.name} className="product-card-image-display" loading="lazy" />
                       <button
                         type="button"
                         onClick={(e) => handleWishlistToggle(e, product)}

@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase';
 
+const IMAGE_SIZES = {
+  card: { width: 400, height: 400 },
+  detail: { width: 800, height: 800 },
+};
+
 export const productService = {
   /**
    * Retrieves all categories.
@@ -46,6 +51,15 @@ export const productService = {
       productCount: c.products?.[0]?.count ?? 0,
       subcategories: subsByParent[c.category_id] || subsByParent[c.id] || []
     }));
+  },
+
+  getResizedImageUrl(url, sizeKey = 'card', quality = 75){
+    if (!url || typeof url !== 'string') return url;
+    let clean = url.replace('/storage/v1/render/image/public/', '/storage/v1/object/public/');
+    if (clean.includes('?')){
+      clean = clean.split('?')[0];
+    }
+    return clean;
   },
 
   /**
@@ -192,7 +206,10 @@ export const productService = {
   async uploadProductImage(filePath, file) {
     const { data, error } = await supabase.storage
       .from('product_img')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '31536000',
+        upsert: false,
+      });
     if (error) throw error;
     return data;
   },
@@ -218,7 +235,10 @@ export const productService = {
   async uploadCategoryImage(filePath, file) {
     const { data, error } = await supabase.storage
       .from('categories_img')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '31536000',
+        upsert: false,
+      });
     if (error) throw error;
     return data;
   },
@@ -228,15 +248,10 @@ export const productService = {
    * @param {string} filePath 
    * @returns {string}
    */
-  getCategoryImagePublicUrl(filePath, width = 400) {
+  getCategoryImagePublicUrl(filePath) {
     const { data } = supabase.storage
       .from('categories_img')
-      .getPublicUrl(filePath, {
-        transform: {
-          width,
-          quality: 75,
-        },
-      });
+      .getPublicUrl(filePath)
     return data.publicUrl;
   },
 
@@ -332,20 +347,18 @@ export const productService = {
   async uploadSubcategoryImage(filePath, file) {
     const { data, error } = await supabase.storage
       .from('subcategories_img')   // create this bucket in Supabase Storage first
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '31536000',
+        upsert: false,
+      });
     if (error) throw error;
     return data;
   },
 
-  getSubcategoryImagePublicUrl(filePath, width = 400) {
+  getSubcategoryImagePublicUrl(filePath) {
     const { data } = supabase.storage
       .from('subcategories_img')
-      .getPublicUrl(filePath, {
-        transform: {
-          width,
-          quality: 75
-        },
-      });
+      .getPublicUrl(filePath)
     return data.publicUrl;
   },
 

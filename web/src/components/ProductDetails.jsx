@@ -5,6 +5,8 @@ import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../lib/supabase';
 import { variantService } from '../services/variantService';
+import { productService } from "../services/productService";
+import { getOriginalImageUrl } from '../utils/imageUtils';
 
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
@@ -36,23 +38,6 @@ import PayPalIcon from '../assets/PaymentPal.webp';
 import GPayIcon from '../assets/PaymentGPay.webp';
 import RazorIcon from '../assets/PaymentRazor.webp';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-export const getOriginalImageUrl = (url) => {
-  if (!url || typeof url !== "string") return url;
-  let clean = url.replace("/storage/v1/render/image/public/", "/storage/v1/object/public/");
-  if (clean.includes("?")) {
-    const [baseUrl, query] = clean.split("?");
-    const params = new URLSearchParams(query);
-    params.delete("width");
-    params.delete("height");
-    params.delete("resize");
-    params.delete("quality");
-    params.delete("format");
-    const remaining = params.toString();
-    clean = remaining ? `${baseUrl}?${remaining}` : baseUrl;
-  }
-  return clean;
-};
 
 // ── Loading Skeleton (Placeholder for better perceived speed) ─────────────────
 const LoadingSkeleton = ({ height = '200px' }) => (
@@ -66,7 +51,7 @@ const LoadingSkeleton = ({ height = '200px' }) => (
 const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displayName, thumbs, discountPct }) => {
   const currentIndex = activeThumb === -1 ? 0 : activeThumb;
   const safeIndex = Math.min(currentIndex, thumbs.length - 1);
-  const currentImg = getOriginalImageUrl(activeThumb === -1 ? displayImage : thumbs[safeIndex]?.img || displayImage);
+  const currentImg = getOriginalImageUrl(activeThumb === -1 ? displayImage : thumbs[safeIndex]?.rawImg || displayImage);
   const swiperRef = useRef(null);
 
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -224,7 +209,7 @@ const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClic
                   {p.badge}
                 </span>
               )}
-              <img src={p.img} alt={p.name} className="pp-rel-img" loading="lazy" decoding="async" />
+              <img src={productService.getResizedImageUrl(p.img, 'card')} alt={p.name} className="pp-rel-img" loading="lazy" decoding="async" />
             </div>
             <div className="pp-rel-info">
               <p className="pp-rel-name">{p.name}</p>
@@ -482,7 +467,8 @@ export default function ProductPage({ onBack }) {
     }
     return imgs.map((img, i) => ({
       id: i + 1,
-      img: getOriginalImageUrl(img),
+      img: productService.getResizedImageUrl(img, 'detail'),
+      rawImg: getOriginalImageUrl(img),
       alt: `${displayName} view ${i + 1}`
     }));
   }, [productImages, displayImage, displayName, hasVariants, selectedVariant, variants])

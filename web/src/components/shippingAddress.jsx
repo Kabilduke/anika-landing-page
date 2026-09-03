@@ -9,7 +9,7 @@ import Navbar from "./SiteHeader";
 import Footer from "./SiteFooter";
 import Toast from "./Toast";
 import LogoImg from "../assets/offers/logo.svg";
-import { getOriginalImageUrl } from "../services/imageUtils";
+import { getOriginalImageUrl } from '../utils/imageUtils';
 
 // Helper to dynamically load the Razorpay script
 const loadRazorpayScript = () => {

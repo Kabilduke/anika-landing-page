@@ -5,7 +5,7 @@ import Footer from "./SiteFooter"
 import { useNavigate } from "react-router-dom";
 import WishlistPage from "./wishlistPage";
 import { useStore } from "../hooks/useStore";
-import { getOriginalImageUrl } from "../services/imageUtils";
+import { getOriginalImageUrl } from '../utils/imageUtils';
 
 export default function CartPage() {
   const cartItems = useStore((state) => state.cartItems);

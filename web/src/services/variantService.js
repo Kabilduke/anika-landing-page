@@ -231,7 +231,10 @@ export const variantService = {
       const fileExt = item.file.name.split('.').pop();
       const fileName = `${productName.replace(/\s+/g, '-').toLowerCase()}-variant-${Date.now()}.${fileExt}`;
       const filePath = `products/variants/${fileName}`;
-      const { error } = await supabase.storage.from('product_img').upload(filePath, item.file);
+      const { error } = await supabase.storage.from('product_img').upload(filePath, item.file, {
+        cacheControl: '31536000',
+        upsert: false,
+      });
       if (error) throw error;
 
       const { data } = supabase.storage.from('product_img').getPublicUrl(filePath);

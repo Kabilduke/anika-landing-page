@@ -5,7 +5,7 @@ import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaWishlist.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
-import { getOriginalImageUrl } from "../services/imageUtils";
+import { getOriginalImageUrl } from '../utils/imageUtils';
 
 const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 

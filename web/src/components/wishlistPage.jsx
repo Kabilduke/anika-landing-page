@@ -4,7 +4,7 @@ import "./WishlistPage.css";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import { useStore } from "../hooks/useStore";
-import { getOriginalImageUrl } from "../services/imageUtils";
+import { getOriginalImageUrl } from '../utils/imageUtils';
 
 export default function WishlistPage({ onBack }) {
   const navigate = useNavigate();
