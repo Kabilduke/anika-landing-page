@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { variantService } from '../services/variantService';
 import { productService } from "../services/productService";
 import { getOriginalImageUrl } from '../utils/imageUtils';
+import { getNavPath } from "../services/categoryRoute";
 
 import './ProductDetails.css';
 import SiteHeader from './SiteHeader';
@@ -240,6 +241,7 @@ export default function ProductPage({ onBack }) {
   // Zustand Store
   const selectedProduct = useStore(state => state.selectedProduct);
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
+  const categories = useStore(state => state.categories);
   const addToCart = useStore(state => state.addToCart);
   const toggleWishlist = useStore(state => state.toggleWishlist);
   const wishlistItems = useStore(state => state.wishlistItems);
@@ -560,7 +562,7 @@ export default function ProductPage({ onBack }) {
     if (link === "Home") {
       navigate("/");
     } else {
-      navigate(`/${link.toLowerCase()}`);
+      navigate(getNavPath(link, categories));
     }
   };
 

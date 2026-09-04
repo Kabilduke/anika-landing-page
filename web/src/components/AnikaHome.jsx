@@ -5,16 +5,21 @@ import HeroMobile from "../assets/hero image mobile.webp";
 import CategorySection from "./CategorySection";
 import SiteHeader from "./SiteHeader";
 
-const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
+import { getNavPath } from "../services/categoryRoute";
+import { useStore } from "../hooks/useStore";
+
+// const NAV_LINKS = ["Home", "Rings", "Earrings", "Bracelets", "Bangles", "Necklaces", "Anklets"];
+
 
 export default function AnikaHome() {
+  const categories = useStore((state) => state.categories);
   const navigate = useNavigate();
 
   const handleNavClick = (link) => {
     if (link === 'Home') {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      navigate(`/${link.toLowerCase()}`);
+      navigate(getNavPath(link, categories));
     }
   };
 
@@ -27,7 +32,7 @@ export default function AnikaHome() {
 
       {/* ── Mobile Category Row  ── */}
       <div className="mobile-top-categories mobile-only">
-        <CategorySection onCategoryClick={(name) => navigate(`/${name.toLowerCase()}`)} />
+        <CategorySection onCategoryClick={(name) => navigate(getNavPath(name, categories))} />
       </div>
 
       {/* ── Hero ── */}

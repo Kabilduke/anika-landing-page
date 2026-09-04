@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AnikaHome from './AnikaHome';
 import './HomePage.css';
 import { useStore } from '../hooks/useStore';
+import { getNavPath } from "../services/categoryRoute";
 
 const ProductSection = lazy(() => import('./ProductSection'));
 const BannerSection = lazy(() => import('./BannerSection'));
@@ -21,6 +22,7 @@ const SectionLoader = () => (
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const categories = useStore(state => state.categories);
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
 
   // Wrap setSelectedProduct to also navigate
@@ -30,7 +32,7 @@ export default function HomePage() {
   };
 
   const handleCategoryClick = (name) => {
-    navigate(`/${name.toLowerCase()}`);
+    navigate(getNavPath(name, categories));
   };
 
   return (

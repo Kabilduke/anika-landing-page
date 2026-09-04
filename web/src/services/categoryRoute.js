@@ -22,6 +22,11 @@ const DEFAULT_CATEGORIES = [
  * @returns {string} the path to navigate to
  */
 export function getNavPath(link, categories = []) {
+  // console.log("========== getNavPath ==========");
+  // console.log("link:", link);
+  // console.log("categories:", categories);
+
+
   if (link === "Home") return "/";
 
   const isDefault = DEFAULT_CATEGORIES.some(
@@ -43,5 +48,7 @@ export function getNavPath(link, categories = []) {
   // Fallback: slugify the name on the fly if no slug field was found,
   // so navigation doesn't silently break even if data is incomplete
   const fallbackSlug = link.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+  // console.log("FALLBACK PATH:", path);
   return `/category/${fallbackSlug}`;
 }
