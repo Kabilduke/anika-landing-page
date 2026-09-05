@@ -45,6 +45,7 @@ import Payment from "./Payment";
 import AdminAccount from "./Adminaccount";
 import DangerZone from "./Dangerzone";
 import Notification from "./Notification";
+import Invoices from "./Invoices";
 
 // ── Icons ───────────────────────────────────────────────────────
 const StatIcon = ({ type }) => {
@@ -107,6 +108,7 @@ const menuItems = [
     ]
   },
   { id: "order", label: "Orders", path: "/admin/orders" },
+  { id: "invoice", label: "Invoices", path: "/admin/invoices" },
   { id: "customer", label: "Customers", path: "/admin/customers" },
   {
     id: "banner", label: "Banner & Content", path: "/admin/banners", children: [
@@ -134,6 +136,15 @@ const sidebarIcons = {
   product: <img src={productIcon} alt="product" className="db__menu-icon-img" />,
   category: <img src={categoryIcon} alt="category" className="db__menu-icon-img" />,
   order: <img src={orderIcon} alt="order" className="db__menu-icon-img" />,
+  invoice: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  ),
   customer: <img src={customerIcon} alt="customer" className="db__menu-icon-img" />,
   banner: <img src={bannerIcon} alt="banner" className="db__menu-icon-img" />,
   analytics: <img src={analyticsIcon} alt="analytics" className="db__menu-icon-img" />,
@@ -142,7 +153,8 @@ const sidebarIcons = {
 
 const HIDE_ADD_PRODUCT_PATHS = [
   "/admin/categories", "/admin/categories/add", "/admin/products/add",
-  "/admin/orders", "/admin/orders/detail", "/admin/customers", "/admin/customers/detail",
+  "/admin/orders", "/admin/orders/detail", "/admin/invoices",
+  "/admin/customers", "/admin/customers/detail",
   "/admin/banners", "/admin/banners/add", "/admin/analytics",
   "/admin/store", "/admin/contact", "/admin/shipping", "/admin/payment",
   "/admin/account", "/admin/notification", "/admin/policies", "/admin/danger"
@@ -1319,6 +1331,9 @@ const Dashboard = () => {
             {/* Orders */}
             <Route path="/orders" element={<AllOrders orders={orders} products={products} loading={adminDataLoading} onViewDetail={handleViewOrderDetail} />} />
             <Route path="/orders/detail" element={<OrderDetails order={selectedOrderObj} onStatusChange={updateOrderStatus} onBack={() => navigate("/admin/orders")} />} />
+
+            {/* Invoices */}
+            <Route path="/invoices" element={<Invoices orders={orders} loading={adminDataLoading} />} />
 
             {/* Customers */}
             <Route path="/customers" element={<AllCustomers customers={customers} loading={adminDataLoading} onViewDetail={handleViewCustomerDetail} />} />

@@ -180,5 +180,37 @@ export const orderService = {
     });
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Marks an order's invoice as printed so it cannot be printed again.
+   * @param {string} orderId
+   * @returns {Promise<any>}
+   */
+  async markInvoicePrinted(orderId) {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ invoice_printed: true })
+      .eq('id', orderId)
+      .select();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Marks multiple orders as printed in a single batch query.
+   * @param {string[]} orderIds
+   * @returns {Promise<any>}
+   */
+  async markInvoicesBulkPrinted(orderIds) {
+    if (!orderIds || orderIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ invoice_printed: true })
+      .in('id', orderIds)
+      .select();
+    if (error) throw error;
+    return data;
   }
 };
+

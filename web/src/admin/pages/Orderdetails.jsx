@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { orderService } from "../../services/orderService";
 import { productService } from "../../services/productService";
 import { useStore } from "../../hooks/useStore";
 import Toast from "../../components/Toast";
+import ThermalInvoice from "../components/ThermalInvoice";
 import "./Orderdetails.css";
 
 const STATUS_CONFIG = {
@@ -43,6 +44,9 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   const [savingNote, setSavingNote] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "" });
   const [productsMap, setProductsMap] = useState({});
+  const [invoicePrinted, setInvoicePrinted] = useState(order?.invoice_printed || false);
+  const [printing, setPrinting] = useState(false);
+  const invoiceRef = useRef(null);
 
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
   const navigate = useNavigate();
@@ -153,6 +157,22 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
       showToast("Failed to save note: " + err.message, "error");
     } finally {
       setSavingNote(false);
+    }
+  };
+
+  const handlePrintInvoice = async () => {
+    if (invoicePrinted) return;
+    try {
+      setPrinting(true);
+      window.print();
+      // Mark as printed in Supabase
+      await orderService.markInvoicePrinted(o.id);
+      setInvoicePrinted(true);
+      showToast("Invoice printed and marked as done!", "success");
+    } catch (err) {
+      showToast("Failed to mark invoice: " + err.message, "error");
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -447,7 +467,37 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
       {/* Footer Actions */}
       <div className="od__footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
         <button className="od__cancel-btn" onClick={onBack} style={{ background: '#f5f5f7', border: '1px solid #e5e5e5', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>Close</button>
+        <button
+          onClick={handlePrintInvoice}
+          disabled={invoicePrinted || printing}
+          style={{
+            backgroundColor: invoicePrinted ? '#d1fae5' : '#1c1c1e',
+            color: invoicePrinted ? '#065f46' : '#fff',
+            border: invoicePrinted ? '1px solid #6ee7b7' : 'none',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            cursor: invoicePrinted ? 'not-allowed' : 'pointer',
+            fontWeight: '600',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            opacity: printing ? 0.7 : 1,
+            transition: 'all 0.2s'
+          }}
+        >
+          {invoicePrinted ? (
+            <><span>✅</span> Invoice Printed</>
+          ) : printing ? (
+            <><span>⏳</span> Printing...</>
+          ) : (
+            <><span>🖨️</span> Print Invoice</>
+          )}
+        </button>
       </div>
+
+      {/* Hidden Thermal Invoice — only visible when printing */}
+      <ThermalInvoice ref={invoiceRef} order={o} address={address} />
       <Toast
         message={toast.message}
         type={toast.type}

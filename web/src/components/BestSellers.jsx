@@ -19,8 +19,18 @@ export default function BestSellers({ onProductClick }) {
 
     const fetchBestSellers = async () => {
       try {
-        // First try fetching featured active products
-        const { data: featuredData, error: featuredErr } = await supabase
+        // 1. Fetch the newest 8 active product IDs that are shown in New Arrivals
+        const { data: newArrivalsData } = await supabase
+          .from('products')
+          .select('product_id')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        const newArrivalIds = (newArrivalsData || []).map((p) => p.product_id).filter(Boolean);
+
+        // 2. Fetch distinct active products for Best Sellers, strictly EXCLUDING New Arrivals
+        let query = supabase
           .from('products')
           .select(`
             product_id,
@@ -35,17 +45,27 @@ export default function BestSellers({ onProductClick }) {
             product_variants(price, compare_price, stock),
             categories(name, slug)
           `)
-          .eq('is_active', true)
-          .eq('is_featured', true)
-          .order('created_at', { ascending: false })
+          .eq('is_active', true);
+
+        if (newArrivalIds.length > 0) {
+          query = query.not('product_id', 'in', `(${newArrivalIds.join(',')})`);
+        }
+
+        // Prioritize featured products or older established classics
+        let { data: distinctData, error: bsError } = await query
+          .order('is_featured', { ascending: false })
+          .order('created_at', { ascending: true })
           .limit(8);
 
-        let finalProducts = featuredData || [];
+        if (bsError) {
+          console.error('Error fetching best sellers:', bsError);
+        }
 
-        // If fewer than 8 featured items, fetch additional active products to complete the 8-item catalog
-        if (finalProducts.length < 8) {
-          const existingIds = finalProducts.map((p) => p.product_id);
-          const { data: moreData } = await supabase
+        let finalProducts = distinctData || [];
+
+        // Fallback only if the catalog has very few products and no other products exist
+        if (finalProducts.length === 0 && newArrivalIds.length > 0) {
+          const { data: fallbackData } = await supabase
             .from('products')
             .select(`
               product_id,
@@ -61,13 +81,10 @@ export default function BestSellers({ onProductClick }) {
               categories(name, slug)
             `)
             .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(16);
+            .order('name', { ascending: true })
+            .limit(8);
 
-          if (moreData) {
-            const additions = moreData.filter((p) => !existingIds.includes(p.product_id));
-            finalProducts = [...finalProducts, ...additions].slice(0, 8);
-          }
+          finalProducts = fallbackData || [];
         }
 
         const mapped = finalProducts.map((p) => {
@@ -143,7 +160,7 @@ export default function BestSellers({ onProductClick }) {
   return (
     <section className="best-sellers-section">
       <div className="best-sellers-header">
-        <span className="best-sellers-eyebrow">Most Loved</span>
+        <span className="best-sellers-eyebrow">Customer Favorites</span>
         <h2 className="best-sellers-title">Best Sellers</h2>
         <p className="best-sellers-subtitle">
           Our most coveted pieces, cherished for their enduring craftsmanship and elegance.

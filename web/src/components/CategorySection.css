@@ -105,9 +105,10 @@
     padding: 9px 10px;
     flex-wrap: nowrap;
     justify-content: flex-start;
+    align-items: flex-start;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    gap: 12px 6px;
+    gap: 16px;
   }
 
   .category-wrapper::-webkit-scrollbar {
@@ -116,7 +117,12 @@
 
   .category-item {
     flex: none;
-    width: 90px;
+    width: 86px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
   }
 
   .category-item img {
@@ -126,7 +132,13 @@
   }
 
   .category-item p {
-    font-size: 13px;
-    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    margin: 0;
   }
 }

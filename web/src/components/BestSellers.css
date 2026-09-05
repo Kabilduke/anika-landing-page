@@ -6,8 +6,11 @@
 .best-sellers-section {
   max-width: 1600px;
   margin: 30px auto 60px;
-  padding: 0 20px;
-  width: 100%;
+  padding: 36px 24px 44px;
+  background: #fdfaf8;
+  border-radius: 20px;
+  border: 1px solid #f6ede8;
+  width: calc(100% - 40px);
   box-sizing: border-box;
 }
 
@@ -218,8 +221,10 @@
 
 @media (max-width: 768px) {
   .best-sellers-section {
-    margin: 25px auto 40px;
-    padding: 0 12px;
+    margin: 20px 10px 30px;
+    padding: 20px 12px 24px;
+    border-radius: 16px;
+    width: calc(100% - 20px);
   }
 
   .best-sellers-header {
