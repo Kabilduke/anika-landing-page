@@ -30,10 +30,10 @@ export default function AnikaHome() {
       <SiteHeader activeLink="Home" onLinkClick={handleNavClick} />
 
 
-      {/* ── Mobile Category Row  ── */}
-      <div className="mobile-top-categories mobile-only">
+      {/* ── Mobile Category Row (moved below hero section in HomePage) ── */}
+      {/* <div className="mobile-top-categories mobile-only">
         <CategorySection onCategoryClick={(name) => navigate(getNavPath(name, categories))} />
-      </div>
+      </div> */}
 
       {/* ── Hero ── */}
       <section className="hero-section">

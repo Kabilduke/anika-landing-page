@@ -3,7 +3,7 @@ import { productService } from "../services/productService";
 import { SkeletonCategories } from "./ui/Skeleton";
 import "./CategorySection.css";
 
-export default function CategorySection({ onCategoryClick }) {
+export default function CategorySection({ onCategoryClick, title = "Category", subtitle = "" }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +25,10 @@ export default function CategorySection({ onCategoryClick }) {
   if (loading) {
     return (
       <section className="category-section">
+        <div className="category-header">
+          <h2 className="category-title">{title}</h2>
+          {subtitle && <p className="category-subtitle">{subtitle}</p>}
+        </div>
         <div className="category-wrapper" style={{ justifyContent: 'center' }}>
           <SkeletonCategories count={6} />
         </div>
@@ -34,6 +38,10 @@ export default function CategorySection({ onCategoryClick }) {
 
   return (
     <section className="category-section">
+      <div className="category-header">
+        <h2 className="category-title">{title}</h2>
+        {subtitle && <p className="category-subtitle">{subtitle}</p>}
+      </div>
       <div className="category-wrapper">
         {categories.map((cat) => (
           <div

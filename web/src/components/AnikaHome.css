@@ -50,7 +50,7 @@ body {
 /* ─── Page ────────────────────────────────────────────────── */
 .page {
   background: #fff;
-  min-height: 100vh;
+  min-height: auto;
   width: 100%;
   overflow-x: hidden;
 }

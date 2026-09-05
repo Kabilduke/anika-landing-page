@@ -8,6 +8,8 @@ import { getNavPath } from "../services/categoryRoute";
 const ProductSection = lazy(() => import('./ProductSection'));
 const BannerSection = lazy(() => import('./BannerSection'));
 const CategorySection = lazy(() => import('./CategorySection'));
+const NewArrivals = lazy(() => import('./NewArrivals'));
+const BestSellers = lazy(() => import('./BestSellers'));
 const CollectionsSection = lazy(() => import('./CollectionsSection'));
 const NecklaceShowcase = lazy(() => import('./NecklaceShowcase'));
 const RealExperience = lazy(() => import('./RealExperience'));
@@ -40,12 +42,18 @@ export default function HomePage() {
       <AnikaHome />
 
       <Suspense fallback={<SectionLoader />}>
-        <div id="shop"><ProductSection onProductClick={handleProductClick} /></div>
-        <BannerSection />
-        <div id="categories" className="desktop-only">
+        <div id="categories">
           <CategorySection onCategoryClick={handleCategoryClick} />
         </div>
-        <CollectionsSection />
+        <div id="new-arrivals">
+          <NewArrivals onProductClick={handleProductClick} />
+        </div>
+        <div id="best-sellers">
+          <BestSellers onProductClick={handleProductClick} />
+        </div>
+        <div id="shop"><ProductSection onProductClick={handleProductClick} /></div>
+        {/* <BannerSection /> */}
+        {/* <CollectionsSection /> */}
         <div id="necklaces"><NecklaceShowcase /></div>
         <RealExperience />
         <div id="offers"><Offers onProductClick={handleProductClick} /></div>
