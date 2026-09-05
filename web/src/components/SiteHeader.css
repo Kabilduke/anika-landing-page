@@ -21,6 +21,11 @@
   transition: all 0.3s ease;
 }
 
+/* Mobile menu hidden on desktop */
+.mobile-menu {
+  display: none;
+}
+
 .header-top-row {
   display: flex;
   align-items: center;
@@ -560,26 +565,31 @@
   }
 
   .mobile-menu {
-    display: block;
-    position: fixed;
-    top: 64px;
-    left: 0;
-    width: 100%;
+    display: block !important;
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
     height: 0;
-    background: #fff;
-    z-index: 999;
+    background: #ffffff !important;
+    z-index: 9999 !important;
     overflow: hidden;
-    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   }
 
   .mobile-menu.open {
-    height: calc(100dvh - 64px);
-    max-height: calc(100vh - 64px);
-    overflow-y: auto;
+    display: block !important;
+    height: calc(100dvh - 64px) !important;
+    max-height: calc(100vh - 64px) !important;
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
     padding-bottom: 80px;
+    background: #ffffff !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .mobile-nav-links {
@@ -670,14 +680,31 @@
     padding: 14px 25px 4px;
   }
 
+  .mobile-menu-socials-wrap {
+    padding: 24px 20px 32px 20px;
+    margin-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+  }
+
+  .mobile-socials-title {
+    font-size: 15px;
+    font-style: italic;
+    font-weight: 600;
+    color: var(--brand-crimson, #C42049);
+    letter-spacing: 0.5px;
+    margin: 14px 0 0 0;
+    font-family: 'Playfair Display', serif;
+  }
+
   .mobile-menu-socials {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    padding: 24px 20px 32px 20px;
-    margin-top: 16px;
-    border-top: 1px solid #f0f0f0;
+    padding: 0;
+    margin: 0;
+    border-top: none;
   }
 
   .mobile-social-btn {

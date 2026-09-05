@@ -477,16 +477,19 @@ export default function SiteHeader({ activeLink = "Home", onLinkClick }) {
           </div>
         )}
 
-        <div className="mobile-menu-socials">
-          <a href="https://www.instagram.com/anikafashionstore.jewellery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="mobile-social-btn mobile-social-btn--ig">
-            <InstagramIcon />
-          </a>
-          <a href="https://wa.me/919363631636" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="mobile-social-btn mobile-social-btn--wa">
-            <WhatsappIcon />
-          </a>
-          <a href="https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="mobile-social-btn mobile-social-btn--fb">
-            <FacebookIcon />
-          </a>
+        <div className="mobile-menu-socials-wrap">
+          <div className="mobile-menu-socials">
+            <a href="https://www.instagram.com/anikafashionstore.jewellery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="mobile-social-btn mobile-social-btn--ig">
+              <InstagramIcon />
+            </a>
+            <a href="https://wa.me/919363631636" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="mobile-social-btn mobile-social-btn--wa">
+              <WhatsappIcon />
+            </a>
+            <a href="https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="mobile-social-btn mobile-social-btn--fb">
+              <FacebookIcon />
+            </a>
+          </div>
+          <p className="mobile-socials-title">Follow us on!</p>
         </div>
       </div>
     </>
