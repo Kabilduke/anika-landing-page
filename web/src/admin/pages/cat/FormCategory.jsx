@@ -3,6 +3,7 @@ import ConfirmDialog from "../dialogs/confirmdialogs";
 import "./FormCategory.css";
 import { useSearchParams } from "react-router-dom";
 import { productService } from "../../../services/productService";
+import { compressImage } from '../../../utils/imageCompression';
 
 
 const ChangeRemoveActions = ({ onChange, onRemove }) => (
@@ -160,7 +161,9 @@ const CreateSubCategory = ({ parentCategory, categories = [], onBack, onDiscard,
       let imageUrl = coverImage?.url && !coverImage?.file ? coverImage.url : null;
 
       if (coverImage?.file) {
-        const filePath = `${Date.now()}-${coverImage.file.name}`;
+        const compressedFile = await compressImage(coverImage.file);
+        const safeName = compressedFile.file.name.replace(/\s+/g, '-');
+        const filePath = `subcategories/${Date.now()}-${safeName}`;
         await productService.uploadSubcategoryImage(filePath, coverImage.file);
         imageUrl = productService.getSubcategoryImagePublicUrl(filePath);
       }

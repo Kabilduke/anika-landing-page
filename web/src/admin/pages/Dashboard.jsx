@@ -962,7 +962,11 @@ const Dashboard = () => {
         setCategories((p) => p.filter((x) => x.id !== id));
       } catch (error) {
         console.error("Error deleting category:", error);
-        alert("Failed to delete category: " + error.message);
+        if (error.code === 'CATEGORY_HAS_SUBCATEGORIES'){
+          alert("This category has subcategories inside it. Please delete or move the subcategories first.");
+        } else {
+          alert("Failed to delete category: " + error.message);
+        }
       }
     }
   };

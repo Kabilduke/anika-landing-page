@@ -1,9 +1,10 @@
 import { supabase } from '../lib/supabase';
+import { compressImage } from '../utils/imageCompression';
 
-const IMAGE_SIZES = {
-  card: { width: 400, height: 400 },
-  detail: { width: 800, height: 800 },
-};
+// const IMAGE_SIZES = {
+//   card: { width: 400, height: 400 },
+//   detail: { width: 800, height: 800 },
+// };
 
 export const productService = {
   /**
@@ -81,11 +82,36 @@ export const productService = {
    * @returns {Promise<void>}
    */
   async deleteProduct(productId) {
+    const { data: existing } = await supabase
+      .from('products')
+      .select('image_url, images, product_variants(images)')
+      .eq('product_id', productId)
+      .single();
+
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('product_id', productId);
     if (error) throw error;
+
+    const r2Base = import.meta.env.VITE_R2_PUBLIC_URL;
+    const allUrls = [
+      ...(existing?.image_url ? [existing.image_url] : []),
+      ...(existing?.images || []),
+      ...(existing?.product_variants || []).flatMap(v => v.images || []),
+    ];
+
+    const r2FilePaths = allUrls
+      .filter(url => url?.includes(r2Base))
+      .map(url => url.replace(`${r2Base}/`, ''));
+
+    for (const filePath of r2FilePaths){
+      try{
+        await this.deleteSubcategoryImageR2(filePath); 
+      } catch (err){
+        console.warn(`Failed to delete image ${filePath} from R2:`, err);
+      }
+    }
   },
 
   /**
@@ -94,11 +120,39 @@ export const productService = {
    * @returns {Promise<void>}
    */
   async deleteCategory(categoryId) {
+    const { data: subs, error: subError } = await supabase
+      .from('subcategories')
+      .select('subcategory_id')
+      .eq('parent_id', categoryId);
+    if (subError) throw subError;
+
+    if(subs && subs.length){
+      const err = new Error('CATEGORY_HAS_SUBCATEGORIES');
+      err.code = 'CATEGORY_HAS_SUBCATEGORIES';
+      throw err;
+    }
+
+    const { data: existing } = await supabase
+      .from('categories')
+      .select('image_url')
+      .eq('category_id', categoryId)
+      .single();
+
     const { error } = await supabase
       .from('categories')
       .delete()
       .eq('category_id', categoryId);
     if (error) throw error;
+
+    const r2Base = import.meta.env.VITE_R2_PUBLIC_URL;
+    if (existing?.image_url?.includes(r2Base)){
+      const filePath = existing.image_url.replace(`${r2Base}/`, '');
+      try {
+        await this.deleteSubcategoryImageR2(filePath);
+      } catch (err){
+        console.warn('Failed to delete category image from R2:', err);
+      }
+    }
   },
 
   /**
@@ -203,13 +257,17 @@ export const productService = {
    * @param {File} file 
    * @returns {Promise<any>}
    */
-  async uploadProductImage(filePath, file) {
-    const { data, error } = await supabase.storage
-      .from('product_img')
-      .upload(filePath, file, {
-        cacheControl: '31536000',
-        upsert: false,
-      });
+  async uploadProductImage(filePath, file, cacheControl = '31536000') {
+    const compressedFile = await compressImage(file, 'detail');
+
+    const formData = new FormData();
+    formData.append('file', compressedFile);
+    formData.append('filePath', filePath);
+    formData.append('cacheControl', cacheControl);
+
+    const { data, error } = await supabase.functions.invoke('upload-image',{
+      body: formData,
+    });
     if (error) throw error;
     return data;
   },
@@ -220,10 +278,7 @@ export const productService = {
    * @returns {string}
    */
   getProductImagePublicUrl(filePath) {
-    const { data } = supabase.storage
-      .from('product_img')
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+    return `${import.meta.env.VITE_R2_PUBLIC_URL}/${filePath}`;
   },
 
   /**
@@ -232,13 +287,17 @@ export const productService = {
    * @param {File} file 
    * @returns {Promise<any>}
    */
-  async uploadCategoryImage(filePath, file) {
-    const { data, error } = await supabase.storage
-      .from('categories_img')
-      .upload(filePath, file, {
-        cacheControl: '31536000',
-        upsert: false,
-      });
+  async uploadCategoryImage(filePath, file, cacheControl = '31536000') {
+    const compressedFile = await compressImage(file, 'card');
+
+    const formData = new FormData();
+    formData.append('file', compressedFile);
+    formData.append('filePath', filePath);
+    formData.append('cacheControl', cacheControl);
+
+    const { data, error } = await supabase.functions.invoke('upload-image', {
+      body: formData,
+    });
     if (error) throw error;
     return data;
   },
@@ -249,10 +308,7 @@ export const productService = {
    * @returns {string}
    */
   getCategoryImagePublicUrl(filePath) {
-    const { data } = supabase.storage
-      .from('categories_img')
-      .getPublicUrl(filePath)
-    return data.publicUrl;
+    return `${import.meta.env.VITE_R2_PUBLIC_URL}/${filePath}`;
   },
 
   /**
@@ -344,22 +400,30 @@ export const productService = {
     return data || [];
   },
 
-  async uploadSubcategoryImage(filePath, file) {
-    const { data, error } = await supabase.storage
-      .from('subcategories_img')   // create this bucket in Supabase Storage first
-      .upload(filePath, file, {
-        cacheControl: '31536000',
-        upsert: false,
-      });
+  async uploadSubcategoryImage(filePath, file, cacheControl = '31536000') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('filePath', filePath);
+    formData.append('cacheControl', cacheControl);
+
+    const { data, error } = await supabase.functions.invoke('upload-image', {
+      body: formData,
+    });
     if (error) throw error;
     return data;
   },
 
+  async deleteSubcategoryImageR2(filePath){
+    const { data, error } = await supabase.functions.invoke('upload-image', {
+      method: 'DELETE',
+      body: { filePath },
+    });
+    if (error) throw error;
+    return data
+  },
+
   getSubcategoryImagePublicUrl(filePath) {
-    const { data } = supabase.storage
-      .from('subcategories_img')
-      .getPublicUrl(filePath)
-    return data.publicUrl;
+    return `${import.meta.env.VITE_R2_PUBLIC_URL}/${filePath}`;
   },
 
   /**
@@ -423,11 +487,26 @@ export const productService = {
    * @returns {Promise<void>}
    */
   async deleteSubcategory(id) {
+    const { data: existing } = await supabase
+      .from("subcategories")
+      .select("image_url")
+      .eq("subcategory_id", id)
+      .single();
+
     const { error } = await supabase
       .from("subcategories")
       .delete()
       .eq("subcategory_id", id);
 
     if (error) throw error;
+
+    if (existing?.image_url?.includes(import.meta.env.VITE_R2_PUBLIC_URL)){
+      const filePath = existing.image_url.replace(`${import.meta.env.VITE_R2_PUBLIC_URL}/`, '');
+      try {
+        await this.deleteSubcategoryImageR2(filePath);
+      } catch (err) {
+        console.warn('Failed to delete subcategory image from R2:', err);
+      }
+    }
   },
 };

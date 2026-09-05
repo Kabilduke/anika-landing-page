@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { compressImage } from '../utils/imageCompression';
 
 // ── SKU generation ──────────────────────────────────────────
 const generateBaseSku = (productName) => {
@@ -228,17 +229,31 @@ export const variantService = {
     if (!mediaItems || mediaItems.length === 0) return [];
     const urls = [];
     for (const item of mediaItems) {
-      const fileExt = item.file.name.split('.').pop();
+      const compressedFile = await compressImage(item.file, 'variant');
+
+      const fileExt = compressedFile.name?.split('.').pop() || 'webp';
       const fileName = `${productName.replace(/\s+/g, '-').toLowerCase()}-variant-${Date.now()}.${fileExt}`;
       const filePath = `products/variants/${fileName}`;
-      const { error } = await supabase.storage.from('product_img').upload(filePath, item.file, {
-        cacheControl: '31536000',
-        upsert: false,
-      });
-      if (error) throw error;
 
-      const { data } = supabase.storage.from('product_img').getPublicUrl(filePath);
+      const formData = new FormData();
+      formData.append('file', item.file);
+      formData.append('filePath', filePath);
+      formData.append('cacheControl', '31536000');
+
+      const { data, error } = await supabase.functions.invoke('upload-image', {
+        body: formData,
+      });
+
+      if (error) throw error;
       urls.push(data.publicUrl);
+      // const { error } = await supabase.storage.from('product_img').upload(filePath, item.file, {
+      //   cacheControl: '31536000',
+      //   upsert: false,
+      // });
+      // if (error) throw error;
+
+      // const { data } = supabase.storage.from('product_img').getPublicUrl(filePath);
+      // urls.push(data.publicUrl);
     }
     return urls;
   },
