@@ -172,12 +172,11 @@ export const orderService = {
    * @returns {Promise<any>}
    */
   async cancelOrder(orderId) {
-    const { data, error } = await supabase.functions.invoke('ekart', {
-      body: {
-        action: "cancel_order",
-        orderId: orderId,
-      }
-    });
+    const { data, error } = await supabase
+    .from('orders')
+    .update({ status: 'Cancelled', delivery_status: 'Cancelled' })
+    .eq('id', orderId)
+    .select();
     if (error) throw error;
     return data;
   },

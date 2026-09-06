@@ -25,22 +25,21 @@ export default function AnikaOrders() {
   const fetchOrders = useStore((s) => s.fetchOrders);
   const setSelectedProduct = useStore((s) => s.setSelectedProduct);
 
-  useEffect(() => {
-    if (location.state?.redirectToEkartUrl) {
-      const timer = setTimeout(() => {
-        window.location.href = location.state.redirectToEkartUrl;
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [location]);
 
   useEffect(() => {
-    productService.getProducts().then((data) =>{
+    if (!rawOrders || rawOrders.length === 0) return;
+    const productIds = new Set();
+    rawOrders.forEach(o => (o.order_items || []) .forEach(i => {
+      if (i.product_id) productIds.add(i.product_id);
+    }));
+    if (productIds.size === 0) return;
+
+    productService.getProductsByIds([...productIds]).then((data) => {
       const map = {};
-      (data || []).forEach((p) => { map[p.name] = p;});
-      setProductsMap(map);
+      (data || []).forEach((p) => { map[p.name] = p; });
+      setProductsMap(map);  
     }).catch((err) => console.error("Error fetching Product:", err));
-  }, []);
+  }, [rawOrders]);
 
   const handleItemClick = (item) => {
     const product = productsMap[item.product_name];

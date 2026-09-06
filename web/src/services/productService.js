@@ -70,7 +70,7 @@ export const productService = {
   async getProducts() {
     const { data, error } = await supabase
       .from('products')
-      .select('*, categories(name), subcategories(name), product_variants(variant_id, price, compare_price, stock, sku, color, size, images)')
+      .select('product_id, name, price, compare_price, stock, sku, image_url, images, is_active, has_variants, category_id, subcategory_id, categories(name), subcategories(name), product_variants(variant_id, price, compare_price, stock, sku, color, size, images)')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
@@ -331,7 +331,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, subcategories(name), product_variants(price, compare_price, stock, images)')
+        .select('product_id, name, price, compare_price, stock, image_url, images, sizes, has_variants, subcategory_id, subcategories(name), product_variants(price, compare_price, stock, images)')
         .eq('category_id', catData.category_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -349,7 +349,7 @@ export const productService = {
     if (!queryData) {
       const { data, error } = await supabase
         .from('products')
-        .select('*, product_variants(price, compare_price, stock, images)')
+        .select('product_id, name, price, compare_price, stock, image_url, images, sizes, has_variants, subcategory_id, subcategories(name), product_variants(price, compare_price, stock, images)')
         .eq('category_id', catData.category_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -376,6 +376,22 @@ export const productService = {
     }
 
     return queryData;
+  },
+
+  /**
+   * Retrieves specific products by their IDs (lean columns only).
+   * @param {Array<string|number>} productIds
+   * @returns {Promise<any[]>}
+   */
+
+  async getProductsByIds(productIds){
+    if (!productIds || productIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('products')
+      .select('product_id, name, price, compare_price, image_url, images, stock, sizes')
+      .in('product_id', productIds);
+    if (error) throw error;
+    return data || [];
   },
 
   /**
@@ -434,7 +450,7 @@ export const productService = {
   async getSubCategories(parentId = null) {
     let query = supabase
       .from("subcategories")
-      .select("*")
+      .select("subcategory_id, name, image_url, parent_id, is_active")
       .order("created_at", { ascending: false });
 
     if (parentId !== null && parentId !== undefined) {

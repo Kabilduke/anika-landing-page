@@ -25,14 +25,16 @@ export default function AnikaAccount() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const sessionLoading = useStore((s) => s.sessionLoading);
 
   useEffect(() =>{
+    if (sessionLoading) return;
     if (!user) {
       navigate("/account/login");
       return;
     }
     fetchOrders(user.id);
-  }, [user]);
+  }, [user, sessionLoading]);
 
   const handleTabClick = (tab) => {
     if (tab === "Profile") navigate("/profile");

@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { RazorpayClient } from "./client.ts";
-import { EkartService } from "../../ekart/src/service.ts";
 import { Product, Order } from "../../_shared/types.ts";
 
 export interface CreateOrderInput {
@@ -42,12 +41,10 @@ export interface VerifyPaymentInput {
 export class RazorpayService {
   private client: RazorpayClient;
   private supabaseAdmin: SupabaseClient;
-  private ekartService: EkartService;
 
   constructor(supabaseAdmin: SupabaseClient) {
     this.client = new RazorpayClient();
     this.supabaseAdmin = supabaseAdmin;
-    this.ekartService = new EkartService(supabaseAdmin);
   }
 
   async createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
@@ -270,21 +267,6 @@ export class RazorpayService {
       throw new Error(`Failed to insert order items: ${itemsInsertError.message}`);
     }
 
-    // 5. Trigger automated shipment booking via Ekart
-    let finalOrder = { ...order };
-    const bookingResult = await this.ekartService.bookShipment(
-      order.id,
-      input.userId,
-      true, // Bypass ownership check as this is system-level fulfillment
-      input.addressId
-    );
-
-    if (bookingResult.success && bookingResult.order) {
-      finalOrder = bookingResult.order;
-    } else {
-      console.error("Ekart automated shipment booking failed during payment verification:", bookingResult.error);
-    }
-
-    return finalOrder;
+    return order;
   }
 }
