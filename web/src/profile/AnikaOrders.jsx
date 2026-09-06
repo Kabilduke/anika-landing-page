@@ -7,6 +7,7 @@ import { getUserInitials } from "../utils/avatarUtils";
 import "./AnikaOrders.css";
 import Navbar from "../components/SiteHeader";
 import Footer from "../components/SiteFooter";
+import ThermalInvoice from "../admin/components/ThermalInvoice";
 
 const TABS = ["Profile", "Orders", "Addresses", "Wishlists", "Account"];
 const PAGE_SIZE = 5;
@@ -16,6 +17,9 @@ export default function AnikaOrders() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [productsMap, setProductsMap] = useState({});
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [invoiceAddress, setInvoiceAddress] = useState(null);
+  const [printingInvoice, setPrintingInvoice] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,6 +64,29 @@ export default function AnikaOrders() {
       setSelectedProduct(formattedProduct);
       navigate("/product");
     }
+  };
+
+  const handleViewInvoice = async (orderSummary) => {
+    const fullOrder = rawOrders.find((o) => o.id === orderSummary.id) || orderSummary;
+    setSelectedInvoiceOrder(fullOrder);
+    setInvoiceAddress(null);
+    if (user?.id) {
+      try {
+        const addresses = await orderService.getAddresses(user.id);
+        const defaultAddr = addresses.find((a) => a.is_default) || addresses[0];
+        setInvoiceAddress(defaultAddr || null);
+      } catch (err) {
+        console.debug("Could not fetch address for invoice:", err);
+      }
+    }
+  };
+
+  const handlePrintUserInvoice = () => {
+    setPrintingInvoice(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setPrintingInvoice(false), 1000);
+    }, 250);
   };
 
   useEffect(() => {
@@ -224,6 +251,25 @@ export default function AnikaOrders() {
                       <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '12px', fontWeight: '500' }}>
                         {order.status}
                       </span>
+                      <button
+                        onClick={() => handleViewInvoice(order)}
+                        title="View and print invoice"
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #d4d4d8',
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          fontSize: '11.5px',
+                          fontWeight: '500',
+                          color: '#333',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span>🧾</span> Invoice
+                      </button>
                     </div>
                   </div>
 
@@ -352,6 +398,69 @@ export default function AnikaOrders() {
           )}
         </div>
       </div>
+
+      {/* Invoice Modal for Customer */}
+      {selectedInvoiceOrder && (
+        <div className="inv__modal-overlay" onClick={() => setSelectedInvoiceOrder(null)}>
+          <div className="inv__modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="inv__modal-header">
+              <div>
+                <h3 className="inv__modal-title">Order Receipt</h3>
+                <p className="inv__modal-subtitle">
+                  Order #{String(selectedInvoiceOrder.id).slice(-8).toUpperCase()}
+                </p>
+              </div>
+              <button
+                className="inv__modal-close"
+                onClick={() => setSelectedInvoiceOrder(null)}
+                aria-label="Close invoice"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="inv__modal-body">
+              <ThermalInvoice
+                order={selectedInvoiceOrder}
+                address={invoiceAddress}
+                isPreview={true}
+              />
+            </div>
+
+            <div className="inv__modal-footer">
+              <button
+                className="inv__modal-close-btn"
+                onClick={() => setSelectedInvoiceOrder(null)}
+              >
+                Close
+              </button>
+              <button
+                className="inv__modal-print-btn"
+                onClick={handlePrintUserInvoice}
+                disabled={printingInvoice}
+              >
+                {printingInvoice ? (
+                  <>
+                    <span className="inv__spin">⏳</span> Printing...
+                  </>
+                ) : (
+                  <>
+                    <span>🖨️</span> Print / Save Receipt
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print container for customer */}
+      {selectedInvoiceOrder && (
+        <div className="thermal-print-area">
+          <ThermalInvoice order={selectedInvoiceOrder} address={invoiceAddress} />
+        </div>
+      )}
+
       <Footer />
     </>
   );

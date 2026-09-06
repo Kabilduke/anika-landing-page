@@ -46,6 +46,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   const [productsMap, setProductsMap] = useState({});
   const [invoicePrinted, setInvoicePrinted] = useState(order?.invoice_printed || false);
   const [printing, setPrinting] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const invoiceRef = useRef(null);
 
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
@@ -161,18 +162,19 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   };
 
   const handlePrintInvoice = async () => {
-    if (invoicePrinted) return;
+    if (printing) return;
     try {
       setPrinting(true);
+      await new Promise((res) => setTimeout(res, 250));
       window.print();
       // Mark as printed in Supabase
       await orderService.markInvoicePrinted(o.id);
       setInvoicePrinted(true);
-      showToast("Invoice printed and marked as done!", "success");
+      showToast("Invoice printed successfully!", "success");
     } catch (err) {
       showToast("Failed to mark invoice: " + err.message, "error");
     } finally {
-      setPrinting(false);
+      setTimeout(() => setPrinting(false), 1000);
     }
   };
 
@@ -468,15 +470,33 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
       <div className="od__footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
         <button className="od__cancel-btn" onClick={onBack} style={{ background: '#f5f5f7', border: '1px solid #e5e5e5', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>Close</button>
         <button
-          onClick={handlePrintInvoice}
-          disabled={invoicePrinted || printing}
+          onClick={() => setShowInvoiceModal(true)}
           style={{
-            backgroundColor: invoicePrinted ? '#d1fae5' : '#1c1c1e',
-            color: invoicePrinted ? '#065f46' : '#fff',
-            border: invoicePrinted ? '1px solid #6ee7b7' : 'none',
+            backgroundColor: '#fff',
+            color: '#1c1c1e',
+            border: '1px solid #d4d4d8',
+            borderRadius: '8px',
+            padding: '10px 18px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>👁️</span> Preview Invoice
+        </button>
+        <button
+          onClick={handlePrintInvoice}
+          disabled={printing}
+          style={{
+            backgroundColor: invoicePrinted ? '#f4f4f5' : '#1c1c1e',
+            color: invoicePrinted ? '#18181b' : '#fff',
+            border: invoicePrinted ? '1px solid #d4d4d8' : 'none',
             borderRadius: '8px',
             padding: '10px 20px',
-            cursor: invoicePrinted ? 'not-allowed' : 'pointer',
+            cursor: printing ? 'not-allowed' : 'pointer',
             fontWeight: '600',
             fontSize: '13px',
             display: 'flex',
@@ -486,18 +506,73 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
             transition: 'all 0.2s'
           }}
         >
-          {invoicePrinted ? (
-            <><span>✅</span> Invoice Printed</>
-          ) : printing ? (
+          {printing ? (
             <><span>⏳</span> Printing...</>
+          ) : invoicePrinted ? (
+            <><span>🖨️</span> Print Again (Printed ✓)</>
           ) : (
             <><span>🖨️</span> Print Invoice</>
           )}
         </button>
       </div>
 
-      {/* Hidden Thermal Invoice — only visible when printing */}
-      <ThermalInvoice ref={invoiceRef} order={o} address={address} />
+      {/* Invoice Preview Modal */}
+      {showInvoiceModal && (
+        <div className="inv__modal-overlay" onClick={() => setShowInvoiceModal(false)}>
+          <div className="inv__modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="inv__modal-header">
+              <div>
+                <h3 className="inv__modal-title">Invoice Preview</h3>
+                <p className="inv__modal-subtitle">
+                  Order #{String(o.id).slice(-8).toUpperCase()}
+                </p>
+              </div>
+              <button
+                className="inv__modal-close"
+                onClick={() => setShowInvoiceModal(false)}
+                aria-label="Close invoice preview"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="inv__modal-body">
+              <ThermalInvoice order={o} address={address} isPreview={true} />
+            </div>
+
+            <div className="inv__modal-footer">
+              <button
+                className="inv__modal-close-btn"
+                onClick={() => setShowInvoiceModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="inv__modal-print-btn"
+                onClick={() => {
+                  handlePrintInvoice();
+                }}
+                disabled={printing}
+              >
+                {printing ? (
+                  <>
+                    <span className="inv__spin">⏳</span> Printing...
+                  </>
+                ) : (
+                  <>
+                    <span>🖨️</span> {invoicePrinted ? "Print Again" : "Print Invoice"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Thermal Invoice container for print */}
+      <div className="thermal-print-area">
+        <ThermalInvoice ref={invoiceRef} order={o} address={address} />
+      </div>
       <Toast
         message={toast.message}
         type={toast.type}

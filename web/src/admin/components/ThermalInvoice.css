@@ -140,39 +140,67 @@
 
 /* ===== THERMAL INVOICE — Print Styles ===== */
 @media print {
-  /* Hide everything on the page */
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html, body {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 1. Hide everything on the page by default */
   body * {
     visibility: hidden !important;
   }
 
-  /* Show only the invoice area */
+  /* 2. Completely suppress screen preview modals and any preview invoice instance */
+  .inv__modal-overlay,
+  .inv__modal-overlay *,
+  .inv__modal-content,
+  .inv__modal-content *,
+  .thermal-invoice--preview,
+  .thermal-invoice--preview * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 3. Show ONLY the dedicated print container and its contents */
   .thermal-print-area,
-  .thermal-print-area *,
-  .thermal-invoice,
-  .thermal-invoice * {
+  .thermal-print-area * {
     visibility: visible !important;
   }
 
   .thermal-print-area {
     display: block !important;
-    position: fixed !important;
+    position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 72mm !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
     margin: 0 !important;
     padding: 0 !important;
-    z-index: 9999999 !important;
+    z-index: 99999999 !important;
     background: #fff !important;
   }
 
-  /* Position invoice for thermal paper */
-  .thermal-invoice {
+  /* 4. Thermal invoice card inside the print area ONLY */
+  .thermal-print-area .thermal-invoice {
     display: block !important;
+    visibility: visible !important;
     position: relative !important;
-    width: 72mm !important; /* 80mm paper - 4mm margin each side */
+    width: 72mm !important; /* 80mm roll with 4mm margin each side */
+    max-width: 72mm !important;
+    margin: 0 auto !important;
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 11px !important;
-    line-height: 1.5 !important;
+    line-height: 1.45 !important;
     color: #000 !important;
     background: #fff !important;
     padding: 4mm 4mm 6mm !important;
@@ -181,18 +209,11 @@
     break-after: page !important;
     border: none !important;
     box-shadow: none !important;
-    margin: 0 !important;
-    max-width: none !important;
   }
 
-  .thermal-invoice:last-child {
+  .thermal-print-area .thermal-invoice:last-child {
     page-break-after: auto !important;
     break-after: auto !important;
-  }
-
-  @page {
-    size: 80mm auto;
-    margin: 0;
   }
 
   /* Header */

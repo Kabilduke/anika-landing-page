@@ -1,9 +1,9 @@
 /* ── Toast Notification ── */
 .toast-container {
   position: fixed;
-  top: 92px;
-  right: 28px;
-  z-index: 10000;
+  top: 72px;
+  right: 24px;
+  z-index: 999999;
   display: flex;
   align-items: center;
   gap: 12px;

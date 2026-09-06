@@ -46,6 +46,10 @@ const Invoices = ({ orders = [], loading = false }) => {
   const [autoPrint, setAutoPrint] = useState(() => {
     return localStorage.getItem("anika_auto_print") !== "false";
   });
+  const [previewOrder, setPreviewOrder] = useState(null);
+  const [previewAddress, setPreviewAddress] = useState(null);
+  const [previewLoadingAddress, setPreviewLoadingAddress] = useState(false);
+  const [printAddresses, setPrintAddresses] = useState({});
 
   const toastTimerRef = useRef(null);
 
@@ -61,6 +65,24 @@ const Invoices = ({ orders = [], loading = false }) => {
   useEffect(() => {
     setLocalOrders(orders);
   }, [orders]);
+
+  // Open invoice preview and fetch customer address if available
+  const handleOpenPreview = async (order) => {
+    setPreviewOrder(order);
+    setPreviewAddress(null);
+    if (order.user_id) {
+      try {
+        setPreviewLoadingAddress(true);
+        const addresses = await orderService.getAddresses(order.user_id);
+        const defaultAddr = addresses.find((a) => a.is_default) || addresses[0];
+        setPreviewAddress(defaultAddr || null);
+      } catch (e) {
+        console.debug("Could not fetch address for preview:", e);
+      } finally {
+        setPreviewLoadingAddress(false);
+      }
+    }
+  };
 
   // Toggle Auto-Print setting
   const handleToggleAutoPrint = () => {
@@ -82,10 +104,27 @@ const Invoices = ({ orders = [], loading = false }) => {
     if (!ordersToPrint || ordersToPrint.length === 0 || isPrinting) return;
     try {
       setIsPrinting(true);
+
+      // Pre-fetch shipping addresses for orders missing them so receipt has full details
+      const addrMap = { ...printAddresses };
+      if (previewOrder && previewAddress) {
+        addrMap[previewOrder.id] = previewAddress;
+      }
+      for (const ord of ordersToPrint) {
+        if (!addrMap[ord.id] && ord.user_id) {
+          try {
+            const addrs = await orderService.getAddresses(ord.user_id);
+            addrMap[ord.id] = addrs.find((a) => a.is_default) || addrs[0] || null;
+          } catch (e) {
+            console.debug("Could not fetch address for print:", e);
+          }
+        }
+      }
+      setPrintAddresses(addrMap);
       setPrintBatch(ordersToPrint);
 
-      // Allow 200ms for React to mount thermal invoices to the DOM
-      await new Promise((res) => setTimeout(res, 200));
+      // Allow 300ms for React to mount thermal invoices to the DOM
+      await new Promise((res) => setTimeout(res, 300));
 
       // Trigger browser print dialog
       window.print();
@@ -99,6 +138,11 @@ const Invoices = ({ orders = [], loading = false }) => {
         prev.map((o) => (ids.includes(o.id) ? { ...o, invoice_printed: true } : o))
       );
 
+      // Update preview order state if currently open
+      setPreviewOrder((prev) =>
+        prev && ids.includes(prev.id) ? { ...prev, invoice_printed: true } : prev
+      );
+
       showToast(
         `✅ Successfully printed ${ids.length} invoice${ids.length > 1 ? "s" : ""}!`,
         "success"
@@ -107,8 +151,11 @@ const Invoices = ({ orders = [], loading = false }) => {
       console.error("Print batch error:", err);
       showToast("Print error: " + err.message, "error");
     } finally {
-      setIsPrinting(false);
-      setPrintBatch([]);
+      // Delay unmounting so asynchronous print dialogs don't capture an empty DOM
+      setTimeout(() => {
+        setIsPrinting(false);
+        setPrintBatch([]);
+      }, 1000);
     }
   };
 
@@ -121,22 +168,49 @@ const Invoices = ({ orders = [], loading = false }) => {
         { event: "INSERT", schema: "public", table: "orders" },
         async (payload) => {
           const newOrder = payload.new;
-          console.log("⚡ [Invoices Realtime] New Order Received:", newOrder);
+          if (!newOrder) return;
+          let enrichedOrder = {
+            ...newOrder,
+            customer: {
+              name: newOrder.customer_name || "Customer",
+              phone: newOrder.customer_phone || newOrder.phone || "",
+            }
+          };
+
+          if (newOrder.user_id) {
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", newOrder.user_id)
+                .single();
+              if (profile) {
+                enrichedOrder.customer = {
+                  id: newOrder.user_id,
+                  name: profile.name || profile.full_name || enrichedOrder.customer.name,
+                  phone: profile.phone || profile.phone_number || profile.mobile || enrichedOrder.customer.phone,
+                  email: profile.email || ""
+                };
+              }
+            } catch (e) {
+              console.debug("Could not enrich profile for new order:", e);
+            }
+          }
 
           // Prepend new order to list if not present
           setLocalOrders((prev) => {
-            if (prev.some((o) => o.id === newOrder.id)) return prev;
-            return [newOrder, ...prev];
+            if (prev.some((o) => o.id === enrichedOrder.id)) return prev;
+            return [enrichedOrder, ...prev];
           });
 
           // If auto-print is enabled and this order is not marked as printed yet
-          if (autoPrint && !newOrder.invoice_printed) {
+          if (autoPrint && !enrichedOrder.invoice_printed) {
             playOrderChime();
-            const orderShortId = String(newOrder.id).slice(-8).toUpperCase();
-            showToast(`🔔 New Order #${orderShortId} placed! Auto-printing invoice...`, "info");
+            const orderShortId = String(enrichedOrder.id).slice(-8).toUpperCase();
+            showToast(`🔔 New Order #${orderShortId} generated! Printing invoice...`, "info");
 
             setTimeout(() => {
-              triggerPrintBatch([newOrder]);
+              triggerPrintBatch([enrichedOrder]);
             }, 300);
           }
         }
@@ -361,7 +435,13 @@ const Invoices = ({ orders = [], loading = false }) => {
                 className={`inv__row ${isPrinted ? "inv__row--printed" : ""}`}
               >
                 <div className="inv__col inv__col--id">
-                  <span className="inv__order-id">{orderShortId}</span>
+                  <span
+                    className="inv__order-id inv__order-id--clickable"
+                    onClick={() => handleOpenPreview(order)}
+                    title="Click to preview invoice"
+                  >
+                    {orderShortId}
+                  </span>
                 </div>
 
                 <div className="inv__col inv__col--customer">
@@ -393,17 +473,28 @@ const Invoices = ({ orders = [], loading = false }) => {
                 </div>
 
                 <div className="inv__col inv__col--action">
-                  {isPrinted ? (
-                    <span className="inv__printed-badge">✅ Printed</span>
-                  ) : (
+                  <div className="inv__action-group">
+                    {isPrinted && (
+                      <span className="inv__printed-tag" title="This invoice has been printed">
+                        ✓ Printed
+                      </span>
+                    )}
                     <button
-                      className="inv__print-btn"
+                      className="inv__preview-btn"
+                      onClick={() => handleOpenPreview(order)}
+                      title="Preview invoice receipt"
+                    >
+                      <span>👁️</span> Preview
+                    </button>
+                    <button
+                      className={`inv__print-btn ${isPrinted ? "inv__print-btn--reprint" : ""}`}
                       onClick={() => triggerPrintBatch([order])}
                       disabled={isPrinting}
+                      title={isPrinted ? "Print invoice again" : "Print invoice"}
                     >
-                      <span>🖨️</span> Print
+                      <span>🖨️</span> {isPrinted ? "Print Again" : "Print"}
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             );
@@ -411,11 +502,76 @@ const Invoices = ({ orders = [], loading = false }) => {
         )}
       </div>
 
+      {/* Invoice Preview Modal */}
+      {previewOrder && (
+        <div className="inv__modal-overlay" onClick={() => setPreviewOrder(null)}>
+          <div className="inv__modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="inv__modal-header">
+              <div>
+                <h3 className="inv__modal-title">Invoice Preview</h3>
+                <p className="inv__modal-subtitle">
+                  Order #{String(previewOrder.id).slice(-8).toUpperCase()}
+                </p>
+              </div>
+              <button
+                className="inv__modal-close"
+                onClick={() => setPreviewOrder(null)}
+                aria-label="Close invoice preview"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="inv__modal-body">
+              {previewLoadingAddress && (
+                <div className="inv__preview-loading">
+                  <span className="inv__spin">⏳</span> Fetching shipping details...
+                </div>
+              )}
+              <ThermalInvoice
+                order={previewOrder}
+                address={previewAddress}
+                isPreview={true}
+              />
+            </div>
+
+            <div className="inv__modal-footer">
+              <button
+                className="inv__modal-close-btn"
+                onClick={() => setPreviewOrder(null)}
+              >
+                Close
+              </button>
+              <button
+                className="inv__modal-print-btn"
+                onClick={() => triggerPrintBatch([previewOrder])}
+                disabled={isPrinting}
+              >
+                {isPrinting ? (
+                  <>
+                    <span className="inv__spin">⏳</span> Printing...
+                  </>
+                ) : (
+                  <>
+                    <span>🖨️</span>{" "}
+                    {previewOrder.invoice_printed ? "Print Again" : "Print Invoice"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hidden container used during printing — supports both single order and batch */}
       {printBatch && printBatch.length > 0 && (
         <div className="thermal-print-area">
           {printBatch.map((orderItem) => (
-            <ThermalInvoice key={orderItem.id} order={orderItem} address={null} />
+            <ThermalInvoice
+              key={orderItem.id}
+              order={orderItem}
+              address={printAddresses[orderItem.id] || (previewOrder?.id === orderItem.id ? previewAddress : null)}
+            />
           ))}
         </div>
       )}
