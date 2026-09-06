@@ -226,10 +226,7 @@ jobs:
           # Prod Secrets
           PROD_RAZORPAY_KEY_ID: ${{ secrets.PROD_RAZORPAY_KEY_ID }}
           PROD_RAZORPAY_KEY_SECRET: ${{ secrets.PROD_RAZORPAY_KEY_SECRET }}
-          PROD_EKART_BASE_URL: ${{ secrets.PROD_EKART_BASE_URL }}
-          PROD_EKART_CLIENT_ID: ${{ secrets.PROD_EKART_CLIENT_ID }}
-          PROD_EKART_USERNAME: ${{ secrets.PROD_EKART_USERNAME }}
-          PROD_EKART_PASSWORD: ${{ secrets.PROD_EKART_PASSWORD }}
+          
           # Seller Details Actions Variables
           SELLER_NAME: ${{ vars.SELLER_NAME }}
           SELLER_ADDRESS: ${{ vars.SELLER_ADDRESS }}
@@ -246,16 +243,10 @@ jobs:
             echo "Building production environment secret payload..."
             echo "RAZORPAY_KEY_ID=$PROD_RAZORPAY_KEY_ID" > .env.deploy
             echo "RAZORPAY_KEY_SECRET=$PROD_RAZORPAY_KEY_SECRET" >> .env.deploy
-            echo "EKART_BASE_URL=$PROD_EKART_BASE_URL" >> .env.deploy
-            echo "EKART_CLIENT_ID=$PROD_EKART_CLIENT_ID" >> .env.deploy
-            echo "EKART_USERNAME=$PROD_EKART_USERNAME" >> .env.deploy
-            echo "EKART_PASSWORD=$PROD_EKART_PASSWORD" >> .env.deploy
-            echo "EKART_SANDBOX=false" >> .env.deploy
           else
             echo "Building development/staging environment secret payload..."
             echo "RAZORPAY_KEY_ID=$DEV_RAZORPAY_KEY_ID" > .env.deploy
             echo "RAZORPAY_KEY_SECRET=$DEV_RAZORPAY_KEY_SECRET" >> .env.deploy
-            echo "EKART_SANDBOX=true" >> .env.deploy
           fi
 
           # Append seller details actions variables
