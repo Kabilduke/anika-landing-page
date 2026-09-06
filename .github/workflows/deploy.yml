@@ -226,7 +226,7 @@ jobs:
           # Prod Secrets
           PROD_RAZORPAY_KEY_ID: ${{ secrets.PROD_RAZORPAY_KEY_ID }}
           PROD_RAZORPAY_KEY_SECRET: ${{ secrets.PROD_RAZORPAY_KEY_SECRET }}
-          
+
           # Seller Details Actions Variables
           SELLER_NAME: ${{ vars.SELLER_NAME }}
           SELLER_ADDRESS: ${{ vars.SELLER_ADDRESS }}
@@ -259,11 +259,7 @@ jobs:
           # Apply secrets to the remote Supabase project
           echo "Setting secrets for project ref: $supabase_ref"
           supabase secrets set --project-ref "$supabase_ref" --env-file .env.deploy
-
-          # Deploy functions
-          echo "Deploying ekart function..."
-          supabase functions deploy ekart --project-ref "$supabase_ref"
-
+          
           echo "Deploying razorpay function..."
           supabase functions deploy razorpay --project-ref "$supabase_ref"
 
