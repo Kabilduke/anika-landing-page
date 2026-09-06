@@ -1,13 +1,20 @@
 import React from "react";
 import "./ThermalInvoice.css";
 
-const ThermalInvoice = React.forwardRef(({ order, address }, ref) => {
+const ThermalInvoice = React.forwardRef(({ order, address, isPreview = false }, ref) => {
   if (!order) return null;
   const o = order;
   const orderItems =
     o.order_items && o.order_items.length > 0
       ? o.order_items
-      : [{ product_name: o.item_name || "Item", quantity: o.quantity || 1, price: o.total_price || 0 }];
+      : [{
+          product_name: o.item_name || "Item",
+          quantity: o.quantity || 1,
+          price: o.total_price || 0,
+          size: o.size || null,
+          color: o.color || null,
+          variant: o.variant || null,
+        }];
 
   const total = Number(o.total_price || 0);
   const invoiceDate = o.order_date
@@ -16,7 +23,7 @@ const ThermalInvoice = React.forwardRef(({ order, address }, ref) => {
   const orderId = o.id ? "#" + String(o.id).slice(-8).toUpperCase() : "#UNKNOWN";
 
   return (
-    <div className="thermal-invoice" ref={ref}>
+    <div className={`thermal-invoice ${isPreview ? "thermal-invoice--preview" : ""}`} ref={ref}>
       <div className="ti__header">
         <div className="ti__store-name">ANIKA FASHION</div>
         <div className="ti__tagline">Handcrafted Jewellery</div>
@@ -50,22 +57,37 @@ const ThermalInvoice = React.forwardRef(({ order, address }, ref) => {
       <div className="ti__divider">--------------------------------</div>
       <div className="ti__section-title">ITEMS</div>
       <div className="ti__items">
-        {orderItems.map((item, idx) => (
-          <div key={idx} className="ti__item">
-            <div className="ti__item-name">{item.product_name}</div>
-            {(item.size || item.color) && (
-              <div className="ti__item-variant">
-                {item.size && "Size: " + item.size}
-                {item.size && item.color && " · "}
-                {item.color && "Color: " + item.color}
+        {orderItems.map((item, idx) => {
+          const rawSize = item.size || item.selected_size || item.sizeDimension || (!o.order_items ? o.size : null);
+          const rawVariant = item.variant || item.variant_name || (!o.order_items ? o.variant : null);
+          const rawColor = item.color || item.selected_color || (!o.order_items ? o.color : null);
+
+          const sizeStr = rawSize ? String(rawSize).replace(/^size[:\s-]+/i, "").trim() : null;
+          const variantStr = rawVariant
+            ? String(rawVariant).replace(/^(variant|color)[:\s-]+/i, "").trim()
+            : (rawColor ? String(rawColor).replace(/^(variant|color)[:\s-]+/i, "").trim() : null);
+          const colorStr = rawColor ? String(rawColor).replace(/^(variant|color)[:\s-]+/i, "").trim() : null;
+
+          const showVariant = variantStr && (!sizeStr || variantStr.toLowerCase() !== sizeStr.toLowerCase());
+          const showColor = colorStr && rawVariant && colorStr.toLowerCase() !== variantStr.toLowerCase();
+
+          return (
+            <div key={idx} className="ti__item">
+              <div className="ti__item-name">{item.product_name}</div>
+              <div className="ti__item-price-row">
+                <span className="ti__item-qty-meta">
+                  Qty: {item.quantity || 1}
+                  {sizeStr && ` · Size: ${sizeStr}`}
+                  {showVariant && ` · Variant: ${variantStr}`}
+                  {showColor && ` · Color: ${colorStr}`}
+                </span>
+                <span className="ti__item-price">
+                  Rs.{Number(item.price || 0).toLocaleString("en-IN")}
+                </span>
               </div>
-            )}
-            <div className="ti__item-price-row">
-              <span>Qty: {item.quantity || 1}</span>
-              <span>Rs.{Number(item.price || 0).toLocaleString("en-IN")}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="ti__divider">================================</div>
       <div className="ti__total-row">
