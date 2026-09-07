@@ -1,5 +1,5 @@
 .textParent {
-  width: 100%;
+  width: auto;
   position: relative;
   background-color: #fffcfa;
   display: flex;
@@ -7,9 +7,9 @@
   align-items: center;
   justify-content: center;
   margin: 10px;
-  padding: 10px;
+  padding: 40px 10px;
   box-sizing: border-box;
-  gap: 60px;
+  gap: 50px;
   text-align: center;
   overflow: hidden;
   border-radius: 10px;
@@ -21,22 +21,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 0 40px;
+  gap: 12px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .realExperiences {
   font-family: 'Agraham', serif;
   font-size: 3.5rem;
-  line-height: 1.3;
+  line-height: 1.2;
   color: #000;
   text-align: center;
 
   width: 100%;
   max-width: 1400px;
 
-  margin: 20px auto 0;
-  padding: 20px 30px;
+  margin: 0 auto;
+  padding: 0;
 
   box-sizing: border-box;
   overflow: visible;
@@ -47,6 +49,8 @@
   line-height: 160%;
   font-family: 'Inter', sans-serif;
   color: #606060;
+  text-align: center;
+  margin: 0;
 }
 
 .experience-scroll-container {
@@ -137,8 +141,56 @@
 }
 
 @media (max-width: 768px) {
-  .textParent { padding: 40px 0; gap: 30px; }
-  .realExperiences { font-size: 2.2rem; }
-  .frameChild { height: 320px; width: 220px; border-radius: 10px; }
-  .experience-track { animation-duration: 20s; }
+  .textParent {
+    width: auto;
+    margin: 10px;
+    padding: 30px 10px;
+    gap: 24px;
+    border-radius: 10px;
+  }
+
+  .text {
+    padding: 0 12px;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+
+  .realExperiences {
+    font-size: clamp(1.75rem, 6vw, 2.2rem);
+    line-height: 1.25;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .hearFromOur {
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .frameChild {
+    height: 320px;
+    width: 220px;
+    border-radius: 10px;
+  }
+
+  .experience-track {
+    animation-duration: 20s;
+    gap: 16px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .realExperiences {
+    font-size: clamp(1.5rem, 5.5vw, 1.85rem);
+  }
+
+  .hearFromOur {
+    font-size: 13px;
+  }
 }

@@ -170,7 +170,7 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  
+
 
   // Caching Addresses
   fetchAddresses: async (userId, { force = false } = {}) => {
@@ -619,7 +619,7 @@ export const useStore = create((set, get) => ({
           onConflict: "id",
         }
       );
-    if (error){
+    if (error) {
       console.error("Profile sync failed:", error);
     }
   },

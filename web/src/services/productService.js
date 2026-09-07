@@ -54,10 +54,10 @@ export const productService = {
     }));
   },
 
-  getResizedImageUrl(url, sizeKey = 'card', quality = 75){
+  getResizedImageUrl(url, sizeKey = 'card', quality = 75) {
     if (!url || typeof url !== 'string') return url;
     let clean = url.replace('/storage/v1/render/image/public/', '/storage/v1/object/public/');
-    if (clean.includes('?')){
+    if (clean.includes('?')) {
       clean = clean.split('?')[0];
     }
     return clean;
@@ -105,10 +105,10 @@ export const productService = {
       .filter(url => url?.includes(r2Base))
       .map(url => url.replace(`${r2Base}/`, ''));
 
-    for (const filePath of r2FilePaths){
-      try{
-        await this.deleteSubcategoryImageR2(filePath); 
-      } catch (err){
+    for (const filePath of r2FilePaths) {
+      try {
+        await this.deleteSubcategoryImageR2(filePath);
+      } catch (err) {
         console.warn(`Failed to delete image ${filePath} from R2:`, err);
       }
     }
@@ -126,7 +126,7 @@ export const productService = {
       .eq('parent_id', categoryId);
     if (subError) throw subError;
 
-    if(subs && subs.length){
+    if (subs && subs.length) {
       const err = new Error('CATEGORY_HAS_SUBCATEGORIES');
       err.code = 'CATEGORY_HAS_SUBCATEGORIES';
       throw err;
@@ -145,11 +145,11 @@ export const productService = {
     if (error) throw error;
 
     const r2Base = import.meta.env.VITE_R2_PUBLIC_URL;
-    if (existing?.image_url?.includes(r2Base)){
+    if (existing?.image_url?.includes(r2Base)) {
       const filePath = existing.image_url.replace(`${r2Base}/`, '');
       try {
         await this.deleteSubcategoryImageR2(filePath);
-      } catch (err){
+      } catch (err) {
         console.warn('Failed to delete category image from R2:', err);
       }
     }
@@ -265,7 +265,7 @@ export const productService = {
     formData.append('filePath', filePath);
     formData.append('cacheControl', cacheControl);
 
-    const { data, error } = await supabase.functions.invoke('upload-image',{
+    const { data, error } = await supabase.functions.invoke('upload-image', {
       body: formData,
     });
     if (error) throw error;
@@ -384,7 +384,7 @@ export const productService = {
    * @returns {Promise<any[]>}
    */
 
-  async getProductsByIds(productIds){
+  async getProductsByIds(productIds) {
     if (!productIds || productIds.length === 0) return [];
     const { data, error } = await supabase
       .from('products')
@@ -429,7 +429,7 @@ export const productService = {
     return data;
   },
 
-  async deleteSubcategoryImageR2(filePath){
+  async deleteSubcategoryImageR2(filePath) {
     const { data, error } = await supabase.functions.invoke('upload-image', {
       method: 'DELETE',
       body: { filePath },
@@ -516,7 +516,7 @@ export const productService = {
 
     if (error) throw error;
 
-    if (existing?.image_url?.includes(import.meta.env.VITE_R2_PUBLIC_URL)){
+    if (existing?.image_url?.includes(import.meta.env.VITE_R2_PUBLIC_URL)) {
       const filePath = existing.image_url.replace(`${import.meta.env.VITE_R2_PUBLIC_URL}/`, '');
       try {
         await this.deleteSubcategoryImageR2(filePath);
