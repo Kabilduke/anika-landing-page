@@ -2,6 +2,9 @@
    ProductPage.css – fully mobile responsive + performance optimized
    Breakpoints: 480px (mobile) | 768px (tablet) | 1024px (laptop)
 ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600&display=swap');
+
 @font-face {
   font-family: 'Agraham';
   src: url('../assets/fonts/Agraham.otf') format('opentype');
@@ -304,9 +307,9 @@ button {
 
 .pp-title {
   /* font-family: var(--serif); */
-  font-family: 'Agraham', Georgia, serif;
-  font-size: 22px;
-  font-weight: 500;
+  font-family: 'Bodoni Moda', serif;
+  font-size: 38px;
+  font-weight: 800;
   line-height: 1.5;
   letter-spacing: 0px;
   color: var(--text);
@@ -1369,7 +1372,7 @@ button {
 
   /* Product info */
   .pp-title {
-    font-size: 22px;
+    font-size: 30px;
     line-height: 1.5;
   }
 
@@ -1634,7 +1637,7 @@ button {
   }
 
   .pp-title {
-    font-size: 19px;
+    font-size: 26px;
     margin-bottom: 8px;
     line-height: 1.5;
   }
