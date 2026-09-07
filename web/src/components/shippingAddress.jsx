@@ -230,10 +230,10 @@ export default function ShippingAddress() {
   const isAddressServiceable = /^\d{6}$/.test(form.pinCode);
   const shippingFee = isAddressServiceable ? 70 : 0;
 
-  const taxes = 0;
+  const gst = Math.round((subtotal - discountAmount) * 0.03);
+  const taxes = gst;
   const platformFee = 0;
   const grandTotal = subtotal - discountAmount + shippingFee + taxes + platformFee;
-  const gst = Math.round((subtotal - discountAmount) - ((subtotal - discountAmount) / 1.03));
 
   const handleCheckoutSubmit = async (e) => {
     if (e) e.preventDefault();
