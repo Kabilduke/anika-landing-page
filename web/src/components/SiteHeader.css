@@ -14,7 +14,12 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: linear-gradient(180deg, #54061D 0%, #C42049 100%);
+  /* background: linear-gradient(180deg, #54061D 0%, #C42049 100%); */
+  /* background: linear-gradient(180deg, #D8B892 0%, #B98A5A 100%) !important; */
+  background: linear-gradient(180deg, #7A1028 0%, #4A0718 100%) !important;
+  /* background: linear-gradient(180deg, #EAD8C2 0%, #C9A27E 100%); */
+  /* background: linear-gradient(180deg, #6E1026 0%, #3B0715 100%) !important; */
+  /* background: linear-gradient(180deg, #72213A 0%, #3F0B1C 100%) !important; */
   color: #fff;
   border-bottom: none;
   width: 100%;
