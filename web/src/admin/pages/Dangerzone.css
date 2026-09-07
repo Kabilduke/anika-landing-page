@@ -63,9 +63,14 @@
   transition: background 0.15s, border-color 0.15s;
 }
 
-.dz__csv-btn:hover {
+.dz__csv-btn:hover:not(:disabled) {
   background: #f5f5f5;
   border-color: #bbb;
+}
+
+.dz__csv-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .dz__backup-date {

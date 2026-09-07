@@ -66,6 +66,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.subcat-card:hover {
+  background: #f7f7f6;
+  border-color: #d4d4d8;
 }
 
 .subcat-card-image-wrap {
@@ -144,6 +151,7 @@
   .subcat-page {
     padding: 20px 16px;
   }
+
   .subcat-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
@@ -154,24 +162,30 @@
   .subcat-page {
     padding: 16px 12px;
   }
+
   .subcat-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
+
   .subcat-card-image-wrap {
     padding: 8px 8px 0 8px;
   }
+
   .subcat-card-body {
     padding: 10px 10px 6px;
   }
+
   .subcat-card-actions {
     padding: 6px 10px 12px;
     gap: 6px;
   }
+
   .subcat-btn {
     padding: 4px 10px;
     font-size: 11px;
   }
+
   .subcat-title {
     font-size: 18px;
   }

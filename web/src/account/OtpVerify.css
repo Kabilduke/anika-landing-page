@@ -110,17 +110,48 @@
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   letter-spacing: 0.04em;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s, opacity 0.2s;
   margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.otp-btn-verify:hover {
+.otp-btn-verify:hover:not(:disabled) {
   background: #a93226;
   transform: translateY(-1px);
 }
 
-.otp-btn-verify:active {
+.otp-btn-verify:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.otp-btn-verify:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.otp-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.otp-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: otp-spin 0.75s linear infinite;
+}
+
+@keyframes otp-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Resend text */
@@ -129,15 +160,29 @@
   color: #777;
 }
 
+.otp-resend-link,
 .otp-resend-text a {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
   color: #1a1a1a;
   font-weight: 500;
   text-decoration: underline;
   cursor: pointer;
+  transition: color 0.2s, opacity 0.2s;
 }
 
+.otp-resend-link:hover:not(:disabled),
 .otp-resend-text a:hover {
   color: #c0392b;
+}
+
+.otp-resend-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: none;
 }
 
 /* ── RESPONSIVE ── */

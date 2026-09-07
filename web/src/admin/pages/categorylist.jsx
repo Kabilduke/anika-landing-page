@@ -47,24 +47,55 @@ const NoResultsSVG = () => (
 
 // ─── Grid Card ────────────────────────────────────────────────────────────────
 const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
+  const [isHovered, setIsHovered] = useState(false);
   // Check categoryImage first, then fall back to images array or legacy image field
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
     <div
       onClick={() => onSelect(cat)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
-        background: "#fff", borderRadius: 14, border: "1px solid #e8e8e8",
+        background: isHovered ? "#f7f7f6" : "#fff",
+        borderRadius: 14,
+        border: isHovered ? "1px solid #d4d4d8" : "1px solid #e8e8e8",
         overflow: "hidden",
+        cursor: "pointer",
+        transition: "background-color 0.15s ease, border-color 0.15s ease",
       }}>
       <div style={{ padding: "10px 10px 0 10px" }}>
-        <div style={{ width: "100%", aspectRatio: "4/3", overflow: "hidden", borderRadius: 8, border: "1px solid #ebebeb" }}>
+        <div style={{
+          width: "100%",
+          aspectRatio: "4/3",
+          overflow: "hidden",
+          borderRadius: 8,
+          border: "1px solid #ebebeb",
+          background: "#fafafa",
+        }}>
           {thumbnail
-            ? <img src={thumbnail} alt={cat.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            ? <img
+              src={thumbnail}
+              alt={cat.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
             : <CheckerPlaceholder />}
         </div>
       </div>
       <div style={{ padding: "12px 14px 14px" }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#1c1c1e",
+          marginBottom: 4,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}>
           {cat.name}
         </div>
         <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
@@ -72,14 +103,41 @@ const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
-            style={{ background: "#eff6ff", color: "#3b82f6", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+            style={{
+              background: "#eff6ff",
+              color: "#3b82f6",
+              border: "none",
+              borderRadius: 6,
+              padding: "5px 14px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              transition: "background 0.15s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#dbeafe"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#eff6ff"; }}
             onClick={(e) => {
               e.stopPropagation();
               onEdit(cat);
             }}
           >Edit</button>
           <button
-            style={{ background: "#fff0f0", color: "#ef4444", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}
+            style={{
+              background: "#fff0f0",
+              color: "#ef4444",
+              border: "none",
+              borderRadius: 6,
+              padding: "5px 14px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              marginLeft: "auto",
+              transition: "background 0.15s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff0f0"; }}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(cat.category_id || cat.id);
@@ -93,14 +151,19 @@ const GridCard = ({ cat, onEdit, onDelete, onSelect }) => {
 
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
 const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcategory }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
     <div
       onClick={() => onOpenSubcategory(cat)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: "flex", alignItems: "flex-start", gap: 12,
         padding: "14px 16px", borderBottom: "1px solid #f5f5f5",
-        background: selected ? "#fafffe" : "#fff",
+        background: selected ? "#fafffe" : isHovered ? "#fbfbfa" : "#fff",
+        cursor: "pointer",
+        transition: "background 0.15s ease",
       }}>
       <input
         type="checkbox"
@@ -155,12 +218,32 @@ const MobileCard = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcatego
 };
 
 // ─── Desktop List Row ──────────────────────────────────────────────────────────
-const ListRow = ({ cat, selected, onSelect, onEdit, onDelete, cols }) => {
+const ListRow = ({ cat, selected, onSelect, onEdit, onDelete, onOpenSubcategory, cols }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const thumbnail = cat.categoryImage || cat.images?.[0] || cat.image || null;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: cols, padding: "14px 20px", borderBottom: "1px solid #f5f5f5", alignItems: "center", gap: 8 }}>
-      <div style={{ color: "#ccc", cursor: "grab", fontSize: 16, userSelect: "none", textAlign: "center" }}>⠿</div>
-      <div style={{ display: "flex", justifyContent: "center" }}>
+    <div
+      onClick={() => onOpenSubcategory && onOpenSubcategory(cat)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        display: "grid", gridTemplateColumns: cols,
+        padding: "14px 20px", borderBottom: "1px solid #f5f5f5",
+        alignItems: "center", gap: 8,
+        background: selected ? "#fafffe" : isHovered ? "#fafaf9" : "#fff",
+        cursor: "pointer",
+        transition: "background 0.15s ease",
+      }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ color: "#ccc", cursor: "grab", fontSize: 16, userSelect: "none", textAlign: "center" }}
+      >
+        ⠿
+      </div>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ display: "flex", justifyContent: "center" }}
+      >
         <input type="checkbox" checked={selected} onChange={onSelect} style={{ width: 15, height: 15, cursor: "pointer" }} />
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -480,16 +563,16 @@ const CategoryList = ({
           {isEmpty
             ? EmptyState()
             : paginated.map((cat) => (
-                <MobileCard
-                  key={cat.id}
-                  cat={cat}
-                  selected={selectedIds.includes(cat.id)}
-                  onSelect={() => toggleOne(cat.id)}
-                  onEdit={onEditCategory}
-                  onDelete={handleDeleteClick}
-                  onOpenSubcategory={onOpenSubcategory}
-                />
-              ))}
+              <MobileCard
+                key={cat.id}
+                cat={cat}
+                selected={selectedIds.includes(cat.id)}
+                onSelect={() => toggleOne(cat.id)}
+                onEdit={onEditCategory}
+                onDelete={handleDeleteClick}
+                onOpenSubcategory={onOpenSubcategory}
+              />
+            ))}
         </>
       ) : (
         <>
@@ -527,6 +610,7 @@ const CategoryList = ({
                 onSelect={() => toggleOne(cat.id)}
                 onEdit={onEditCategory}
                 onDelete={handleDeleteClick}
+                onOpenSubcategory={onOpenSubcategory}
               />
             ))}
         </>

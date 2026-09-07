@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 import { orderService } from "../../services/orderService";
 import { productService } from "../../services/productService";
 import { useStore } from "../../hooks/useStore";
@@ -9,24 +10,19 @@ import "./Orderdetails.css";
 
 const STATUS_CONFIG = {
   Delivered: { bg: "#dcfce7", color: "#16a34a", dot: "#22c55e" },
-  Shipped:   { bg: "#fef9c3", color: "#a16207", dot: "#eab308" },
-  Pending:   { bg: "#dbeafe", color: "#1d4ed8", dot: "#3b82f6" },
+  Shipped: { bg: "#fef9c3", color: "#a16207", dot: "#eab308" },
+  Pending: { bg: "#dbeafe", color: "#1d4ed8", dot: "#3b82f6" },
   Cancelled: { bg: "#fee2e2", color: "#dc2626", dot: "#ef4444" },
-  Returned:  { bg: "#fee2e2", color: "#dc2626", dot: "#ef4444" },
-  Confirmed: { bg: "#f3e8ff", color: "#7c3aed", dot: "#8b5cf6" }
-};
-
-const COMPLETED_MAP = {
-  Cancelled: 1,
-  Returned:  1,
-  Pending:   2,
-  Confirmed: 3,
-  Shipped:   4,
-  Delivered: 5
+  Returned: { bg: "#fee2e2", color: "#dc2626", dot: "#ef4444" },
+  Confirmed: { bg: "#f3e8ff", color: "#7c3aed", dot: "#8b5cf6" },
+  "Refund Completed": { bg: "#ecfdf5", color: "#047857", dot: "#10b981" }
 };
 
 const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.Pending;
+  const normStatus = Object.keys(STATUS_CONFIG).find(
+    k => k.toLowerCase() === (status || "").toLowerCase()
+  );
+  const cfg = STATUS_CONFIG[normStatus] || STATUS_CONFIG[status] || STATUS_CONFIG.Pending;
   return (
     <span className="od__status-badge" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
       <span className="od__status-dot" style={{ backgroundColor: cfg.dot }} />
@@ -36,10 +32,11 @@ const StatusBadge = ({ status }) => {
 };
 
 const OrderDetails = ({ order, onStatusChange, onBack }) => {
+  const [currentOrder, setCurrentOrder] = useState(order || null);
   const [adminNote, setAdminNote] = useState(order?.admin_notes || "");
   const [address, setAddress] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("Pending");
+  const [selectedStatus, setSelectedStatus] = useState(order?.status || "Pending");
   const [updating, setUpdating] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "" });
@@ -51,6 +48,55 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
 
   const setSelectedProduct = useStore(state => state.setSelectedProduct);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (order) {
+      setCurrentOrder(order);
+      if (order.status) {
+        setSelectedStatus(order.status);
+      }
+      if (order.admin_notes !== undefined) {
+        setAdminNote(order.admin_notes || "");
+      }
+      if (order.invoice_printed !== undefined) {
+        setInvoicePrinted(order.invoice_printed);
+      }
+    }
+  }, [order]);
+
+  // Realtime subscription for this order in admin
+  useEffect(() => {
+    const orderId = order?.id;
+    if (!orderId) return;
+
+    const channel = supabase
+      .channel(`admin-order-detail-${orderId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${orderId}`
+        },
+        (payload) => {
+          if (payload?.new) {
+            setCurrentOrder((prev) => ({
+              ...(prev || {}),
+              ...payload.new
+            }));
+            if (payload.new.status) {
+              setSelectedStatus(payload.new.status);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -96,7 +142,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
     setTimeout(() => setToast({ message, type }), 10);
   };
 
-  const o = order || {
+  const o = currentOrder || order || {
     id: "ORD-UNKNOWN",
     customer: { name: "Unknown Customer", email: "N/A", phone: "N/A" },
     order_date: new Date().toISOString(),
@@ -114,8 +160,8 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   }, [o.status]);
 
   useEffect(() => {
-    setAdminNote(order?.admin_notes || "");
-  }, [order?.admin_notes]);
+    setAdminNote(o.admin_notes || "");
+  }, [o.admin_notes]);
 
   useEffect(() => {
     if (o.user_id) {
@@ -136,10 +182,14 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   }, [o.user_id]);
 
   const handleUpdateStatus = async () => {
-    if (!order?.id || !onStatusChange) return;
+    if (!o?.id || !onStatusChange) return;
     try {
       setUpdating(true);
-      await onStatusChange(order.id, selectedStatus);
+      await onStatusChange(o.id, selectedStatus);
+      setCurrentOrder((prev) => ({
+        ...(prev || o),
+        status: selectedStatus
+      }));
       showToast("Order status updated successfully!", "success");
     } catch (err) {
       showToast("Failed to update status: " + err.message, "error");
@@ -149,10 +199,10 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   };
 
   const handleSaveNote = async () => {
-    if (!order?.id) return;
+    if (!o?.id) return;
     try {
       setSavingNote(true);
-      await orderService.updateOrderNote(order.id, adminNote);
+      await orderService.updateOrderNote(o.id, adminNote);
       showToast("Note saved successfully!", "success");
     } catch (err) {
       showToast("Failed to save note: " + err.message, "error");
@@ -190,15 +240,134 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   const uniqueProducts = orderItems.length;
   const totalCount = orderItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
-  const completedSteps = COMPLETED_MAP[o.status] ?? 2;
+  // Dynamic order timeline based strictly on database status (only completed in green, real-time sync)
+  const getTimelineSteps = () => {
+    const rawStatus = (o?.status || "Pending").trim();
+    const s = rawStatus.toLowerCase();
+    const d = (o?.delivery_status || "").trim().toLowerCase();
 
-  const TIMELINE_STEPS = [
-    { label: "Order placed", date: o.order_date ? new Date(o.order_date).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A" },
-    { label: "Payment confirmed", date: o.payment === "Paid" ? "Confirmed" : "COD (Upon delivery)" },
-    { label: "Order confirmed", date: completedSteps >= 3 ? "Confirmed" : "Pending" },
-    { label: "Shipped", date: completedSteps >= 4 ? "Shipped" : "Pending" },
-    { label: "Delivered", date: completedSteps >= 5 ? "Delivered" : "Pending" },
-  ];
+    const orderPlacedDate = o.order_date
+      ? new Date(o.order_date).toLocaleString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      : "Recently placed";
+
+    const isCod = (o.payment || "").toString().toUpperCase() !== "PAID" &&
+      !o.payment_id &&
+      !o.razorpay_payment_id;
+
+    if (s === "refund completed") {
+      return [
+        {
+          label: "Order placed",
+          date: orderPlacedDate,
+          done: true,
+          isCancelled: false
+        },
+        {
+          label: "Order cancelled",
+          date: "Order Cancelled",
+          done: true,
+          isCancelled: false
+        },
+        {
+          label: "Refund completed",
+          date: "Refund Processed to Source",
+          done: true,
+          isCancelled: false
+        }
+      ];
+    }
+
+    if (s === "cancelled") {
+      const steps = [
+        {
+          label: "Order placed",
+          date: orderPlacedDate,
+          done: true,
+          isCancelled: false
+        },
+        {
+          label: "Order cancelled",
+          date: "Order Cancelled",
+          done: false,
+          isCancelled: true
+        }
+      ];
+
+      if (!isCod) {
+        steps.push({
+          label: "Refund",
+          date: "3-5 business days",
+          done: false,
+          isCancelled: false
+        });
+      }
+
+      return steps;
+    }
+
+    const isPlacedDone = true;
+    const isConfirmedDone = [
+      "confirmed", "processing", "packed", "shipped", "delivered", "returned"
+    ].includes(s);
+
+    const isShippedDone = [
+      "shipped", "delivered", "returned"
+    ].includes(s) || d.includes("shipped") || d.includes("transit") || d === "booked" || d === "delivered";
+
+    const isDeliveredDone = ["delivered", "returned"].includes(s) || d === "delivered";
+
+    const steps = [
+      {
+        label: "Order placed",
+        date: orderPlacedDate,
+        done: isPlacedDone,
+        isCancelled: false
+      },
+      {
+        label: "Order confirmed",
+        date: isConfirmedDone ? "Confirmed" : "",
+        done: isConfirmedDone,
+        isCancelled: false
+      },
+      {
+        label: "Shipped",
+        date: isShippedDone
+          ? (o.delivery_provider ? `${o.delivery_provider}${o.waybill ? ` (${o.waybill})` : ""}` : "Dispatched")
+          : "",
+        done: isShippedDone,
+        isCancelled: false
+      },
+      {
+        label: "Delivered",
+        date: isDeliveredDone
+          ? (s === "returned" ? "Delivered to Customer" : "Delivered")
+          : (o.estimated_delivery_date
+              ? `Est: ${new Date(o.estimated_delivery_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+              : ""),
+        done: isDeliveredDone,
+        isCancelled: false
+      }
+    ];
+
+    if (s === "returned") {
+      steps.push({
+        label: "Returned",
+        date: "Returned to Origin",
+        done: true,
+        isCancelled: false
+      });
+    }
+
+    return steps;
+  };
+
+  const timelineSteps = getTimelineSteps();
 
   return (
     <div className="od">
@@ -206,7 +375,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
       <div className="od__header">
         <button className="od__back-btn" onClick={onBack}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           Order Details
         </button>
@@ -270,17 +439,17 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
             const isClickable = !!product;
 
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className={`od__item-row ${isClickable ? 'od__item-row--clickable' : ''}`}
                 onClick={() => isClickable && handleItemClick(item)}
               >
                 <div className="od__item-img">
                   {image ? (
-                    <img 
-                      src={image} 
-                      alt={item.product_name} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+                    <img
+                      src={image}
+                      alt={item.product_name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
                     />
                   ) : (
                     "✨"
@@ -368,28 +537,33 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
           </div>
           <div className="od__option-label" style={{ color: '#888', fontSize: '13px', marginBottom: '6px' }}>Change Status to</div>
           <div className="od__status-select-row" style={{ display: 'flex', gap: '10px' }}>
-            <select 
-              value={selectedStatus} 
+            <select
+              value={selectedStatus}
               onChange={e => setSelectedStatus(e.target.value)}
               style={{
-                flex: 1, 
-                height: '34px', 
-                borderRadius: '8px', 
-                border: '1px solid #e5e5e5', 
+                flex: 1,
+                height: '34px',
+                borderRadius: '8px',
+                border: '1px solid #e5e5e5',
                 padding: '0 10px',
                 outline: 'none',
                 background: '#fff'
               }}
             >
-              <option value="Pending">Pending</option>
+              {selectedStatus === "Pending" && (
+                <option value="Pending" disabled hidden>
+                  Pending
+                </option>
+              )}
               <option value="Confirmed">Confirmed</option>
               <option value="Shipped">Shipped</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
               <option value="Returned">Returned</option>
+              <option value="Refund Completed">Refund Completed</option>
             </select>
-            <button 
-              onClick={handleUpdateStatus} 
+            <button
+              onClick={handleUpdateStatus}
               disabled={updating}
               style={{
                 backgroundColor: '#1c1c1e',
@@ -413,17 +587,39 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
       <div className="od__card od__card--section">
         <div className="od__card-title">Order Timeline</div>
         <div className="od__timeline">
-          {TIMELINE_STEPS.map((step, i) => {
-            const done = i < completedSteps;
-            const lineActive = i < completedSteps - 1;
+          {timelineSteps.map((step, i) => {
+            const isDone = step.done;
+            const isCancelled = step.isCancelled;
+            const nextStep = timelineSteps[i + 1];
+            const isConnectorDone = isDone && nextStep?.done;
+
             return (
               <div key={i} className="od__tl-step">
-                <div className="od__tl-top">
-                  <div className={`od__tl-circle ${done ? "od__tl-circle--done" : ""}`}>
+                {i < timelineSteps.length - 1 && (
+                  <div className={`od__tl-line ${isConnectorDone ? "od__tl-line--done" : ""}`} />
+                )}
+                <div
+                  className={`od__tl-circle ${isDone ? "od__tl-circle--done" : ""} ${
+                    isCancelled ? "od__tl-circle--cancelled" : ""
+                  }`}
+                >
+                  {isCancelled ? (
+                    <span style={{ fontSize: "14px", fontWeight: "bold" }}>✕</span>
+                  ) : isDone ? (
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
                     <span className="od__tl-num">{String(i + 1).padStart(2, "0")}</span>
-                  </div>
-                  {i < TIMELINE_STEPS.length - 1 && (
-                    <div className={`od__tl-line ${lineActive ? "od__tl-line--done" : ""}`} />
                   )}
                 </div>
                 <div className="od__tl-label">{step.label}</div>

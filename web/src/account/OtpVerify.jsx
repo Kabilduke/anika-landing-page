@@ -7,6 +7,8 @@ import Toast from "../components/Toast"
 
 export default function OtpVerify() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [toast, setToast] = useState({message: "", type: ""});
   const inputRefs = useRef([]);
 
@@ -32,6 +34,8 @@ export default function OtpVerify() {
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "Enter" && !loading) {
+      handleVerify();
     }
   };
 
@@ -46,11 +50,14 @@ export default function OtpVerify() {
   };
 
   const handleVerify = async () => {
+    if (loading) return;
     const code = otp.join("");
     if (code.length < 6) {
       showToast("Please enter all 6 digits.", "error");
       return;
     }
+
+    setLoading(true);
 
     try {
       const data = await authService.verifyOtp(email, code, "email");
@@ -59,10 +66,13 @@ export default function OtpVerify() {
       setTimeout(() => navigate("/profile"), 1200);
     } catch (error) {
       showToast(error.message, "error");
+      setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (resending || loading) return;
+    setResending(true);
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0]?.focus();
 
@@ -71,6 +81,8 @@ export default function OtpVerify() {
       showToast("OTP resent!", "success");
     } catch (error) {
       showToast(error.message, "error");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -102,12 +114,24 @@ export default function OtpVerify() {
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
+                disabled={loading}
               />
             ))}
           </div>
 
-          <button className="otp-btn-verify" onClick={handleVerify}>
-            Verify
+          <button
+            className="otp-btn-verify"
+            onClick={handleVerify}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="otp-btn-loading">
+                <span className="otp-spinner" />
+                Verifying...
+              </span>
+            ) : (
+              "Verify"
+            )}
           </button>
 
           <p className="otp-resend-text">
@@ -115,8 +139,9 @@ export default function OtpVerify() {
             <button 
               className="otp-resend-link"
               onClick={handleResend}
+              disabled={loading || resending}
             >
-              Click Here
+              {resending ? "Resending..." : "Click Here"}
             </button>
           </p>
 

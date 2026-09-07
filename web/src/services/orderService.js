@@ -13,6 +13,29 @@ export const orderService = {
       .eq('user_id', userId)
       .order('order_date', { ascending: false });
     if (error) throw error;
+    if (data && data.length > 0) {
+      try {
+        const orderIds = data.map((o) => o.id);
+        const { data: allItems } = await supabase
+          .from('order_items')
+          .select('*')
+          .in('order_id', orderIds);
+        if (allItems && allItems.length > 0) {
+          const itemsByOrderId = {};
+          allItems.forEach((item) => {
+            if (!itemsByOrderId[item.order_id]) itemsByOrderId[item.order_id] = [];
+            itemsByOrderId[item.order_id].push(item);
+          });
+          data.forEach((o) => {
+            if (itemsByOrderId[o.id]) {
+              o.order_items = itemsByOrderId[o.id];
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Error joining order_items in getOrders:', e);
+      }
+    }
     return data || [];
   },
 
@@ -209,6 +232,34 @@ export const orderService = {
       .in('id', orderIds)
       .select();
     if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Retrieves a single order by ID with details.
+   * @param {string} orderId 
+   * @returns {Promise<any>}
+   */
+  async getOrderById(orderId) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      try {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', orderId);
+        if (items && items.length > 0) {
+          data.order_items = items;
+        }
+      } catch (err) {
+        console.warn('Error fetching order_items for getOrderById:', err);
+      }
+    }
     return data;
   }
 };

@@ -8,6 +8,7 @@ import Login from "./account/JewelryLogin";
 import OtpVerify from "./account/OtpVerify";
 import AnikaProfile from "./profile/AnikaProfile";
 import AnikaOrders from "./profile/AnikaOrders";
+import OrderTracking from "./profile/OrderTracking";
 import AnikaAddresses from "./profile/AnikaAddresses";
 import AnikaWishlist from "./profile/AnikaWishlist";
 import AnikaAccount from "./profile/AnikaAccount";
@@ -106,6 +107,8 @@ function App() {
         <Route path="/payment" element={<Payment />} />
         <Route path="/profile" element={<AnikaProfile />} />
         <Route path="/profile/orders" element={<AnikaOrders />} />
+        <Route path="/profile/orders/track/:orderId" element={<OrderTracking />} />
+        <Route path="/track-order/:orderId" element={<OrderTracking />} />
         <Route path="/profile/addresses" element={<AnikaAddresses />} />
         <Route path="/profile/wishlists" element={<AnikaWishlist />} />
         <Route path="/profile/account" element={<AnikaAccount />} />

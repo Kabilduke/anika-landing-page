@@ -470,15 +470,15 @@ const Invoices = ({ orders = [], loading = false }) => {
                   >
                     {order.status}
                   </span>
+                  {isPrinted && (
+                    <span className="inv__printed-tag" title="This invoice has been printed">
+                      ✓ Printed
+                    </span>
+                  )}
                 </div>
 
                 <div className="inv__col inv__col--action">
                   <div className="inv__action-group">
-                    {isPrinted && (
-                      <span className="inv__printed-tag" title="This invoice has been printed">
-                        ✓ Printed
-                      </span>
-                    )}
                     <button
                       className="inv__preview-btn"
                       onClick={() => handleOpenPreview(order)}

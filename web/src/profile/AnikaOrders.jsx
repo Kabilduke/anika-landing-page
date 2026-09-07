@@ -66,6 +66,13 @@ export default function AnikaOrders() {
     }
   };
 
+  const handleTrackOrder = (order, item) => {
+    const fullOrder = rawOrders.find((o) => o.id === order.id) || order;
+    navigate(`/profile/orders/track/${order.id}`, {
+      state: { order: fullOrder, item }
+    });
+  };
+
   const handleViewInvoice = async (orderSummary) => {
     const fullOrder = rawOrders.find((o) => o.id === orderSummary.id) || orderSummary;
     setSelectedInvoiceOrder(fullOrder);
@@ -240,15 +247,15 @@ export default function AnikaOrders() {
                   }}
                 >
                   {/* Order header details */}
-                  <div className="ao-order-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                    <div>
+                  <div className="ao-order-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span className="ao-order-id" style={{ fontWeight: '600', color: '#111', fontSize: '13px' }}>Order: #{order.id?.slice(-8) || order.id}</span>
-                      <span style={{ color: '#aaa', margin: '0 8px' }}>·</span>
+                      <span style={{ color: '#aaa' }}>·</span>
                       <span className="ao-order-meta" style={{ fontSize: '12.5px', color: '#666' }}>{order.date}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span className="ao-order-price" style={{ fontWeight: '600', color: '#111', fontSize: '13px' }}>{order.price}</span>
-                      <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '12px', fontWeight: '500' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span className="ao-order-price" style={{ fontWeight: '700', color: '#111', fontSize: '13.5px', marginRight: '4px' }}>{order.price}</span>
+                      <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 9px', borderRadius: '12px', fontWeight: '500' }}>
                         {order.status}
                       </span>
                       <button
@@ -258,14 +265,16 @@ export default function AnikaOrders() {
                           background: '#fff',
                           border: '1px solid #d4d4d8',
                           borderRadius: '6px',
-                          padding: '3px 8px',
+                          padding: '4px 10px',
                           fontSize: '11.5px',
                           fontWeight: '500',
                           color: '#333',
                           cursor: 'pointer',
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px'
+                          gap: '5px',
+                          height: '28px',
+                          boxSizing: 'border-box'
                         }}
                       >
                         <span>🧾</span> Invoice
@@ -278,97 +287,67 @@ export default function AnikaOrders() {
                     {orderItems.map((item, itemIdx) => {
                       const product = productsMap[item.product_name];
                       const image = item.image_url || product?.image_url || (product?.images && product.images[0]) || '/src/assets/cart/bangle1.webp';
-                      const isClickable = !!product;
 
                       return (
                         <div 
                           key={itemIdx} 
                           className="ao-order-item-row"
-                          onClick={() => isClickable && handleItemClick(item)}
+                          onClick={() => handleTrackOrder(order, item)}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'space-between',
                             gap: '12px',
-                            padding: '8px',
+                            padding: '10px 14px',
                             borderRadius: '8px',
                             background: '#fafafa',
                             border: '1px solid #f0f0f0',
-                            cursor: isClickable ? 'pointer' : 'default',
-                            transition: 'background-color 0.2s ease',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
                           }}
+                          title="Click to track this order"
                         >
-                          <div className="ao-item-img" style={{ width: '40px', height: '40px', overflow: 'hidden', borderRadius: '6px', background: '#fff', border: '1px solid #ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            {image ? (
-                              <img src={image} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              "✨"
-                            )}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '12.5px', fontWeight: '500', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product_name}</span>
-                              {isClickable && (
-                                <span style={{ fontSize: '10px', color: '#8b0030', marginLeft: '6px', fontWeight: 'normal' }}>(View Product)</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                            <div className="ao-item-img" style={{ width: '46px', height: '46px', overflow: 'hidden', borderRadius: '6px', background: '#fff', border: '1px solid #ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {image ? (
+                                <img src={image} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                "✨"
                               )}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                              Qty: {item.quantity}
-                              {(item.size || item.color) && ` · Size: ${item.size || 'N/A'} · Color: ${item.color || 'N/A'}`}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: '600', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.product_name}
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#666', marginTop: '3px' }}>
+                                Qty: {item.quantity}
+                                {(item.size || item.color) && ` · Size: ${item.size || 'N/A'} · Color: ${item.color || 'N/A'}`}
+                              </div>
                             </div>
                           </div>
-                          <div style={{ fontSize: '12.5px', fontWeight: '600', color: '#111', textAlign: 'right' }}>
-                            {typeof item.price === 'number' ? `₹${item.price.toLocaleString('en-IN')}` : item.price}
+
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#111' }}>
+                              {typeof item.price === 'number' ? `₹${item.price.toLocaleString('en-IN')}` : item.price}
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '11.5px',
+                                color: '#C42049',
+                                fontWeight: '600',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                            >
+                              Track Order →
+                            </span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  {/* Shipping / Delivery Details */}
-                  {order.waybill && (
-                    <div 
-                      className="ao-delivery-details" 
-                      style={{ 
-                        fontSize: '11.5px', 
-                        background: '#fcfcfc', 
-                        padding: '10px 14px', 
-                        borderRadius: '6px', 
-                        border: '1px dashed #e0e0e0', 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '8px'
-                      }}
-                    >
-                      <div>
-                        <span style={{ color: '#777' }}>Delivery by:</span>{' '}
-                        <strong style={{ color: '#111' }}>{order.deliveryProvider || 'Ekart'}</strong>
-                        <span style={{ color: '#aaa', margin: '0 6px' }}>·</span>
-                        <span style={{ color: '#777' }}>Waybill:</span>{' '}
-                        <a 
-                          href={`https://ekartlogistics.com/ekartlogistics-web/shipmenttrack/${order.waybill}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          style={{ color: '#8b0030', textDecoration: 'underline', fontWeight: '500' }}
-                        >
-                          {order.waybill}
-                        </a>
-                      </div>
-                      <div>
-                        {order.estimatedDeliveryDate && (
-                          <>
-                            <span style={{ color: '#777' }}>Est. Delivery:</span>{' '}
-                            <strong style={{ color: '#111' }}>{order.estimatedDeliveryDate}</strong>
-                            <span style={{ color: '#aaa', margin: '0 6px' }}>·</span>
-                          </>
-                        )}
-                        <span style={{ color: '#777' }}>Delivery Status:</span>{' '}
-                        <span style={{ fontWeight: '600', color: order.deliveryStatus === 'Booked' ? '#27ae60' : '#d35400' }}>
-                          {order.deliveryStatus || 'Pending'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+
                   {/* Cancel Order Button */}
                   {(order.status === "Pending" || order.status === "Confirmed") && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>

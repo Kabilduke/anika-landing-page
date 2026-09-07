@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation} from "swiper/modules";
+import { Navigation } from "swiper/modules";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../lib/supabase';
@@ -60,18 +60,18 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
   const [touchStartX, setTouchStartX] = useState(null);
 
   useEffect(() => {
-    if (swiperRef.current){
+    if (swiperRef.current) {
       swiperRef.current.update();
       swiperRef.current.slideTo(0, 0);
     }
   }, [thumbs])
 
   const goToIndex = (i) => {
-    const clamped = Math.max(0, Math.min(thumbs.length-1, i));
+    const clamped = Math.max(0, Math.min(thumbs.length - 1, i));
     setActiveThumb(clamped)
   };
 
-  const handleTouchStart = (e) =>{
+  const handleTouchStart = (e) => {
     setTouchStartX(e.touches[0].clientX);
   };
 
@@ -80,8 +80,8 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX - touchEndX;
     const SWIPE_THRESHOLD = 50;
-    if (Math.abs(diff) > SWIPE_THRESHOLD){
-      if (diff > 0){
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      if (diff > 0) {
         goToIndex(currentIndex + 1);
       } else {
         goToIndex(currentIndex - 1);
@@ -90,8 +90,8 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
     setTouchStartX(null);
   };
 
-  const handleZoomImageClick = (e) =>{
-    if (!isZoomedIn){
+  const handleZoomImageClick = (e) => {
+    if (!isZoomedIn) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -105,7 +105,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
     setIsZoomedIn(false);
   };
 
-  return(
+  return (
     <div className="pp-gallery">
       <div className="pp-main-wrap">
         <div className="pp-image-container-inner"
@@ -114,7 +114,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
         >
           <div className="pp-main-badge">{discountPct > 0 ? `${discountPct}% Off` : ''}
           </div>
-          
+
 
           <button
             className="pp-zoom-btn"
@@ -140,7 +140,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
             spaceBetween={0}
           >
             {thumbs.map((item) => (
-              <SwiperSlide key ={item.id}>
+              <SwiperSlide key={item.id}>
                 <img
                   src={item.img}
                   alt={item.alt}
@@ -149,7 +149,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
               </SwiperSlide>
             ))}
           </Swiper>
-          
+
           {/* <img
             src={currentImg}
             alt={displayName}
@@ -160,7 +160,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
         </div>
       </div>
 
-      {thumbs.length >1 && (
+      {thumbs.length > 1 && (
         <div className="pp-dots" role="tablist" aria-label="Product images">
           {thumbs.map((item, i) => (
             <button
@@ -190,7 +190,7 @@ const ProductGallery = memo(({ activeThumb, setActiveThumb, displayImage, displa
     </div>
   );
 });
-   
+
 const RelatedProducts = memo(({ showAll, setShowAll, relatedItems, onProductClick }) => {
   const visibleRelated = showAll ? relatedItems.slice(0, 10) : relatedItems.slice(0, 4);
   return (
@@ -298,30 +298,30 @@ export default function ProductPage({ onBack }) {
         .select('images, image_url')
         .eq('product_id', productId)
         .single();
-      if (error || !data ) return;
+      if (error || !data) return;
       const imgs = Array.isArray(data.images) && data.images.length > 0
         ? data.images
         : (data.image_url ? [data.image_url] : []);
       setProductImages(imgs);
     };
 
-    const fetchProductBase = async () =>{
+    const fetchProductBase = async () => {
       const { data, error } = await supabase
         .from("products")
         .select('price, compare_price, sku, stock, stock_alert, sizes, colors, has_variants')
         .eq('product_id', productId)
         .single();
 
-      if (error){
+      if (error) {
         console.error("fetchProductBase error:", error.message, error.details);
         return;
       }
-      if(!data) return;
+      if (!data) return;
 
       setHasVariants(!!data.has_variants);
 
-      if (data.has_variants){
-        try{
+      if (data.has_variants) {
+        try {
           const variantRows = await variantService.getVariantsByProductId(productId);
           setVariants(variantRows);
 
@@ -337,15 +337,15 @@ export default function ProductPage({ onBack }) {
         }
       } else {
         setProductPrice(data);
-        if (data.sizes?.length){
-            setSize(data.sizes);
-            setSelectedSize(data.sizes[0] || "");
+        if (data.sizes?.length) {
+          setSize(data.sizes);
+          setSelectedSize(data.sizes[0] || "");
         }
         const parsedColors = Array.isArray(data.colors)
           ? data.colors
           : (typeof data.colors === "string" ? data.colors.split(",").map((s) => s.trim()).filter(Boolean) : []);
-        if (parsedColors.length > 0){
-            setSelectedColor(parsedColors[0]);
+        if (parsedColors.length > 0) {
+          setSelectedColor(parsedColors[0]);
         }
       }
     };
@@ -381,18 +381,18 @@ export default function ProductPage({ onBack }) {
     ) || null;
   }, [hasVariants, variants, activeSizeValue, selectedColor]);
 
-  useEffect(()=> {
+  useEffect(() => {
     if (!hasVariants || variants.length === 0) return;
 
     const colorsForCurrentSize = [...new Set(
       variants.filter(v => !activeSizeValue || v.size === activeSizeValue).map(v => v.color).filter(Boolean)
     )];
-    if (colorsForCurrentSize.length > 0 && !colorsForCurrentSize.includes(selectedColor)){
+    if (colorsForCurrentSize.length > 0 && !colorsForCurrentSize.includes(selectedColor)) {
       setSelectedColor(colorsForCurrentSize[0]);
     }
   }, [activeSizeValue, hasVariants, variants]);
 
-    // Determine which image to show in gallery
+  // Determine which image to show in gallery
   const rawPrice = hasVariants
     ? (selectedVariant?.price ?? null)
     : (productPrices?.price ?? selectedProduct?.price ?? null);
@@ -414,9 +414,9 @@ export default function ProductPage({ onBack }) {
 
   const stockAlertThreshold = hasVariants
     ? (selectedVariant?.stock_alert ?? 10)
-    : (productPrices?.stock_alert ?? 10); 
+    : (productPrices?.stock_alert ?? 10);
 
-  const payPrice = rawPrice != null ? Number(rawPrice) : 0; 
+  const payPrice = rawPrice != null ? Number(rawPrice) : 0;
   const strikePrice = rawCompare != null ? Number(rawCompare) : Math.round(payPrice * 1.3);
 
   const displayPrice = payPrice ? `₹${payPrice.toLocaleString("en-IN")}` : "";
@@ -449,8 +449,8 @@ export default function ProductPage({ onBack }) {
   const dynamicThumbs = useMemo(() => {
     let imgs = [];
 
-    if (hasVariants){
-      if(selectedVariant?.images.length > 0){
+    if (hasVariants) {
+      if (selectedVariant?.images.length > 0) {
         imgs = selectedVariant.images;
       } else {
         const anyVariantWithImages = variants.find(v => v.images?.length > 0);
@@ -460,11 +460,11 @@ export default function ProductPage({ onBack }) {
       }
     }
 
-    if (imgs.length === 0 && productImages.length > 0){
+    if (imgs.length === 0 && productImages.length > 0) {
       imgs = productImages;
     }
 
-    if(imgs.length == 0){
+    if (imgs.length == 0) {
       imgs = [displayImage];
     }
     return imgs.map((img, i) => ({
@@ -509,7 +509,7 @@ export default function ProductPage({ onBack }) {
         const sellingPrice = Number(p.price) || 0;
         const mrp = Number(p.compare_price) || 0;
 
-        const discountPct = mrp > sellingPrice && sellingPrice > 0 ? Math.round(((mrp - sellingPrice)/mrp)*100):0;
+        const discountPct = mrp > sellingPrice && sellingPrice > 0 ? Math.round(((mrp - sellingPrice) / mrp) * 100) : 0;
 
         return {
           ...p,
@@ -521,7 +521,7 @@ export default function ProductPage({ onBack }) {
           category: p.category || cat,
         };
       });
-      return mapped;
+    return mapped;
   }, [cat, productsCache, selectedProduct]);
 
   // Dynamic Info Rows
@@ -636,7 +636,7 @@ export default function ProductPage({ onBack }) {
       <section className="pp-detail-section">
         <div className="pp-detail-card">
           <ProductGallery
-            key={selectedProduct?.productId || selectedProduct?.id} 
+            key={selectedProduct?.productId || selectedProduct?.id}
             activeThumb={activeThumb}
             setActiveThumb={handleThumbClick}
             displayImage={displayImage}
@@ -649,8 +649,8 @@ export default function ProductPage({ onBack }) {
             <div className='pp-title-row'>
               <h1 className="pp-title">{displayName}</h1>
 
-              <button 
-                className='pp-title-share-btn' 
+              <button
+                className='pp-title-share-btn'
                 aria-label='share the product'
                 onClick={handleShare}
               >
@@ -666,7 +666,7 @@ export default function ProductPage({ onBack }) {
             {displaySku && (
               <p className="pp-sku">SKU: {displaySku}</p>
             )}
-  
+
             <div className="pp-rating">
               {'★★★★★'.split('').map((s, i) => <span key={i} className="pp-star">{s}</span>)}
               <span className="pp-rating-count">5.0 (25 Reviews)</span>
@@ -748,21 +748,21 @@ export default function ProductPage({ onBack }) {
 
             {stockCount != null && (
               <div className="pp-stock">
-                {stockCount === 0 ?(
+                {stockCount === 0 ? (
                   <span className="pp-stock-out">Out of stock</span>
                 ) : stockCount <= stockAlertThreshold ? (
                   <span className="pp-stock-low">Hurry, Only {stockCount} item{stockCount > 1 ? 's' : ''} left in stock!</span>
-                ): (
+                ) : (
                   <span className="pp-stock-ok">In stock</span>
                 )}
               </div>
             )}
             <div className="pp-ship-row">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b1d1d" strokeWidth="2" aria-hidden="true">
-                  <rect x="1" y="3" width="15" height="13" />
-                  <path d="M16 8h4l3 3v5h-7V8z" />
-                  <circle cx="5.5" cy="18.5" r="2.5" />
-                  <circle cx="18.5" cy="18.5" r="2.5" />
+                <rect x="1" y="3" width="15" height="13" />
+                <path d="M16 8h4l3 3v5h-7V8z" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
               </svg>
               <span>
                 Delivers in 3 – 4 business days &nbsp;
@@ -845,7 +845,7 @@ export default function ProductPage({ onBack }) {
                 <img src={RazorIcon} alt="Razor Pay" />
                 <img src={GPayIcon} alt="Google Pay" />
               </div>
-            </div> 
+            </div>
 
             {/* ── ACCORDIONS (Moved inside pp-info for desktop side-by-side) ── */}
             <div className="pp-accordions">

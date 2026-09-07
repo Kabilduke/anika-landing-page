@@ -262,13 +262,16 @@
 
 /* ── Order Timeline ──────────────────────────────── */
 .od__timeline {
+  --circle-size: 40px;
   display: flex;
   align-items: flex-start;
   overflow-x: auto;
+  padding-top: 4px;
   padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: #e0e0e0 transparent;
+  position: relative;
 }
 .od__timeline::-webkit-scrollbar {
   height: 4px;
@@ -282,6 +285,7 @@
 }
 
 .od__tl-step {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -289,28 +293,47 @@
   min-width: 90px;
 }
 
-.od__tl-top {
-  display: flex;
-  align-items: center;
+.od__tl-line {
+  position: absolute;
+  top: calc(var(--circle-size) / 2);
+  left: 50%;
   width: 100%;
-  margin-bottom: 8px;
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+.od__tl-line--done {
+  background: #16a34a;
 }
 
 .od__tl-circle {
-  width: 42px;
-  height: 42px;
+  width: var(--circle-size);
+  height: var(--circle-size);
   border-radius: 50%;
   border: 2px solid #ddd;
-  background: #f5f5f5;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  z-index: 1;
+  z-index: 2;
+  margin-bottom: 8px;
+  position: relative;
+  box-shadow: 0 0 0 3px #fff;
+  transition: all 0.25s ease;
 }
 .od__tl-circle--done {
-  background: #111;
-  border-color: #111;
+  background: #16a34a;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px #fff;
+  color: #fff;
+}
+.od__tl-circle--cancelled {
+  background: #fee2e2;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px #fff;
+  color: #dc2626;
 }
 .od__tl-num {
   font-size: 12px;
@@ -320,14 +343,8 @@
 .od__tl-circle--done .od__tl-num {
   color: #fff;
 }
-
-.od__tl-line {
-  flex: 1;
-  height: 2px;
-  background: #e5e7eb;
-}
-.od__tl-line--done {
-  background: #111;
+.od__tl-circle--cancelled .od__tl-num {
+  color: #dc2626;
 }
 
 .od__tl-label {
@@ -443,9 +460,8 @@
   }
 
   /* Shrink timeline circles a bit */
-  .od__tl-circle {
-    width: 36px;
-    height: 36px;
+  .od__timeline {
+    --circle-size: 36px;
   }
   .od__tl-step {
     min-width: 80px;
@@ -530,9 +546,8 @@
   }
 
   /* Timeline */
-  .od__tl-circle {
-    width: 32px;
-    height: 32px;
+  .od__timeline {
+    --circle-size: 32px;
   }
   .od__tl-num {
     font-size: 10px;
@@ -585,13 +600,12 @@
     font-size: 15px;
   }
 
-  .od__tl-step {
-    min-width: 64px;
+  .od__timeline {
+    --circle-size: 28px;
   }
 
-  .od__tl-circle {
-    width: 28px;
-    height: 28px;
+  .od__tl-step {
+    min-width: 64px;
   }
 
   .od__tl-label {

@@ -19,6 +19,7 @@ export default function JewelryLogin() {
   };
 
   const handleSendOTP = async () => {
+    if (loading) return;
     if (!email) {
       showToast("Please enter your email.", "error");
       return;
@@ -31,6 +32,10 @@ export default function JewelryLogin() {
       await authService.signInWithOtp(email, {
         shouldCreateUser: false,
       });
+
+      // Step 3 — user exists → OTP sent → redirect to verify
+      showToast("OTP sent to email!", "success");
+      setTimeout(() => navigate("/account/otp-verify", { state: { email } }), 1200);
     } catch (error) {
       // Step 2 — user doesn't exist → redirect to signup
       showToast("Email not found! Please sign up first.", "error");
@@ -38,12 +43,6 @@ export default function JewelryLogin() {
       setLoading(false);
       return; // ← stops here
     }
-
-    // Step 3 — user exists → OTP sent → redirect to verify
-    showToast("OTP sent to email!", "success");
-    setTimeout(() => navigate("/account/otp-verify", { state: { email } }), 1200);
-
-    setLoading(false);
   };
 
   return (
@@ -75,12 +74,29 @@ export default function JewelryLogin() {
             className="jewelry-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !loading) {
+                handleSendOTP();
+              }
+            }}
             placeholder=""
             maxLength={32}
+            disabled={loading}
           />
 
-          <button className="jewelry-btn-otp" onClick={handleSendOTP}>
-            Send OTP
+          <button
+            className="jewelry-btn-otp"
+            onClick={handleSendOTP}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="jewelry-btn-loading">
+                <span className="jewelry-spinner" />
+                Sending OTP...
+              </span>
+            ) : (
+              "Send OTP"
+            )}
           </button>
 
           {/* Divider */}

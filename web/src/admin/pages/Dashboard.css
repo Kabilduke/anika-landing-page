@@ -46,7 +46,8 @@
 }
 
 .db__navbar-logo {
-  width: 240px; /* ← updated from 220px */
+  width: 240px;
+  /* ← updated from 220px */
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -197,7 +198,8 @@
 ───────────────────────────────────────────────────────────────────────────── */
 
 .db__sidebar {
-  width: 240px; /* ← updated from 220px */
+  width: 240px;
+  /* ← updated from 220px */
   height: calc(100vh - 52px);
   background-color: #f0f0f0;
   position: fixed;
@@ -210,9 +212,18 @@
   padding: 12px 10px;
 }
 
-.db__sidebar::-webkit-scrollbar { width: 4px; }
-.db__sidebar::-webkit-scrollbar-track { background: transparent; }
-.db__sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+.db__sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.db__sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.db__sidebar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
 
 .db__sidenav {
   display: flex;
@@ -275,7 +286,8 @@
 .db__menu-label {
   flex: 1;
   line-height: 1.2;
-  white-space: nowrap; /* ← prevents wrapping */
+  white-space: nowrap;
+  /* ← prevents wrapping */
 }
 
 .db__chevron {
@@ -334,7 +346,8 @@
 .db__main {
   position: fixed;
   top: 52px;
-  left: 240px; /* ← updated from 220px */
+  left: 240px;
+  /* ← updated from 220px */
   right: 0;
   bottom: 0;
   overflow-y: auto;
@@ -345,7 +358,7 @@
   flex-direction: column;
 }
 
-.db__main > * {
+.db__main>* {
   flex: 1;
   min-height: 100%;
 }
@@ -1016,8 +1029,8 @@
   font-size: 13px;
 }
 
-@media (max-width: 768px){
-  .notification-btn{
+@media (max-width: 768px) {
+  .notification-btn {
     width: 34px;
     height: 34px;
     padding: 0;
@@ -1027,16 +1040,16 @@
     border-radius: 50%;
   }
 
-  .notification-label{
+  .notification-label {
     display: none;
   }
 
-  .notification-btn svg{
+  .notification-btn svg {
     width: 18px;
     height: 18px;
   }
 
-  .notification-badge{
+  .notification-badge {
     top: 2px;
     right: 2px;
     min-width: 16px;
@@ -1045,7 +1058,7 @@
     font-size: 9px;
   }
 
-  .notification-dropdown{
+  .notification-dropdown {
     position: fixed;
     top: 60px;
     right: 10px;
@@ -1056,7 +1069,7 @@
     border-radius: 12px;
   }
 
-  .notification-list{
+  .notification-list {
     max-height: calc(100vh - 150px);
   }
 }
@@ -1083,7 +1096,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .notification-label{
+  .notification-label {
     display: none;
   }
 
@@ -1147,23 +1160,23 @@
     gap: 4px;
   }
 
-  .notification-wrapper{
+  .notification-wrapper {
     display: block;
     position: relative;
   }
 
-  .db__hamburger{
+  .db__hamburger {
     width: 32px;
     height: 32px;
     margin-right: 0;
   }
 
-  .db__navbar-logo{
+  .db__navbar-logo {
     margin-left: -120px;
     width: auto;
   }
 
-  .db__logo-img{
+  .db__logo-img {
     height: 38px;
   }
 
@@ -1284,6 +1297,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

@@ -271,6 +271,12 @@ body {
   color: var(--status-return-text);
 }
 
+.ao-status--refund-completed,
+.ao-status--refund\ completed {
+  background: #ecfdf5;
+  color: #047857;
+}
+
 /* ── SHOW MORE BUTTON ─────────────────────────────────────── */
 .ao-show-more-wrap {
   display: flex;
