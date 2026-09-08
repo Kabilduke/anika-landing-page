@@ -249,16 +249,28 @@ export default function AnikaOrders() {
                     borderBottom: idx < visibleOrders.length - 1 ? '1px solid #ebebeb' : 'none',
                     padding: '16px 20px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '16px',
+                    flexDirection: 'column',
+                    gap: '10px',
                     cursor: 'pointer',
-                    transition: 'background 0.15s ease',
-                    flexWrap: 'wrap'
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  {/* Left: Product Thumbnails & Order Summary */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '260px' }}>
+                  {/* Top Line: Name & Order ID (left) + Price (right) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: '700', color: '#111', fontSize: '13.5px' }}>Order: #{order.id?.slice(-8) || order.id}</span>
+                      <span style={{ color: '#aaa' }}>·</span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>{order.date}</span>
+                      <span style={{ color: '#aaa' }}>·</span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>{totalItemCount} item{totalItemCount > 1 ? 's' : ''}</span>
+                    </div>
+                    <div style={{ fontWeight: '700', color: '#111', fontSize: '14.5px', flexShrink: 0 }}>
+                      {order.price}
+                    </div>
+                  </div>
+
+                  {/* Middle Line: Product Thumbnails & Product Names */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
                     {/* Overlapping Product Thumbnails */}
                     <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative' }}>
                       {orderItems.slice(0, 3).map((item, imgIdx) => {
@@ -268,8 +280,8 @@ export default function AnikaOrders() {
                           <div 
                             key={imgIdx} 
                             style={{ 
-                              width: '46px', 
-                              height: '46px', 
+                              width: '44px', 
+                              height: '44px', 
                               borderRadius: '8px', 
                               overflow: 'hidden', 
                               border: '2px solid #fff', 
@@ -286,25 +298,14 @@ export default function AnikaOrders() {
                       })}
                     </div>
 
-                    {/* Order Meta & Product Titles */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
-                        <span style={{ fontWeight: '700', color: '#111', fontSize: '13.5px' }}>Order: #{order.id?.slice(-8) || order.id}</span>
-                        <span style={{ color: '#aaa' }}>·</span>
-                        <span style={{ fontSize: '12px', color: '#666' }}>{order.date}</span>
-                        <span style={{ color: '#aaa' }}>·</span>
-                        <span style={{ fontSize: '12px', color: '#666' }}>{totalItemCount} item{totalItemCount > 1 ? 's' : ''}</span>
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {itemsSummary}
-                      </div>
+                    {/* Product Names */}
+                    <div style={{ flex: 1, minWidth: 0, fontSize: '13px', fontWeight: '500', color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {itemsSummary}
                     </div>
                   </div>
 
-                  {/* Right: Price, Status, & Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0, flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: '700', color: '#111', fontSize: '14px' }}>{order.price}</span>
-                    
+                  {/* Bottom Line: Status Badge & Actions */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', width: '100%', paddingTop: '2px' }}>
                     <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 9px', borderRadius: '12px', fontWeight: '500' }}>
                       {order.status}
                     </span>

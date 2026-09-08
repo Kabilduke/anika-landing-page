@@ -14,57 +14,90 @@ export default function Offers({ onProductClick }) {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          product_id,
-          name,
-          price,
-          compare_price,
-          discount_price,
-          images,
-          has_variants,
-          product_variants(price, compare_price, stock),
-          categories!inner(name)
-        `)
-        .eq('is_active', true)
-        .eq('is_featured', true)
-        .eq('categories.name', 'Rings')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      try {
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('category_id, name')
+          .ilike('name', '%toe%')
+          .eq('is_active', true);
 
-      if (error) {
-        console.error('Error fetching Rings for Offers:', error);
+        let catIds = (catData || []).map(c => c.category_id);
+
+        let productsData = [];
+
+        if (catIds.length > 0) {
+          const { data } = await supabase
+            .from('products')
+            .select(`
+              product_id,
+              name,
+              price,
+              compare_price,
+              discount_price,
+              images,
+              has_variants,
+              product_variants(price, compare_price, stock),
+              categories(name)
+            `)
+            .in('category_id', catIds)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          productsData = data || [];
+        }
+
+        if (productsData.length === 0) {
+          const { data: nameData } = await supabase
+            .from('products')
+            .select(`
+              product_id,
+              name,
+              price,
+              compare_price,
+              discount_price,
+              images,
+              has_variants,
+              product_variants(price, compare_price, stock),
+              categories(name)
+            `)
+            .ilike('name', '%toe%')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          productsData = nameData || [];
+        }
+
+        const mapped = productsData.map(p => {
+          const variants = p.product_variants || [];
+          const hasVariants = !!p.has_variants && variants.length > 0;
+
+          const sellingPrice = hasVariants
+            ? Math.min(...variants.map(v => Number(v.price) || Infinity).filter(isFinite))
+            : (Number(p.price) || 0);
+
+          const mrp = hasVariants
+            ? Math.max(...variants.map(v => Number(v.compare_price) || 0))
+            : (Number(p.compare_price) || 0);
+
+          return {
+            id: p.product_id,
+            img: p.images?.[0] || p.image_url || '',
+            name: p.name,
+            category: p.categories?.name || 'Toe Rings',
+            price: sellingPrice ? `₹${sellingPrice.toLocaleString('en-IN')}` : '',
+            original: mrp ? `₹${mrp.toLocaleString('en-IN')}` : '',
+          };
+        });
+
+        setProducts(mapped);
+      } catch (err) {
+        console.error('Error fetching Toe Rings:', err);
         setProducts([]);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const mapped = (data || []).map(p => {
-        const variants = p.product_variants || [];
-        const hasVariants = !!p.has_variants && variants.length > 0;
-
-        const sellingPrice = hasVariants
-          ? Math.min(...variants.map(v => Number(v.price) || Infinity).filter
-          (isFinite))
-          : (Number(p.price) || 0);
-
-        const mrp = hasVariants
-          ? Math.max(...variants.map(v => Number(v.compare_price) || 0))
-          : (Number(p.compare_price) || 0);
-
-        return {
-          id: p.product_id,
-          img: p.images?.[0] || '',
-          name: p.name,
-          category: p.categories?.name || '',
-          price: sellingPrice ? `₹${sellingPrice.toLocaleString('en-IN')}` : '',
-          original: mrp ? `₹${mrp.toLocaleString('en-IN')}` : '',
-        };
-      });
-
-      setProducts(mapped);
-      setLoading(false);
     };
 
     fetchProducts();
@@ -87,10 +120,10 @@ export default function Offers({ onProductClick }) {
     return (
       <section className="product-section">
         <div className="product-left">
-          <img src={FestiveImg} alt="Ring on hand" className="ring-hand-img" loading="lazy" />
+          <img src={FestiveImg} alt="Toe rings showcase" className="ring-hand-img" loading="lazy" />
           <div className="lifestyle-overlay">
-            <p className="lifestyle-subtitle">Feel the Sparkle</p>
-            <h2 className="lifestyle-title">Rings</h2>
+            <p className="lifestyle-subtitle">Grace for Every Step</p>
+            <h2 className="lifestyle-title">Toe Rings</h2>
           </div>
         </div>
         <div className="product-right">
@@ -113,10 +146,10 @@ export default function Offers({ onProductClick }) {
   return (
     <section className="product-section">
       <div className="product-left">
-        <img src={FestiveImg} alt="Ring on hand" className="ring-hand-img" loading="lazy" decoding="async" />
+        <img src={FestiveImg} alt="Toe rings showcase" className="ring-hand-img" loading="lazy" decoding="async" />
         <div className="lifestyle-overlay">
-          <p className="lifestyle-subtitle">Feel the Sparkle</p>
-          <h2 className="lifestyle-title">Rings</h2>
+          <p className="lifestyle-subtitle">Grace for Every Step</p>
+          <h2 className="lifestyle-title">Toe Rings</h2>
         </div>
       </div>
 
@@ -145,27 +178,7 @@ export default function Offers({ onProductClick }) {
         </div>
 
         <div className="product-footer">
-          <div className="carousel-nav">
-            <button
-              className={`nav-arrow ${!canPrev ? 'disabled' : ''}`}
-              onClick={prev}
-              aria-label="Previous"
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
-                <path d="M10 4L6 8l4 4" stroke="#333" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-            <button
-              className={`nav-arrow ${!canNext ? 'disabled' : ''}`}
-              onClick={next}
-              aria-label="Next"
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
-                <path d="M6 4l4 4-4 4" stroke="#333" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-          <button className="shop-now-btn" onClick={() => navigate('/rings')}>Shop Now</button>
+          <button className="shop-now-btn" onClick={() => navigate('/toe-rings')}>Shop Now</button>
         </div>
       </div>
     </section>

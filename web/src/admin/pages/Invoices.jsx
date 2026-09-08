@@ -5,6 +5,7 @@ import { orderService } from "../../services/orderService";
 import "./Invoices.css";
 
 const STATUS_COLORS = {
+  "Order Placed": { bg: "#e0f2fe", color: "#0369a1" },
   Delivered: { bg: "#dcfce7", color: "#16a34a" },
   Shipped:   { bg: "#fef9c3", color: "#a16207" },
   Pending:   { bg: "#dbeafe", color: "#1d4ed8" },

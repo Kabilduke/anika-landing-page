@@ -273,6 +273,22 @@ select {
   text-align: center;
 }
 
+.cart-empty-shop-btn {
+  background: var(--charcoal);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.cart-empty-shop-btn:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
 .cart-left:has(.cart-empty) {
   width: 100%;
 }
@@ -281,6 +297,7 @@ select {
   text-align: left;
   width: 100%;
 }
+
 
 /* Select bar */
 .cart-select-bar {
@@ -1144,100 +1161,118 @@ select {
   /* Main — stack left + right vertically */
   .cart-main {
     flex-direction: column;
-    padding: 24px 16px 56px;
-    gap: 32px;
+    padding: 20px 16px 48px;
+    gap: 24px;
   }
 
-  /* Order summary goes full width at top on mobile */
+
+  /* Order summary goes full width below items on mobile */
   .cart-right {
     width: 100%;
     position: static;
-    order: -1;
-    /* show summary ABOVE items on mobile */
+    order: 1;
+    margin-top: 12px;
   }
 
   /* Cart title */
   .cart-title {
-    font-size: 32px;
-    margin-bottom: 20px;
-  }
-
-  .cart-left:has(.cart-empty) .cart-title {
+    font-size: 28px;
+    margin-bottom: 16px;
     text-align: center;
   }
 
-  /* Select bar — stack on mobile screens */
+  /* Select bar */
   .cart-select-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #faf8f5;
+    border-radius: 8px;
+    border: 1px solid #efe8e0;
+    margin-bottom: 16px;
+    gap: 8px;
   }
 
   .cart-bar-actions {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
+    gap: 8px;
   }
 
   .cart-wishlist-btn {
-    font-size: 13px;
-    padding: 9px 18px;
+    font-size: 12px;
+    padding: 8px 14px;
   }
 
-  /* Cart items — smaller image */
+  /* Cart items — smaller image & aligned checkbox */
   .cart-item {
     gap: 12px;
-    padding: 18px 0;
+    padding: 14px 0;
+    align-items: center;
   }
 
   .item-checkbox {
-    margin-top: 32px;
+    margin-top: 0;
+    align-self: center;
   }
 
   .cart-item-img {
-    width: 100px;
-    height: 100px;
+    width: 84px;
+    height: 84px;
     border-radius: 8px;
   }
 
   .cart-item-name {
     font-size: 14px;
+    line-height: 1.3;
   }
 
   .cart-item-price {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .cart-item-original {
     font-size: 12px;
   }
 
+  .qty-select {
+    padding: 4px 22px 4px 8px;
+    font-size: 12px;
+    min-height: 32px;
+  }
+
+  .cart-item-delivery {
+    font-size: 12px;
+  }
+
   /* Frequently bought — single column */
   .freq-section {
-    margin-top: 40px;
+    margin-top: 36px;
   }
 
   .freq-title {
-    font-size: 26px;
-    margin-bottom: 20px;
+    font-size: 24px;
+    margin-bottom: 16px;
   }
 
   .freq-content {
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
   }
 
   .freq-products {
-    gap: 10px;
+    gap: 8px;
   }
 
   .freq-img {
-    width: 110px;
-    height: 110px;
-    border-radius: 10px;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
   }
 
   .freq-plus {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .freq-action {
@@ -1250,15 +1285,15 @@ select {
     text-align: center;
   }
 
-  /* Recently viewed — 3 cols on tablet-ish mobile */
+  /* Recently viewed — 3 cols on mobile */
   .recent-section {
-    width: 92vw;
-    margin-top: 40px;
+    width: 100%;
+    margin-top: 36px;
   }
 
   .recent-title {
-    font-size: 26px;
-    margin-bottom: 20px;
+    font-size: 24px;
+    margin-bottom: 16px;
   }
 
   .recent-grid {
@@ -1272,8 +1307,8 @@ select {
   /* Footer */
   .footer-main {
     grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    padding: 36px 24px 28px;
+    gap: 24px;
+    padding: 32px 16px 24px;
   }
 
   .footer-brand {
@@ -1286,7 +1321,7 @@ select {
   }
 
   .footer-bottom {
-    padding: 14px 24px;
+    padding: 14px 16px;
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -1315,47 +1350,55 @@ select {
   }
 
   .cart-main {
-    padding: 20px 14px 48px;
-    gap: 24px;
+    padding: 16px 12px 40px;
+    gap: 20px;
   }
 
   .cart-title {
-    font-size: 28px;
+    font-size: 24px;
   }
-
-
 
   /* Cart item — even smaller image */
   .cart-item {
     gap: 10px;
-    padding: 14px 0;
+    padding: 12px 0;
   }
 
   .item-checkbox {
-    margin-top: 28px;
+    margin-top: 0;
+    align-self: center;
   }
 
   .cart-item-img {
-    width: 80px;
-    height: 80px;
+    width: 75px;
+    height: 75px;
   }
 
   .cart-item-name {
     font-size: 13px;
   }
 
+  .select-all-label span {
+    font-size: 12px;
+  }
+
+  .cart-wishlist-btn {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+
   /* Frequently bought — stack items vertically */
   .freq-img {
-    width: 90px;
-    height: 90px;
+    width: 85px;
+    height: 85px;
   }
 
   .freq-products {
-    gap: 8px;
+    gap: 6px;
   }
 
   .freq-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   /* Recently viewed — 2 cols */
@@ -1368,12 +1411,12 @@ select {
   }
 
   .recent-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   /* Order summary text */
   .summary-subtotal {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .summary-grand {
@@ -1383,8 +1426,8 @@ select {
   /* Footer — single column */
   .footer-main {
     grid-template-columns: 1fr;
-    padding: 28px 16px 20px;
-    gap: 24px;
+    padding: 24px 14px 20px;
+    gap: 20px;
   }
 
   .footer-logo-img {
@@ -1399,6 +1442,6 @@ select {
     flex-direction: column;
     gap: 8px;
     text-align: center;
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
 }

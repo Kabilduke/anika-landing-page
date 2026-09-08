@@ -6,12 +6,12 @@ import { useStore } from '../hooks/useStore';
 import { getNavPath } from "../services/categoryRoute";
 
 const ProductSection = lazy(() => import('./ProductSection'));
+const NecklaceSection = lazy(() => import('./NecklaceSection'));
 const BannerSection = lazy(() => import('./BannerSection'));
 const CategorySection = lazy(() => import('./CategorySection'));
 const NewArrivals = lazy(() => import('./NewArrivals'));
 const BestSellers = lazy(() => import('./BestSellers'));
 const CollectionsSection = lazy(() => import('./CollectionsSection'));
-const NecklaceShowcase = lazy(() => import('./NecklaceShowcase'));
 const RealExperience = lazy(() => import('./RealExperience'));
 const Offers = lazy(() => import('./Offers'));
 const CustomerExperiences = lazy(() => import('./CustomerExperiences'));
@@ -52,9 +52,9 @@ export default function HomePage() {
           <BestSellers onProductClick={handleProductClick} />
         </div>
         <div id="shop"><ProductSection onProductClick={handleProductClick} /></div>
+        <div id="necklaces-section"><NecklaceSection onProductClick={handleProductClick} /></div>
         {/* <BannerSection /> */}
         {/* <CollectionsSection /> */}
-        <div id="necklaces"><NecklaceShowcase /></div>
         <RealExperience />
         <div id="offers"><Offers onProductClick={handleProductClick} /></div>
         <div id="reviews"><CustomerExperiences /></div>

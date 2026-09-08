@@ -9,11 +9,13 @@
 
 const DEFAULT_CATEGORIES = [
   "Rings",
+  "Toe Rings",
   "Earrings",
   "Bracelets",
   "Bangles",
   "Necklaces",
   "Anklets",
+  "Hip Accessories",
 ];
 
 /**
@@ -33,7 +35,7 @@ export function getNavPath(link, categories = []) {
     (d) => d.toLowerCase() === link.toLowerCase()
   );
   if (isDefault) {
-    return `/${link.toLowerCase()}`;
+    return `/${link.toLowerCase().trim().replace(/\s+/g, '-')}`;
   }
 
   // Custom category — look up its slug from the store's category list

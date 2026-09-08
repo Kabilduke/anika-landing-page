@@ -50,21 +50,43 @@ function CategoryBySlug(){
     fetchCategories().finally(() => setChecked(true));
   }, [fetchCategories]);
 
-  const match = categories.find(c => c.slug === slug);
+  const rawSlug = decodeURIComponent(slug || '');
+  const normalizedSlug = rawSlug.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+  const match = categories.find(
+    c => c.slug === slug ||
+         c.slug === normalizedSlug ||
+         (c.name || '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') === normalizedSlug
+  );
 
   if (!checked){
     return null;
   }
 
-  if (!match) {
-    return (
-      <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-        <h2>Page not found</h2>
-      </div>
-    );
+  if (match) {
+    return <CategoryPage category={match.name} />;
   }
 
-  return <CategoryPage category={match.name} />;
+  const defaultNames = {
+    'rings': 'Rings',
+    'toe-rings': 'Toe Rings',
+    'earrings': 'Earrings',
+    'bracelets': 'Bracelets',
+    'bangles': 'Bangles',
+    'necklaces': 'Necklaces',
+    'anklets': 'Anklets',
+    'hip-accessories': 'Hip Accessories',
+  };
+
+  if (defaultNames[normalizedSlug]) {
+    return <CategoryPage category={defaultNames[normalizedSlug]} />;
+  }
+
+  return (
+    <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+      <h2>Page not found</h2>
+    </div>
+  );
 }
 
 function App() {
@@ -91,11 +113,13 @@ function App() {
           }
         />
         <Route path="/rings" element={<CategoryPage category="Rings" />} />
+        <Route path="/toe-rings" element={<CategoryPage category="Toe Rings" />} />
         <Route path="/earrings" element={<CategoryPage category="Earrings" />} />
         <Route path="/bracelets" element={<CategoryPage category="Bracelets" />} />
         <Route path="/bangles" element={<CategoryPage category="Bangles" />} />
         <Route path="/necklaces" element={<CategoryPage category="Necklaces" />} />
         <Route path="/anklets" element={<CategoryPage category="Anklets" />} />
+        <Route path="/hip-accessories" element={<CategoryPage category="Hip Accessories" />} />
 
         <Route path="/category/:slug" element={<CategoryBySlug />} />
         <Route path="/:slug" element={<CategoryBySlug />} />

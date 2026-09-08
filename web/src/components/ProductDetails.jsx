@@ -603,12 +603,13 @@ export default function ProductPage({ onBack }) {
           qty: qty,
           img: dynamicThumbs[0]?.img || selectedVariant?.images?.[0] || displayImage,
           category: cat,
+          sku: displaySku || selectedProduct?.sku || selectedVariant?.sku || '',
           size: sizeParam,
           color: colorParam,
         }
       }
     });
-  }, [displayName, payPrice, strikePrice, qty, dynamicThumbs, selectedVariant, displayImage, cat, selectedProduct, selectedSize, selectedColor, canAddToCart, navigate]);
+  }, [displayName, payPrice, strikePrice, qty, dynamicThumbs, selectedVariant, displayImage, cat, displaySku, selectedProduct, selectedSize, selectedColor, canAddToCart, navigate]);
 
   const handleShare = useCallback(async () => {
     const shareData = {

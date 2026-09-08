@@ -29,7 +29,6 @@ export default function ProductSection({ onProductClick }) {
           categories!inner(name)
         `)
         .eq('is_active', true)
-        .eq('is_featured', true)
         .eq('categories.name', 'Bangles')
         .order('created_at', { ascending: false })
         .limit(5);
@@ -137,18 +136,6 @@ export default function ProductSection({ onProductClick }) {
         </div>
 
         <div className="product-footer">
-          <div className="carousel-nav">
-            <button className={`nav-arrow ${!canPrev ? 'disabled' : ''}`} onClick={prev} aria-label="Previous">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
-                <path d="M10 4L6 8l4 4" stroke="#333" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-            <button className={`nav-arrow ${!canNext ? 'disabled' : ''}`} onClick={next} aria-label="Next">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
-                <path d="M6 4l4 4-4 4" stroke="#333" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
           <button className="shop-now-btn" onClick={() => navigate('/bangles')}>Shop Now</button>
         </div>
       </div>

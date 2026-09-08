@@ -87,6 +87,8 @@ export const cartService = {
         originalPrice = parsePrice(product.compare_price || Math.round(rawPrice * 1.3));
       }
 
+      const sku = matchedVariant?.sku || product.sku || '';
+
       return {
         id: item.id,
         productId: item.product_id,
@@ -94,6 +96,7 @@ export const cartService = {
         price: price,
         originalPrice: originalPrice,
         category: product.categories?.name || '',
+        sku: sku,
         qty: item.qty || 1,
         size: item.size || '',
         color: item.color || '',

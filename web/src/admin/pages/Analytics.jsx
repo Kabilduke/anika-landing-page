@@ -255,34 +255,49 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
 
   const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
 
+  // Date handlers that auto-switch to Custom period
+  const handleStartDateChange = (val) => {
+    setStartDate(val);
+    if (val) setActivePeriod("Custom");
+  };
+
+  const handleEndDateChange = (val) => {
+    setEndDate(val);
+    if (val) setActivePeriod("Custom");
+  };
+
   // Filter orders by active date period
   const filteredOrders = useMemo(() => {
     const now = new Date();
     return orders.filter((o) => {
-      const dateStr = o.created_at || o.createdAt || o.date;
+      const dateStr = o.created_at || o.createdAt || o.order_date || o.date;
       if (!dateStr) return true;
       const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return true;
 
       if (activePeriod === "Today") {
-        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         return d >= start;
       }
       if (activePeriod === "7 Days") {
         const start = new Date();
         start.setDate(now.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
         return d >= start;
       }
       if (activePeriod === "This Month") {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
         return d >= start;
       }
       if (activePeriod === "Last Month") {
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
         return d >= start && d <= end;
       }
-      if (activePeriod === "Custom" && (startDate || endDate)) {
+      if (activePeriod === "Custom") {
+        if (!startDate && !endDate) return true;
         const s = startDate ? new Date(startDate) : new Date(0);
+        s.setHours(0, 0, 0, 0);
         const e = endDate ? new Date(endDate) : new Date();
         e.setHours(23, 59, 59, 999);
         return d >= s && d <= e;
@@ -291,15 +306,48 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     });
   }, [orders, activePeriod, startDate, endDate]);
 
+  // Helper to extract net revenue excluding shipping charges
+  const getOrderRevenue = (o) => {
+    if (o.subtotal !== undefined && o.subtotal !== null && Number(o.subtotal) > 0) {
+      return Number(o.subtotal);
+    }
+    if (o.order_items && o.order_items.length > 0) {
+      const itemsTotal = o.order_items.reduce((sum, item) => {
+        const price = Number(item.price || item.unit_price || 0);
+        const qty = Number(item.quantity || item.qty || 1);
+        return sum + price * qty;
+      }, 0);
+      if (itemsTotal > 0) return itemsTotal;
+    }
+    const gross = Number(o.total_price || o.grandTotal || o.amount || 0);
+    const shipping = Number(o.shipping_fee || o.shippingFee || o.shipping_charge || o.shipping || o.delivery_charge || 0);
+    return Math.max(0, gross - shipping);
+  };
+
   // Derived Overview metrics
   const totalRevenue = useMemo(() => {
     return filteredOrders
       .filter((o) => !["cancelled", "returned"].includes(o.status?.toLowerCase()))
-      .reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+      .reduce((sum, o) => sum + getOrderRevenue(o), 0);
+  }, [filteredOrders]);
+
+  const grossRevenue = useMemo(() => {
+    return filteredOrders
+      .filter((o) => !["cancelled", "returned"].includes(o.status?.toLowerCase()))
+      .reduce((sum, o) => sum + Number(o.total_price || o.grandTotal || o.amount || 0), 0);
   }, [filteredOrders]);
 
   const totalOrdersCount = filteredOrders.length;
-  const avgOrderVal = totalOrdersCount > 0 ? totalRevenue / totalOrdersCount : 0;
+
+  const totalInventoryValue = useMemo(() => {
+    return products.reduce((sum, p) => {
+      const price = Number(p.price || p.selling_price || p.unit_price || p.mrp || 0);
+      const stock = p.variants && p.variants.length > 0
+        ? p.variants.reduce((vs, v) => vs + (Number(v.stock) || 0), 0)
+        : Number(p.stock ?? p.stockQuantity ?? 0);
+      return sum + (price * stock);
+    }, 0);
+  }, [products]);
 
   const cancelledCount = useMemo(() => {
     return filteredOrders.filter((o) => o.status?.toLowerCase() === "cancelled").length;
@@ -329,14 +377,6 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     return customers.length > 0 ? Math.min(customers.length, activeCustomerIds.size || customers.length) : activeCustomerIds.size;
   }, [customers, activeCustomerIds]);
 
-  const returningCustomersCount = useMemo(() => {
-    const userOrderCounts = {};
-    orders.forEach((o) => {
-      if (o.user_id) userOrderCounts[o.user_id] = (userOrderCounts[o.user_id] || 0) + 1;
-    });
-    return Object.values(userOrderCounts).filter((cnt) => cnt > 1).length;
-  }, [orders]);
-
   // Bar Data - Order Status distribution
   const statusBarData = useMemo(() => {
     const countStatus = (st) => filteredOrders.filter((o) => o.status?.toLowerCase() === st.toLowerCase()).length;
@@ -357,7 +397,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       const baseItemName = o.item_name?.split(" + ")[0] || "";
       const matchedProd  = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
       const cat = matchedProd?.category || o.category || "General";
-      catMap[cat] = (catMap[cat] || 0) + Number(o.total_price || 0);
+      catMap[cat] = (catMap[cat] || 0) + getOrderRevenue(o);
     });
 
     const colors = ["#f87171", "#fb923c", "#3b82f6", "#facc15", "#a855f7", "#10b981"];
@@ -381,12 +421,12 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     const custs = [0, 0, 0, 0, 0, 0, 0];
 
     filteredOrders.forEach((o) => {
-      const dateStr = o.created_at || o.createdAt || o.date;
+      const dateStr = o.created_at || o.createdAt || o.order_date || o.date;
       if (!dateStr) return;
       const d = new Date(dateStr);
       let dayIdx = d.getDay() - 1;
       if (dayIdx < 0) dayIdx = 6;
-      revs[dayIdx] += Number(o.total_price || 0);
+      revs[dayIdx] += getOrderRevenue(o);
       custs[dayIdx] += 1;
     });
 
@@ -400,7 +440,8 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     const counts = [0, 0, 0, 0, 0, 0, 0];
 
     filteredOrders.forEach((o) => {
-      const d = new Date(o.created_at || o.createdAt || Date.now());
+      const dateStr = o.created_at || o.createdAt || o.order_date || o.date;
+      const d = new Date(dateStr || Date.now());
       let idx = d.getDay() - 1;
       if (idx < 0) idx = 6;
       counts[idx]++;
@@ -422,7 +463,8 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     const counts = [0, 0, 0, 0, 0, 0, 0];
 
     filteredOrders.forEach((o) => {
-      const d = new Date(o.created_at || o.createdAt || Date.now());
+      const dateStr = o.created_at || o.createdAt || o.order_date || o.date;
+      const d = new Date(dateStr || Date.now());
       const h = d.getHours();
       if (h >= 6 && h < 9) counts[0]++;
       else if (h >= 9 && h < 12) counts[1]++;
@@ -439,14 +481,14 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
   // Customers Tab - Top spenders & segments
   const topCustomersList = useMemo(() => {
     const custMap = {};
-    orders.forEach((o) => {
+    filteredOrders.forEach((o) => {
       const name = o.customer?.name || "Customer #" + (o.user_id?.slice(0, 6) || "N/A");
       if (!custMap[name]) {
         custMap[name] = { name, orders: 0, amount: 0, city: o.customer?.city || "India" };
       }
       custMap[name].orders += 1;
       if (!["cancelled", "returned"].includes(o.status?.toLowerCase())) {
-        custMap[name].amount += Number(o.total_price || 0);
+        custMap[name].amount += getOrderRevenue(o);
       }
     });
 
@@ -454,11 +496,11 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
       .map((c) => ({ ...c, amount: fmtVal(c.amount) }));
-  }, [orders]);
+  }, [filteredOrders]);
 
   const customerSegments = useMemo(() => {
     const userCounts = {};
-    orders.forEach((o) => {
+    filteredOrders.forEach((o) => {
       if (o.user_id) userCounts[o.user_id] = (userCounts[o.user_id] || 0) + 1;
     });
     const values = Object.values(userCounts);
@@ -473,7 +515,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       { label: "One-time (1)",    value: oneTime, color: "#a855f7" },
       { label: "No orders yet",   value: noOrders, color: "#eab308" },
     ];
-  }, [orders, customers]);
+  }, [filteredOrders, customers]);
 
   // Products Tab Data
   const productsSoldUnits = useMemo(() => {
@@ -517,7 +559,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       if (!catMap[cat]) catMap[cat] = { units: 0, revenue: 0 };
       catMap[cat].units += Number(o.quantity || 1);
       if (!["cancelled", "returned"].includes(o.status?.toLowerCase())) {
-        catMap[cat].revenue += Number(o.total_price || 0);
+        catMap[cat].revenue += getOrderRevenue(o);
       }
     });
 
@@ -559,23 +601,21 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       </div>
 
       <div className="an__date-row">
-        <DateInput label="Start Date" value={startDate} onChange={setStartDate} />
-        <DateInput label="End Date"   value={endDate}   onChange={setEndDate}   />
+        <DateInput label="Start Date" value={startDate} onChange={handleStartDateChange} />
+        <DateInput label="End Date"   value={endDate}   onChange={handleEndDateChange}   />
       </div>
 
       {activeTab === "Overview" && (
         <>
           <div className="an__stats-container">
             <div className="an__stats-grid">
-              <StatCard label="Total Revenue"    value={fmtVal(totalRevenue)} change={`${totalOrdersCount} orders`} changeType="up" subtext="in period" />
-              <StatCard label="Total Order"      value={totalOrdersCount}     change={`${completedCount} delivered`} changeType="up" subtext="in period" />
-              <StatCard label="Avg. order value" value={fmtVal(avgOrderVal)} change="Live" changeType="up" subtext="average" />
-              <StatCard label="New Customers"    value={newCustomersCount}    change="Live" changeType="up" subtext="in period" />
+              <StatCard label="Total Revenue"         value={fmtVal(totalRevenue)} change={`${totalOrdersCount} orders`} changeType="up" subtext={`(${fmtVal(grossRevenue)} incl. shipping)`} />
+              <StatCard label="Total Order"           value={totalOrdersCount}     change={`${completedCount} delivered`} changeType="up" subtext="in period" />
+              <StatCard label="Total Inventory Value" value={fmtVal(totalInventoryValue)} change={`${products.length} products`} changeType="up" subtext="catalog worth" />
+              <StatCard label="New Customers"         value={newCustomersCount}    change="Live" changeType="up" subtext="in period" />
             </div>
             <div className="an__stats-divider" />
-            <div className="an__stats-grid">
-              <StatCard label="Returning Customers" value={returningCustomersCount} subtext={`${orders.length ? Math.round((returningCustomersCount / orders.length) * 100) : 0}% of Total`} />
-              <StatCard label="Completion Rate"     value={`${conversionRate}%`} change="Delivered" changeType="up" subtext="fulfillment" />
+            <div className="an__stats-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
               <StatCard label="Cancelled Orders"    value={cancelledCount}      changeType="warn" subtext="cancelled" />
               <StatCard label="Returns"             value={returnsCount}        subtext={`${returnRate}% return rate`} />
             </div>
@@ -620,7 +660,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
               <div className="an__orders-stat-label">Completed</div>
               <div className="an__orders-stat-value">{completedCount}</div>
               <div className="an__orders-stat-footer">
-                <span className="an__stat-subtext">{conversionRate}% Completion Rate</span>
+                <span className="an__stat-subtext">Successfully delivered</span>
               </div>
             </div>
             <div className="an__orders-stat-card">
@@ -675,7 +715,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
 
       {activeTab === "Customers" && (
         <div className="an__customers">
-          <div className="an__stats-grid">
+          <div className="an__stats-grid an__stats-grid--3">
             <div className="an__stat-card">
               <div className="an__stat-label">Total Customers</div>
               <div className="an__stat-value">{customers.length || activeCustomerIds.size}</div>
@@ -688,13 +728,6 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
               <div className="an__stat-value">{newCustomersCount}</div>
               <div className="an__stat-footer">
                 <span className="an__badge an__badge--up">New registrations</span>
-              </div>
-            </div>
-            <div className="an__stat-card">
-              <div className="an__stat-label">Returning</div>
-              <div className="an__stat-value">{returningCustomersCount}</div>
-              <div className="an__stat-footer">
-                <span className="an__stat-subtext--green">Repeat buyers</span>
               </div>
             </div>
             <div className="an__stat-card">

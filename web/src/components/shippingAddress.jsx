@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from "../services/authService";
 import { orderService } from "../services/orderService";
+import { emailService } from "../services/emailService";
 import { useStore } from "../hooks/useStore";
 import { supabase } from "../lib/supabase";
 import "./shippingAddress.css";
@@ -10,6 +11,7 @@ import Footer from "./SiteFooter";
 import Toast from "./Toast";
 import LogoImg from "../assets/offers/logo.svg";
 import { getOriginalImageUrl } from '../utils/imageUtils';
+import { getNavPath } from "../services/categoryRoute";
 
 // Helper to dynamically load the Razorpay script
 const loadRazorpayScript = () => {
@@ -83,13 +85,10 @@ export default function ShippingAddress() {
 
   const isCODAvailable = false;
 
+  const categories = useStore((state) => state.categories);
 
   const handleNavClick = (link) => {
-    if (link === "Home") {
-      navigate("/");
-    } else {
-      navigate(`/${link.toLowerCase()}`);
-    }
+    navigate(getNavPath(link, categories));
   };
 
   // fetch addresses from Supabase
@@ -104,7 +103,7 @@ export default function ShippingAddress() {
         // Default to first address
         const addr = data[0];
         setSelectedId(addr.address_id);
-        
+
         // Fill form fields
         const parts = (addr.full_name || "").split(" ");
         const firstName = parts[0] || "";
@@ -228,7 +227,7 @@ export default function ShippingAddress() {
 
   // const isAddressServiceable = pincodeServiceability === 'serviceable' || (selectedId && selectedAddrServiceable);
   const isAddressServiceable = /^\d{6}$/.test(form.pinCode);
-  const shippingFee = isAddressServiceable ? 0 : 0;
+  const shippingFee = isAddressServiceable ? 1 : 0;
 
   const gst = Math.round((subtotal - discountAmount) * 0.03);
   const taxes = gst;
@@ -299,15 +298,15 @@ export default function ShippingAddress() {
             prev.map((a) =>
               a.address_id === selectedId
                 ? {
-                    ...a,
-                    full_name: fullName,
-                    phone_number: form.mobile,
-                    address_line1: form.flat,
-                    address_line2: form.area,
-                    city: form.city,
-                    state: form.state,
-                    postal_code: form.pinCode,
-                  }
+                  ...a,
+                  full_name: fullName,
+                  phone_number: form.mobile,
+                  address_line1: form.flat,
+                  address_line2: form.area,
+                  city: form.city,
+                  state: form.state,
+                  postal_code: form.pinCode,
+                }
                 : a
             )
           );
@@ -341,19 +340,19 @@ export default function ShippingAddress() {
       if (paymentMethod === "COD") {
         // COD order placement
         const mainItem = checkoutItems[0];
-        
+
         const { data, error } = await supabase
           .from("orders")
           .insert({
             user_id: userId,
-            item_name: checkoutItems.length > 1 
-              ? `${mainItem.name} + ${checkoutItems.length - 1} other(s)` 
+            item_name: checkoutItems.length > 1
+              ? `${mainItem.name} + ${checkoutItems.length - 1} other(s)`
               : mainItem.name,
             quantity: checkoutItems.reduce((sum, item) => sum + (item.qty || 1), 0),
             total_price: grandTotal,
             payment: "COD",
             type: "Regular",
-            status: "Pending",
+            status: "Order Placed",
           })
           .select()
           .single();
@@ -372,6 +371,8 @@ export default function ShippingAddress() {
           size: item.size || null,
           color: item.color || null,
           image_url: item.img || item.image || (item.images && item.images[0]) || null,
+          sku: item.sku || item.sku_id || 'N/A',
+          category: item.category || item.category_name || item.categories?.name || 'N/A',
         }));
 
         const { error: itemsError } = await supabase
@@ -380,6 +381,29 @@ export default function ShippingAddress() {
 
         if (itemsError) throw itemsError;
 
+        // Trigger order notification email to jeyareshd@gmail.com
+        emailService.sendOrderNotificationEmail({
+          orderId: generatedOrderId,
+          customerName: `${form.firstName} ${form.lastName}`.trim(),
+          customerEmail: session?.user?.email || form.email || "N/A",
+          customerPhone: form.mobile || "N/A",
+          paymentMethod: "Cash on Delivery (COD)",
+          address: {
+            name: `${form.firstName} ${form.lastName}`.trim(),
+            mobile: form.mobile,
+            flat: form.flat,
+            area: form.area,
+            landmark: form.landmark,
+            city: form.city,
+            state: form.state,
+            pincode: form.pinCode,
+          },
+          items: orderItemsToInsert,
+          totalPrice: grandTotal,
+          subtotal: subtotal,
+          discount: discountAmount,
+          shippingFee: shippingFee,
+        });
 
         // Clear cart
         if (!checkoutProduct) {
@@ -424,7 +448,7 @@ export default function ShippingAddress() {
         if (invokeError || !orderData) {
           throw new Error(invokeError?.message || "Failed to initiate Razorpay order.");
         }
-        
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("name, phone")
@@ -467,6 +491,38 @@ export default function ShippingAddress() {
               }
 
               showToast("Payment successful! Order placed.", "success");
+
+              // Trigger order notification email to jeyareshd@gmail.com
+              emailService.sendOrderNotificationEmail({
+                orderId: verifyData?.order?.id || response.razorpay_order_id,
+                customerName: profile?.name || `${form.firstName} ${form.lastName}`.trim(),
+                customerEmail: session?.user?.email || form.email || "N/A",
+                customerPhone: profile?.phone || form.mobile || "N/A",
+                paymentMethod: "Razorpay (Online Payment)",
+                address: {
+                  name: profile?.name || `${form.firstName} ${form.lastName}`.trim(),
+                  mobile: form.mobile,
+                  flat: form.flat,
+                  area: form.area,
+                  city: form.city,
+                  state: form.state,
+                  pincode: form.pinCode,
+                },
+                items: checkoutItems.map(item => ({
+                  product_name: item.name,
+                  quantity: item.qty || 1,
+                  price: parsePrice(item.price),
+                  size: item.size || null,
+                  color: item.color || null,
+                  sku: item.sku || item.sku_id || 'N/A',
+                  category: item.category || item.category_name || item.categories?.name || 'N/A',
+                })),
+                totalPrice: grandTotal,
+                subtotal: subtotal,
+                discount: discountAmount,
+                shippingFee: shippingFee,
+              });
+
               setTimeout(() => {
                 navigate("/profile/orders");
               }, 2000);
@@ -502,9 +558,9 @@ export default function ShippingAddress() {
 
   return (
     <>
-      <Navbar onLinkClick={handleNavClick}/>
+      <Navbar onLinkClick={handleNavClick} />
       <div className="checkout-page-container">
-        
+
         {/* TOAST */}
         <Toast
           message={toast.message}
@@ -523,7 +579,7 @@ export default function ShippingAddress() {
 
               {/* Form */}
               <form onSubmit={handleCheckoutSubmit} className="checkout-form">
-                
+
                 {/* Contact Section */}
                 <div className="checkout-section">
                   <div className="checkout-section-header">
@@ -532,7 +588,7 @@ export default function ShippingAddress() {
                       <a href="/account/login" className="checkout-signin-link">Sign in</a>
                     )}
                   </div>
-                  
+
                   <div className="checkout-field-wrap">
                     <input
                       type="email"
@@ -738,7 +794,7 @@ export default function ShippingAddress() {
                           <span className="logo-icon count">+18</span>
                         </div>
                       </label>
-                      
+
                       {paymentMethod === 'RAZORPAY' && (
                         <div className="checkout-accordion-body">
                           <div className="payment-redirect-box">
@@ -754,8 +810,8 @@ export default function ShippingAddress() {
 
                     {/* Cash on Delivery (COD) */}
                     <div className={`checkout-accordion-item checkout-accordion-item--cod ${paymentMethod === 'COD' ? 'active' : ''}`}>
-                      <label 
-                        className={`checkout-accordion-header ${!isCODAvailable ?  'checkout-option-disabled': ''}`}
+                      <label
+                        className={`checkout-accordion-header ${!isCODAvailable ? 'checkout-option-disabled' : ''}`}
                         onClick={() => isCODAvailable && setPaymentMethod('COD')}
                       >
                         <div className="checkout-radio-wrap">
@@ -785,7 +841,7 @@ export default function ShippingAddress() {
                 {/* Billing Address Section */}
                 <div className="checkout-section">
                   <h2 className="checkout-section-title">Billing address</h2>
-                  
+
                   <div className="checkout-accordion-group">
                     <div className={`checkout-accordion-item ${billingSame ? 'active' : ''}`}>
                       <label className="checkout-accordion-header" onClick={() => setBillingSame(true)}>
@@ -815,7 +871,7 @@ export default function ShippingAddress() {
                           <span className="payment-method-name">Use a different billing address</span>
                         </div>
                       </label>
-                      
+
                       {!billingSame && (
                         <div className="checkout-accordion-body">
                           <div className="checkout-fields-row">
@@ -864,7 +920,7 @@ export default function ShippingAddress() {
           {/* RIGHT COLUMN: Order Summary Sidebar */}
           <div className="checkout-right-col">
             <div className="checkout-right-content">
-              
+
               {/* Product list */}
               <div className="checkout-items-list">
                 {checkoutItems.map((item, idx) => {
@@ -912,7 +968,7 @@ export default function ShippingAddress() {
                   <span>Subtotal</span>
                   <span className="summary-val">₹{subtotal.toLocaleString('en-IN')}.00</span>
                 </div>
-                
+
                 {appliedDiscount && (
                   <div className="checkout-summary-row discount-row">
                     <span>Discount ({appliedDiscount.code})</span>

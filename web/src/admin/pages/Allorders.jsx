@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import "./Allorders.css";
 
 const STATUS_STYLE = {
+  "Order Placed": { bg: "#E0F2FE", color: "#0369A1" },
   Pending:   { bg: "#FFF4E5", color: "#D97706" },
   Shipped:   { bg: "#EFF6FF", color: "#2563EB" },
   Delivered: { bg: "#F0FDF4", color: "#16A34A" },
@@ -17,7 +18,7 @@ const PAYMENT_STYLE = {
 };
 
 const CATEGORIES = ["All Category", "Necklaces", "Earrings", "Rings", "Bracelets"];
-const STATUSES   = ["All Status",   "Pending", "Confirmed", "Shipped", "Delivered", "Cancelled", "Returned"];
+const STATUSES   = ["All Status",   "Order Placed", "Confirmed", "Shipped", "Delivered", "Cancelled", "Returned"];
 const PER_PAGE   = 6;
 
 /* ── Icons ── */

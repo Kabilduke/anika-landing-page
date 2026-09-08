@@ -499,8 +499,8 @@ export default function OrderTracking() {
                           {isRefundCompleted
                             ? "Your refund has been successfully processed and returned to your original payment source."
                             : isCod
-                            ? "This order was cancelled. Since this was a Cash on Delivery (COD) order, no payment was charged and no refund is required."
-                            : "This order was cancelled. Any amount paid will be refunded to your original payment source within 3-5 business days."}
+                              ? "This order was cancelled. Since this was a Cash on Delivery (COD) order, no payment was charged and no refund is required."
+                              : "This order was cancelled. Any amount paid will be refunded to your original payment source within 3-5 business days."}
                         </p>
                       </div>
                     </div>
@@ -585,7 +585,14 @@ export default function OrderTracking() {
                             </div>
                           </div>
                           <div className="track-product-details">
-                            <div className="track-product-name">{item.product_name}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                              <div className="track-product-name">{item.product_name}</div>
+                              <div className="track-product-price">
+                                {qty > 1
+                                  ? `${qty} × ₹${unitPrice.toLocaleString("en-IN")}`
+                                  : `₹${unitPrice.toLocaleString("en-IN")}`}
+                              </div>
+                            </div>
                             <div className="track-product-meta">
                               <span>Qty: {qty}</span>
                               {(item.size || item.color) && (
@@ -595,11 +602,6 @@ export default function OrderTracking() {
                                 </span>
                               )}
                             </div>
-                          </div>
-                          <div className="track-product-price">
-                            {qty > 1
-                              ? `${qty} × ₹${unitPrice.toLocaleString("en-IN")}`
-                              : `₹${unitPrice.toLocaleString("en-IN")}`}
                           </div>
                         </div>
                       );

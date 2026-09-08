@@ -6,8 +6,10 @@ import { useNavigate } from "react-router-dom";
 import WishlistPage from "./wishlistPage";
 import { useStore } from "../hooks/useStore";
 import { getOriginalImageUrl } from '../utils/imageUtils';
+import { getNavPath } from "../services/categoryRoute";
 
 export default function CartPage() {
+  const categories = useStore((state) => state.categories);
   const cartItems = useStore((state) => state.cartItems);
   const wishlistItems = useStore((state) => state.wishlistItems);
   const updateCartQty = useStore((state) => state.updateCartQty);
@@ -36,12 +38,8 @@ export default function CartPage() {
   }, [cartItems]);
 
   const handleNavClick = (link) => {
-    if (link == "Home") {
-      navigate("/");
-    } else {
-      navigate(`/${link.toLowerCase()}`);
-    }
-  }
+    navigate(getNavPath(link, categories));
+  };
 
   const showToast = (msg) => {
     setToast(msg);
@@ -139,6 +137,9 @@ export default function CartPage() {
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 <p>Your cart is empty</p>
+                <button className="cart-empty-shop-btn" onClick={() => navigate('/')}>
+                  Start Shopping
+                </button>
               </div>
             ) : (
               <>

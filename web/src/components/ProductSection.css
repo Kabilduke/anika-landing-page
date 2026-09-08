@@ -1,21 +1,88 @@
-/* ─── Product Section (Overlap Pattern like Violet Page) ──────────────── */
+/* ─── Product Section Header ──────────────── */
+.showcase-header {
+  text-align: center;
+  margin: 32px 0 20px;
+  padding: 0 16px;
+}
+
+.showcase-eyebrow {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #C42049;
+  margin-bottom: 6px;
+}
+
+.showcase-title {
+  font-family: 'Agraham', Georgia, serif;
+  font-size: 34px;
+  font-weight: 500;
+  color: #4A1521;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.5px;
+}
+
+.showcase-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #7d7571;
+  margin: 0 auto;
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+.necklace-cards {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 16px;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.necklace-cards::-webkit-scrollbar {
+  display: none;
+}
+
+.necklace-cards .product-card {
+  flex: 0 0 175px;
+  max-width: 175px;
+  width: 175px;
+  scroll-snap-align: start;
+}
+
 .product-section {
   display: flex;
   margin: 10px;
   padding: 10px;
   border-radius: 10px;
   overflow: hidden;
-  max-width: 100%; 
+  max-width: 100%;
   box-sizing: border-box;
   background: #fff;
   border: 1px solid #efefef;
+}
+
+.product-section-reverse {
+  flex-direction: row-reverse;
+}
+
+.product-section-reverse .product-footer {
+  justify-content: flex-start;
 }
 
 .product-left {
   width: 38%;
   flex-shrink: 0;
   position: relative;
-  /* Lock absolute children like the overlay */
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .ring-hand-img {
@@ -23,22 +90,22 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .lifestyle-overlay {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
-  padding: 80px 30px 35px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  padding: 35px 30px 80px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65) 0%, transparent 100%);
   color: #fff;
   z-index: 2;
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .lifestyle-title {
@@ -70,20 +137,22 @@
 .product-cards {
   display: flex;
   gap: 16px;
-  overflow: hidden;
-  min-width: 0; 
+  min-width: 0;
+  padding-top: 8px;
+  margin-top: -8px;
+  padding-bottom: 4px;
 }
 
 .product-card {
   flex: 1;
-  min-width: 0; 
+  min-width: 0;
   background: #fff;
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid #e0d5e8;
-  padding: 10px;
-  padding-bottom: 20px;
+  padding: 5px;
+  padding-bottom: 12px;
   background: #fdfaf7;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
   /* Ensure rounded corners are maintained */
   transform: translateZ(0);
@@ -92,7 +161,8 @@
 }
 
 .product-card:hover {
-  transform: translateY(-5px) translateZ(0);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .product-img-wrapper {
@@ -110,25 +180,28 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 6px;
+  padding: 2px;
   box-sizing: border-box;
   display: block;
   border-radius: 12px;
 }
 
 .product-details {
-  padding: 12px 4px 0;
+  padding: 8px 4px 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .product-info {
   display: flex;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   margin-bottom: 4px;
+  width: 100%;
 }
 
 .product-price {
@@ -149,7 +222,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: #777;
-  text-align: center;
+  text-align: left;
   margin: 0;
   width: 100%;
   white-space: nowrap;
@@ -160,7 +233,7 @@
 .product-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 24px;
 }
 
@@ -211,10 +284,32 @@
 
 /* 📱 MOBILE: Overlap & Scroll pattern (Matches the Violet Page request) */
 @media (max-width: 768px) {
-  .product-section {
+
+  .showcase-header {
+    margin: 20px 0 12px;
+    padding: 0 12px;
+  }
+
+  .showcase-eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+
+  .showcase-title {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .showcase-subtitle {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .product-section,
+  .product-section-reverse {
     flex-direction: column;
     margin: 12px 10px 10px;
-    /* Added top margin */
     padding: 10px;
     border-radius: 10px;
     background: #fff5eb !important;
@@ -224,7 +319,7 @@
     width: 100%;
     margin: 0;
     height: 320px;
-    border-radius: 0;
+    border-radius: 12px;
     overflow: hidden;
     position: relative;
     z-index: 1;
@@ -235,6 +330,27 @@
     background: transparent;
     z-index: 5;
     margin-top: -60px;
+  }
+
+  .product-section:not(:has(.product-left)) {
+    background: #fff !important;
+    border: 1px solid #efefef;
+    margin: 8px 10px;
+    padding: 12px 10px;
+  }
+
+  .product-section:not(:has(.product-left)) .product-right,
+  .product-right:has(.necklace-cards) {
+    margin-top: 0 !important;
+    padding: 0;
+  }
+
+  .necklace-cards .product-card {
+    flex: 0 0 130px;
+    max-width: 130px;
+    width: 130px;
+    padding: 5px;
+    border-radius: 10px;
   }
 
   .product-cards {
@@ -290,7 +406,7 @@
   .product-info {
     width: 100%;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .product-price {

@@ -418,10 +418,7 @@
   align-items: center;
 }
 
-/* Cols */
-.inv__col--id {}
 
-.inv__col--customer {}
 
 .inv__col--date {
   font-size: 12.5px;
@@ -434,7 +431,6 @@
   color: #1c1c1e;
 }
 
-.inv__col--payment {}
 
 .inv__col--status {
   display: flex;
@@ -469,17 +465,17 @@
 }
 
 .inv__order-id {
-  font-size: 13px;
-  font-weight: 600;
-  font-family: 'Courier New', monospace;
-  color: #1c1c1e;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #000;
 }
 
 .inv__order-id--clickable {
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: #1c1c1e;
+  color: #000;
   transition: color 0.15s;
 }
 
@@ -490,7 +486,7 @@
 .inv__customer-name {
   display: block;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1c1c1e;
 }
 

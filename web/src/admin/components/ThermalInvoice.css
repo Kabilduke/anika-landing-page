@@ -7,19 +7,21 @@
 .thermal-invoice.thermal-invoice--preview,
 .thermal-invoice-modal .thermal-invoice {
   display: block !important;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 11.5px;
+  font-family: 'Consolas', 'Courier New', Courier, Monaco, monospace;
+  font-size: 13.5px;
+  font-weight: 700;
   line-height: 1.5;
-  color: #111;
+  color: #000;
+  -webkit-text-stroke: 0.15px #000;
   background: #fff;
   padding: 24px 20px;
   box-sizing: border-box;
   width: 100%;
-  max-width: 340px;
+  max-width: 360px;
   margin: 0 auto;
   border-radius: 8px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e5e7;
+  border: 1px solid #d0d0d5;
 }
 
 .thermal-invoice--preview .ti__header {
@@ -28,22 +30,25 @@
 }
 
 .thermal-invoice--preview .ti__store-name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 900;
   letter-spacing: 2px;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__tagline {
-  font-size: 11px;
-  color: #555;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
   margin-bottom: 4px;
 }
 
 .thermal-invoice--preview .ti__divider {
-  font-size: 10.5px;
-  margin: 5px 0;
+  font-size: 12.5px;
+  font-weight: 900;
+  margin: 6px 0;
   letter-spacing: -0.5px;
-  color: #888;
+  color: #000;
   text-align: center;
   overflow: hidden;
 }
@@ -55,22 +60,25 @@
 .thermal-invoice--preview .ti__meta-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__section-title {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin: 4px 0 2px;
-  color: #222;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  margin: 6px 0 3px;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__customer,
 .thermal-invoice--preview .ti__address {
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.55;
-  color: #333;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__items {
@@ -82,14 +90,15 @@
 }
 
 .thermal-invoice--preview .ti__item-name {
-  font-weight: 700;
-  font-size: 11.5px;
-  color: #111;
+  font-weight: 800;
+  font-size: 14px;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__item-variant {
-  font-size: 10px;
-  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  color: #222;
 }
 
 .thermal-invoice--preview .ti__item-price-row {
@@ -97,8 +106,9 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
-  font-size: 11px;
-  color: #333;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__item-qty-meta {
@@ -109,31 +119,35 @@
 
 .thermal-invoice--preview .ti__item-price {
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 800;
+  font-size: 14px;
   text-align: right;
+  color: #000;
 }
 
 .thermal-invoice--preview .ti__total-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13.5px;
-  font-weight: 700;
-  margin: 6px 0;
+  font-size: 17px;
+  font-weight: 900;
+  margin: 8px 0;
   color: #000;
 }
 
 .thermal-invoice--preview .ti__footer {
   text-align: center;
-  font-size: 10.5px;
-  color: #555;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #000;
   margin: 6px 0;
   line-height: 1.55;
 }
 
 .thermal-invoice--preview .ti__cut {
   text-align: center;
-  font-size: 10px;
-  color: #aaa;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #000;
   margin-top: 8px;
   letter-spacing: 2px;
 }
@@ -142,7 +156,7 @@
 @media print {
   @page {
     size: 80mm auto;
-    margin: 0;
+    margin: 4mm 0 0 0;
   }
 
   html, body {
@@ -195,15 +209,17 @@
     display: block !important;
     visibility: visible !important;
     position: relative !important;
-    width: 72mm !important; /* 80mm roll with 4mm margin each side */
-    max-width: 72mm !important;
+    width: 74mm !important; /* Expanded printable width */
+    max-width: 74mm !important;
     margin: 0 auto !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 11px !important;
+    font-family: 'Consolas', 'Courier New', Courier, Monaco, monospace !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
     line-height: 1.45 !important;
     color: #000 !important;
+    -webkit-text-stroke: 0.2px #000 !important;
     background: #fff !important;
-    padding: 4mm 4mm 6mm !important;
+    padding: 8mm 3mm 6mm !important;
     box-sizing: border-box !important;
     page-break-after: always !important;
     break-after: page !important;
@@ -216,29 +232,60 @@
     break-after: auto !important;
   }
 
-  /* Header */
+  /* Header — Guaranteed visible and centered */
+  .thermal-print-area .ti__header,
   .ti__header {
-    text-align: center;
-    margin-bottom: 4px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    text-align: center !important;
+    margin-top: 2px !important;
+    margin-bottom: 6px !important;
+    padding-top: 2px !important;
+    width: 100% !important;
   }
 
+  .thermal-print-area .ti__store-name,
   .ti__store-name {
-    font-size: 15px;
-    font-weight: bold;
-    letter-spacing: 2px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: 19px !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    color: #000 !important;
+    line-height: 1.3 !important;
+    margin: 0 0 2px 0 !important;
+    text-align: center !important;
+    width: 100% !important;
   }
 
+  .thermal-print-area .ti__tagline,
   .ti__tagline {
-    font-size: 10px;
-    margin-bottom: 4px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    margin-bottom: 6px !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+    width: 100% !important;
   }
 
   /* Dividers */
+  .thermal-print-area .ti__divider,
   .ti__divider {
-    font-size: 10px;
-    margin: 4px 0;
-    letter-spacing: -0.5px;
-    overflow: hidden;
+    display: block !important;
+    visibility: visible !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    color: #000 !important;
+    margin: 4px 0 !important;
+    letter-spacing: -0.5px !important;
+    overflow: hidden !important;
+    text-align: center !important;
   }
 
   /* Meta (invoice#, date, payment) */
@@ -249,22 +296,27 @@
   .ti__meta-row {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
   }
 
   /* Section titles */
   .ti__section-title {
-    font-size: 10px;
-    font-weight: bold;
-    letter-spacing: 1px;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+    color: #000 !important;
     margin: 3px 0 2px;
   }
 
   /* Customer */
   .ti__customer,
   .ti__address {
-    font-size: 10px;
-    line-height: 1.6;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.6 !important;
+    color: #000 !important;
     margin-bottom: 2px;
   }
 
@@ -278,13 +330,15 @@
   }
 
   .ti__item-name {
-    font-weight: bold;
-    font-size: 11px;
+    font-weight: 900 !important;
+    font-size: 13.5px !important;
+    color: #000 !important;
   }
 
   .ti__item-variant {
-    font-size: 9px;
-    color: #333;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
   }
 
   .ti__item-price-row {
@@ -292,7 +346,9 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 6px;
-    font-size: 10px;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
   }
 
   .ti__item-qty-meta {
@@ -303,6 +359,9 @@
 
   .ti__item-price {
     white-space: nowrap;
+    font-weight: 900 !important;
+    font-size: 13.5px !important;
+    color: #000 !important;
     text-align: right;
   }
 
@@ -310,15 +369,18 @@
   .ti__total-row {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    color: #000 !important;
     margin: 4px 0;
   }
 
   /* Footer */
   .ti__footer {
     text-align: center;
-    font-size: 10px;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
     margin: 4px 0;
     line-height: 1.6;
   }
@@ -326,8 +388,12 @@
   /* Cut line */
   .ti__cut {
     text-align: center;
-    font-size: 9px;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    color: #000 !important;
     margin-top: 6px;
     letter-spacing: 2px;
   }
 }
+
+

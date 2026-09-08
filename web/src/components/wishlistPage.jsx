@@ -5,11 +5,13 @@ import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import { useStore } from "../hooks/useStore";
 import { getOriginalImageUrl } from '../utils/imageUtils';
+import { getNavPath } from "../services/categoryRoute";
 
 export default function WishlistPage({ onBack }) {
   const navigate = useNavigate();
 
   // Zustand Store
+  const categories = useStore((state) => state.categories);
   const wishlistItems = useStore((state) => state.wishlistItems);
   const removeFromWishlist = useStore((state) => state.removeFromWishlist);
   const removeSelectedFromWishlist = useStore((state) => state.removeSelectedFromWishlist);
@@ -91,10 +93,7 @@ export default function WishlistPage({ onBack }) {
       {/* ── HEADER ──────────────────────────────────────────── */}
       <SiteHeader
         activeLink=""
-        onLinkClick={(link) => {
-          if (link === "Home") navigate("/");
-          else navigate(`/${link.toLowerCase()}`);
-        }}
+        onLinkClick={(link) => navigate(getNavPath(link, categories))}
       />
 
       {/* ── TOAST ───────────────────────────────────────────── */}

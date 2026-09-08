@@ -9,6 +9,7 @@ import ThermalInvoice from "../components/ThermalInvoice";
 import "./Orderdetails.css";
 
 const STATUS_CONFIG = {
+  "Order Placed": { bg: "#e0f2fe", color: "#0369a1", dot: "#0284c7" },
   Delivered: { bg: "#dcfce7", color: "#16a34a", dot: "#22c55e" },
   Shipped: { bg: "#fef9c3", color: "#a16207", dot: "#eab308" },
   Pending: { bg: "#dbeafe", color: "#1d4ed8", dot: "#3b82f6" },
@@ -36,7 +37,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   const [adminNote, setAdminNote] = useState(order?.admin_notes || "");
   const [address, setAddress] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState(order?.status || "Pending");
+  const [selectedStatus, setSelectedStatus] = useState(order?.status || "Order Placed");
   const [updating, setUpdating] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "" });
@@ -149,7 +150,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
     item_name: "N/A",
     quantity: 1,
     total_price: 0,
-    status: "Pending",
+    status: "Order Placed",
     payment: "COD"
   };
 
@@ -182,7 +183,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
   }, [o.user_id]);
 
   const handleUpdateStatus = async () => {
-    if (!o?.id || !onStatusChange) return;
+    if (!o?.id || !onStatusChange || !selectedStatus) return;
     try {
       setUpdating(true);
       await onStatusChange(o.id, selectedStatus);
@@ -248,12 +249,12 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
 
     const orderPlacedDate = o.order_date
       ? new Date(o.order_date).toLocaleString("en-GB", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
       : "Recently placed";
 
     const isCod = (o.payment || "").toString().toUpperCase() !== "PAID" &&
@@ -348,8 +349,8 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
         date: isDeliveredDone
           ? (s === "returned" ? "Delivered to Customer" : "Delivered")
           : (o.estimated_delivery_date
-              ? `Est: ${new Date(o.estimated_delivery_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
-              : ""),
+            ? `Est: ${new Date(o.estimated_delivery_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+            : ""),
         done: isDeliveredDone,
         isCancelled: false
       }
@@ -550,11 +551,7 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
                 background: '#fff'
               }}
             >
-              {selectedStatus === "Pending" && (
-                <option value="Pending" disabled hidden>
-                  Pending
-                </option>
-              )}
+              <option value="Order Placed">Order Placed</option>
               <option value="Confirmed">Confirmed</option>
               <option value="Shipped">Shipped</option>
               <option value="Delivered">Delivered</option>
@@ -599,9 +596,8 @@ const OrderDetails = ({ order, onStatusChange, onBack }) => {
                   <div className={`od__tl-line ${isConnectorDone ? "od__tl-line--done" : ""}`} />
                 )}
                 <div
-                  className={`od__tl-circle ${isDone ? "od__tl-circle--done" : ""} ${
-                    isCancelled ? "od__tl-circle--cancelled" : ""
-                  }`}
+                  className={`od__tl-circle ${isDone ? "od__tl-circle--done" : ""} ${isCancelled ? "od__tl-circle--cancelled" : ""
+                    }`}
                 >
                   {isCancelled ? (
                     <span style={{ fontSize: "14px", fontWeight: "bold" }}>✕</span>
