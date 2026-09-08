@@ -16,6 +16,7 @@ export default function CartPage() {
   const toggleWishlist = useStore((state) => state.toggleWishlist);
 
   const [selectedIds, setSelectedIds] = useState([]);
+  const selectedItems = cartItems.filter((i) => selectedIds.includes(i.id));
   const [toast, setToast] = useState("");
   const [showWishlist, setShowWishlist] = useState(false);
 
@@ -92,12 +93,14 @@ export default function CartPage() {
   };
 
   // Only calculate totals for currently SELECTED items
-  const selectedItems = cartItems.filter((i) => selectedIds.includes(i.id));
   const subtotal = selectedItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
   const taxes = 0;
-  const gst = subtotal > 0 ? Math.round(subtotal - (subtotal / 1.03)) : 0; // 3% inclusive GST on jewelry
+  const gst = subtotal > 0 ? Math.round(subtotal - (subtotal / 1.03)) : 0;
   const platformFee = 0;
-  const grandTotal = subtotal + taxes + platformFee;
+  const deliveryFee = subtotal > 0 ? 70 : 0;
+  const grandTotal = subtotal + taxes + gst + platformFee + deliveryFee;
+
+
 
   if (showWishlist) {
     return (
@@ -255,7 +258,7 @@ export default function CartPage() {
                 </div>
                 <div className="summary-row">
                   <span>Delivery Fee</span>
-                  <span className="free-label">70</span>
+                  <span className="free-label">+{deliveryFee}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="summary-row summary-grand">
