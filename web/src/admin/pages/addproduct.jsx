@@ -89,6 +89,8 @@ const compressImage = async (file, maxWidth = 1200, quality = 0.8) => {
   });
 };
 
+const generateSKU = () => `ANK-${Math.floor(100000 + Math.random() * 900000)}`;
+
 export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVariant, initialData }) {
   const isEditing = !!initialData;
 
@@ -97,7 +99,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       ? {
         name: initialData.name || "",
         description: initialData.description || "",
-        sku: initialData.sku || "",
+        sku: initialData.sku || generateSKU(),
         category_id: initialData.category_id || "",
         subcategory_id: initialData.subcategory_id || "",
         price: initialData.price || "",
@@ -115,7 +117,10 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
             : []),
         care: initialData.care || "",
       }
-      : EMPTY_FORM
+      : {
+        ...EMPTY_FORM,
+        sku: generateSKU(),
+      }
   );
 
   const [imageList, setImageList] = useState(() =>
@@ -127,6 +132,8 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
   );
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [savingAction, setSavingAction] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
@@ -188,7 +195,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       setForm({
         name: initialData.name || "",
         description: initialData.description || "",
-        sku: initialData.sku || "",
+        sku: initialData.sku || generateSKU(),
         category_id: initialData.category_id || "",
         subcategory_id: initialData.subcategory_id || "",
         price: initialData.price || "",
@@ -215,7 +222,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
       );
       setVisibility([initialData.is_active ?? false, initialData.is_featured ?? false]);
     } else {
-      setForm(EMPTY_FORM);
+      setForm({ ...EMPTY_FORM, sku: generateSKU() });
       setImageList([]);
       setVisibility([false, false]);
     }
@@ -332,36 +339,37 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
 
   // ── Save Product to Database ─────────────────────────────────
   const saveProduct = async (status) => {
-    console.log("category_id:", form.category_id, "subcategory_id:", form.subcategory_id);
-    const { urls, error: uploadError } = await uploadAllImages();
-    if (uploadError) {
-      alert("Failed to upload images: " + uploadError.message);
-      return { error: uploadError };
-    }
-
-    const productData = {
-      name: form.name,
-      description: form.description,
-      sku: form.sku,
-      category_id: parseInt(form.category_id) || null,
-      subcategory_id: form.subcategory_id || null,
-      price: parseFloat(form.price) || 0,
-      compare_price: parseFloat(form.compare_price) || null,
-      // discount_price: parseFloat(form.discount_price) || null,
-      stock: parseInt(form.stock) || 0,
-      stock_alert: parseInt(form.stock_alert) || null,
-      material: form.material,
-      weight: parseFloat(form.weight) || null,
-      sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
-      colors: form.colors || [],
-      care: form.care,
-      image_url: urls[0] || null,
-      images: urls,
-      is_active: visibility[0],
-      is_featured: visibility[1],
-    };
-
+    setSubmitting(true);
     try {
+      console.log("category_id:", form.category_id, "subcategory_id:", form.subcategory_id);
+      const { urls, error: uploadError } = await uploadAllImages();
+      if (uploadError) {
+        alert("Failed to upload images: " + uploadError.message);
+        return { error: uploadError };
+      }
+
+      const productData = {
+        name: form.name,
+        description: form.description,
+        sku: form.sku,
+        category_id: parseInt(form.category_id) || null,
+        subcategory_id: form.subcategory_id || null,
+        price: parseFloat(form.price) || 0,
+        compare_price: parseFloat(form.compare_price) || null,
+        // discount_price: parseFloat(form.discount_price) || null,
+        stock: parseInt(form.stock) || 0,
+        stock_alert: parseInt(form.stock_alert) || null,
+        material: form.material,
+        weight: parseFloat(form.weight) || null,
+        sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()) : null,
+        colors: form.colors || [],
+        care: form.care,
+        image_url: urls[0] || null,
+        images: urls,
+        is_active: visibility[0],
+        is_featured: visibility[1],
+      };
+
       if (isEditing) {
         // Update existing product
         const productId = initialData?.product_id || initialData?.id;
@@ -375,20 +383,27 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
     } catch (error) {
       alert((isEditing ? "Update failed: " : "Insert failed: ") + error.message);
       return { error };
+    } finally {
+      setSubmitting(false);
+      setSavingAction(null);
     }
   };
 
   const handlePublish = async () => {
+    if (submitting || uploading) return;
     if (!form.name.trim()) { alert("Product name is required."); return; }
     if (!form.price) { alert("Price is required."); return; }
     if (errors.price) { alert(errors.price); return; }
+    setSavingAction("publish");
     const result = await saveProduct("Visible");
     if (!result.error && onPublish) onPublish(result.data);
   };
 
   const handleDraft = async () => {
+    if (submitting || uploading) return;
     if (!form.name.trim()) { alert("Product name is required."); return; }
     if (errors.price) { alert(errors.price); return; }
+    setSavingAction("draft");
     const result = await saveProduct("Draft");
     if (!result.error && onSaveDraft) onSaveDraft(result.data);
   };
@@ -464,11 +479,11 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
           <div className="field">
             <label>SKU</label>
             <input
-              placeholder="Product Type"
+              placeholder="Auto Generated"
               value={form.sku}
-              onChange={set("sku")}
+              readOnly
             />
-            <div className="auto-hint">Auto Generated Or Enter Manually</div>
+            <div className="auto-hint">Auto Generated</div>
           </div>
           <div className="field">
             <label>Category</label>
@@ -515,7 +530,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
           className={`drop-zone ${uploading ? "uploading" : ""}`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          onClick={() => fileRef.current.click()}
+          onClick={() => fileRef.current?.click()}
         >
           <div className="drop-btn">
             <svg
@@ -579,7 +594,7 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
               className="add-thumb"
               onClick={(e) => {
                 e.stopPropagation();
-                fileRef.current.click();
+                fileRef.current?.click();
               }}
               title="Add image"
             >
@@ -783,17 +798,35 @@ export default function AddProduct({ onBack, onPublish, onSaveDraft, onAddVarian
           type="button"
           className="btn-draft"
           onClick={isEditing ? handleDraft : onBack}
-          disabled={uploading}
+          disabled={submitting || uploading}
         >
-          {isEditing ? "Save as Draft" : "Cancel"}
+          {savingAction === "draft" ? (
+            <span className="ap-btn-loading">
+              <span className="ap-spinner" /> Saving Draft...
+            </span>
+          ) : isEditing ? (
+            "Save as Draft"
+          ) : (
+            "Cancel"
+          )}
         </button>
         <button
           type="button"
           className="btn-publish"
           onClick={handlePublish}
-          disabled={uploading}
+          disabled={submitting || uploading}
         >
-          {uploading ? "Uploading..." : isEditing ? "Update Product" : "Save"}
+          {savingAction === "publish" ? (
+            <span className="ap-btn-loading">
+              <span className="ap-spinner" /> {uploading ? "Uploading..." : isEditing ? "Updating..." : "Saving..."}
+            </span>
+          ) : uploading ? (
+            "Uploading..."
+          ) : isEditing ? (
+            "Update Product"
+          ) : (
+            "Save"
+          )}
         </button>
       </div>
     </div>

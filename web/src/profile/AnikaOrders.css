@@ -1,32 +1,34 @@
 :root {
-  --brand-red:      #8b0030;
+  --brand-red: #8b0030;
   --brand-red-dark: #6e0026;
-  --brand-gold:     #c8a96e;
-  --white:          #ffffff;
-  --page-bg:        #f9f3f5;
-  --border-gray:    #e4e4e4;
-  --text-dark:      #1a1a1a;
-  --text-mid:       #555555;
-  --text-light:     #888888;
-  --status-pending-bg:   #fff4e0;
+  --brand-gold: #c8a96e;
+  --white: #ffffff;
+  --page-bg: #f9f3f5;
+  --border-gray: #e4e4e4;
+  --text-dark: #1a1a1a;
+  --text-mid: #555555;
+  --text-light: #888888;
+  --status-pending-bg: #fff4e0;
   --status-pending-text: #b87800;
-  --status-shipped-bg:   #e8f0fe;
+  --status-shipped-bg: #e8f0fe;
   --status-shipped-text: #1a5cd6;
   --status-delivered-bg: #e6f9ec;
-  --status-delivered-text:#1a7a3a;
-  --status-confirmed-bg:  #f3e8ff;
-  --status-confirmed-text:#7c3aed;
-  --status-cancelled-bg:  #fee2e2;
-  --status-cancelled-text:#dc2626;
-  --status-returned-bg:   #fee2e2;
+  --status-delivered-text: #1a7a3a;
+  --status-confirmed-bg: #f3e8ff;
+  --status-confirmed-text: #7c3aed;
+  --status-cancelled-bg: #fee2e2;
+  --status-cancelled-text: #dc2626;
+  --status-returned-bg: #fee2e2;
   --status-returned-text: #dc2626;
-  --status-return-bg:     #fee2e2;
-  --status-return-text:   #dc2626;
-  --vip-bg:         #fff8dc;
-  --vip-text:       #7a5a00;
+  --status-return-bg: #fee2e2;
+  --status-return-text: #dc2626;
+  --vip-bg: #fff8dc;
+  --vip-text: #7a5a00;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -40,8 +42,8 @@ body {
 
 /* ── ROOT WRAPPER ─────────────────────────────────────────── */
 .ao-root {
-  max-width: 960px;        
-  margin: 0 auto;     
+  max-width: 960px;
+  margin: 0 auto;
   width: 100%;
   padding: 36px 24px 60px;
   display: flex;
@@ -304,6 +306,39 @@ body {
 }
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ao-page-top {
+    text-align: center;
+    width: 100%;
+  }
+
+  .ao-profile-title {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .ao-user-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .ao-user-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .ao-vip-badge {
+    margin: 4px auto 0;
+  }
+
+  .ao-tabs {
+    justify-content: center;
+  }
+}
+
 @media (max-width: 480px) {
   .ao-root {
     padding: 24px 16px 48px;
@@ -311,6 +346,7 @@ body {
 
   .ao-profile-title {
     font-size: 28px;
+    text-align: center;
   }
 
   .ao-order-row {
@@ -353,4 +389,3 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
-

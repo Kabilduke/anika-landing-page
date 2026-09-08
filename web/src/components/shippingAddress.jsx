@@ -228,7 +228,7 @@ export default function ShippingAddress() {
 
   // const isAddressServiceable = pincodeServiceability === 'serviceable' || (selectedId && selectedAddrServiceable);
   const isAddressServiceable = /^\d{6}$/.test(form.pinCode);
-  const shippingFee = isAddressServiceable ? 0 : 0;
+  const shippingFee = isAddressServiceable ? 70 : 0;
 
   const gst = Math.round((subtotal - discountAmount) * 0.03);
   const taxes = gst;

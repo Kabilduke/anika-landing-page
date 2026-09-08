@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { productService } from '../services/productService';
+import { variantService } from '../services/variantService';
 import { cartService } from '../services/cartService';
 import { wishlistService } from '../services/wishlistService';
 import { authService } from '../services/authService';
@@ -31,6 +32,54 @@ const getOriginalImageUrl = (url) => {
   return clean;
 };
 
+// ── Product Detail Cache (localStorage, 1-year TTL) ─────────────────────────
+const PD_CACHE_KEY = 'anika_pd_cache';
+const PD_CACHE_TTL = 365 * 24 * 60 * 60 * 1000; // 1 year in ms
+
+/** Load image-only entries from localStorage (price/stock never persisted) */
+const loadPdCache = () => {
+  try {
+    const raw = localStorage.getItem(PD_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const now = Date.now();
+    const valid = {};
+    Object.entries(parsed).forEach(([id, entry]) => {
+      if (entry.cachedAt && (now - entry.cachedAt) < PD_CACHE_TTL) {
+        // Only restore images — price/stock are re-fetched fresh on every refresh
+        valid[id] = { cachedAt: entry.cachedAt, images: entry.images || [] };
+      }
+    });
+    return valid;
+  } catch {
+    return {};
+  }
+};
+
+/** Persist only image data to localStorage (price/stock intentionally excluded) */
+const savePdCache = (cache) => {
+  try {
+    const imgOnly = {};
+    Object.entries(cache).forEach(([id, entry]) => {
+      imgOnly[id] = { cachedAt: entry.cachedAt, images: entry.images || [] };
+    });
+    localStorage.setItem(PD_CACHE_KEY, JSON.stringify(imgOnly));
+  } catch (e) {
+    console.warn('Product detail cache write failed (localStorage full?):', e);
+  }
+};
+
+/** Remove one product entry from localStorage cache */
+const evictPdEntry = (productId) => {
+  try {
+    const raw = localStorage.getItem(PD_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    delete parsed[productId];
+    localStorage.setItem(PD_CACHE_KEY, JSON.stringify(parsed));
+  } catch { /* ignore */ }
+};
+
 export const useStore = create((set, get) => ({
   // --- Authentication State ---
   session: null,
@@ -49,6 +98,7 @@ export const useStore = create((set, get) => ({
   // --- Catalog Caching ---
   categories: [],
   products: {}, // { categoryName: [products] }
+  productDetails: loadPdCache(), // { productId: { cachedAt, images, base, variants } } — persisted 1 year
   loadingCategories: false,
   loadingProducts: false,
 
@@ -150,6 +200,9 @@ export const useStore = create((set, get) => ({
         localStorage.removeItem('anika_guest_wishlist');
       }
     });
+
+    // Validate product image cache on refresh (price is always fresh)
+    get().validateProductImageCache();
   },
 
 
@@ -259,6 +312,87 @@ export const useStore = create((set, get) => ({
       set({ loadingProducts: false });
       return [];
     }
+  },
+
+  // Caching Individual Product Details (images + price + variants)
+  // Images: served from Zustand session cache (populated from localStorage on load)
+  // Price/stock/variants: ALWAYS fetched fresh from DB on first access per session
+  fetchProductDetails: async (productId, { force = false } = {}) => {
+    if (!productId) return null;
+    const cached = get().productDetails[productId];
+
+    // Full session cache hit (images + base both present) — return immediately
+    if (!force && cached?.base) return cached;
+
+    try {
+      // If images already in cache (from localStorage), skip image DB call
+      const hasImages = cached?.images?.length > 0;
+
+      const fetchTasks = [
+        hasImages
+          ? Promise.resolve({ data: { images: cached.images, image_url: null }, error: null })
+          : supabase
+              .from('products')
+              .select('images, image_url')
+              .eq('product_id', productId)
+              .single(),
+        // Price/stock always fetched fresh
+        supabase
+          .from('products')
+          .select('price, compare_price, sku, stock, stock_alert, sizes, colors, has_variants')
+          .eq('product_id', productId)
+          .single(),
+      ];
+
+      const [imgResult, baseResult] = await Promise.all(fetchTasks);
+
+      const imgData = imgResult.data;
+      const baseData = baseResult.data;
+      if (baseResult.error) throw baseResult.error;
+
+      const images = hasImages
+        ? cached.images
+        : (Array.isArray(imgData?.images) && imgData.images.length > 0
+          ? imgData.images
+          : (imgData?.image_url ? [imgData.image_url] : []));
+
+      let variantRows = [];
+      if (baseData?.has_variants) {
+        try {
+          variantRows = await variantService.getVariantsByProductId(productId);
+        } catch (err) {
+          console.error('Failed to load variants in store:', err);
+        }
+      }
+
+      const details = { cachedAt: Date.now(), images, base: baseData, variants: variantRows };
+      const updatedCache = { ...get().productDetails, [productId]: details };
+      set({ productDetails: updatedCache });
+      savePdCache(updatedCache); // persists images only (price excluded by savePdCache)
+      return details;
+    } catch (err) {
+      console.error(`Error fetching product details for ${productId}:`, err);
+      return null;
+    }
+  },
+
+  // On refresh: productDetails loaded from localStorage has images only.
+  // base (price/stock) and variants will be null/missing → triggers DB fetch.
+  // This ensures price/stock is ALWAYS fresh on every page refresh,
+  // while images are served from localStorage cache (1-year TTL).
+  validateProductImageCache: () => {
+    const cache = get().productDetails;
+    const now = Date.now();
+    let changed = false;
+    const updatedCache = { ...cache };
+    Object.entries(cache).forEach(([id, entry]) => {
+      if (!entry.cachedAt || (now - entry.cachedAt) >= PD_CACHE_TTL) {
+        delete updatedCache[id];
+        evictPdEntry(id);
+        changed = true;
+      }
+    });
+    if (changed) set({ productDetails: updatedCache });
   },
 
   // Caching Orders

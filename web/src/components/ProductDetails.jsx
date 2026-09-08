@@ -247,6 +247,8 @@ export default function ProductPage({ onBack }) {
   const wishlistItems = useStore(state => state.wishlistItems);
   const fetchProductsByCategory = useStore(state => state.fetchProductsByCategory);
   const productsCache = useStore(state => state.products);
+  const fetchProductDetails = useStore(state => state.fetchProductDetails);
+  const productDetailsCache = useStore(state => state.productDetails);
 
   const cat = selectedProduct?.category || 'Bangles';
 
@@ -288,77 +290,79 @@ export default function ProductPage({ onBack }) {
     Anklets: "Length",
   }
 
+  // Compute outside effect so cachedEntry can be a dependency.
+  // When validateProductCache evicts a stale entry, cachedEntry becomes
+  // undefined and the effect re-runs to fetch fresh data from DB.
+  const productId = selectedProduct?.productId || selectedProduct?.id;
+  const cachedEntry = productId ? productDetailsCache[productId] : undefined;
+
   useEffect(() => {
-    const productId = selectedProduct?.productId || selectedProduct?.id;
     if (!productId) return;
 
-    const fetchImages = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('images, image_url')
-        .eq('product_id', productId)
-        .single();
-      if (error || !data) return;
-      const imgs = Array.isArray(data.images) && data.images.length > 0
-        ? data.images
-        : (data.image_url ? [data.image_url] : []);
-      setProductImages(imgs);
-    };
-
-    const fetchProductBase = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select('price, compare_price, sku, stock, stock_alert, sizes, colors, has_variants')
-        .eq('product_id', productId)
-        .single();
-
-      if (error) {
-        console.error("fetchProductBase error:", error.message, error.details);
-        return;
-      }
-      if (!data) return;
-
-      setHasVariants(!!data.has_variants);
-
-      if (data.has_variants) {
-        try {
-          const variantRows = await variantService.getVariantsByProductId(productId);
-          setVariants(variantRows);
-
-          const sizes = [...new Set(variantRows.map(v => v.size).filter(Boolean))];
-          const firstVariant = variantRows[0];
-
-          setSize(sizes);
-          setSelectedSize(firstVariant?.size || "");
-          setSelectedColor(firstVariant?.color || "");
-        } catch (err) {
-          console.error("Failed to load variants:", err);
-          setVariants([]);
-        }
-      } else {
-        setProductPrice(data);
-        if (data.sizes?.length) {
-          setSize(data.sizes);
-          setSelectedSize(data.sizes[0] || "");
-        }
-        const parsedColors = Array.isArray(data.colors)
-          ? data.colors
-          : (typeof data.colors === "string" ? data.colors.split(",").map((s) => s.trim()).filter(Boolean) : []);
-        if (parsedColors.length > 0) {
-          setSelectedColor(parsedColors[0]);
-        }
-      }
-    };
+    // Reset UI state before loading
     setSize([]);
     setProductImages([]);
     setProductPrice(null);
     setVariants([]);
-    setSelectedColor("");
-    setSelectedSize("");
+    setSelectedColor('');
+    setSelectedSize('');
     setQty(1);
-    fetchProductBase();
-    fetchImages();
-  }, [selectedProduct, cat]);
+
+    // Cache hit only if price data (base) is present in Zustand session.
+    // On refresh, localStorage restores images only — base is missing → triggers DB fetch.
+    if (cachedEntry?.base) {
+      setProductImages(cachedEntry.images || []);
+      const baseData = cachedEntry.base;
+      setHasVariants(!!baseData?.has_variants);
+      if (baseData?.has_variants) {
+        const variantRows = cachedEntry.variants || [];
+        setVariants(variantRows);
+        const sizes = [...new Set(variantRows.map(v => v.size).filter(Boolean))];
+        const firstVariant = variantRows[0];
+        setSize(sizes);
+        setSelectedSize(firstVariant?.size || '');
+        setSelectedColor(firstVariant?.color || '');
+      } else {
+        setProductPrice(baseData);
+        if (baseData?.sizes?.length) {
+          setSize(baseData.sizes);
+          setSelectedSize(baseData.sizes[0] || '');
+        }
+        const parsedColors = Array.isArray(baseData?.colors)
+          ? baseData.colors
+          : (typeof baseData?.colors === 'string' ? baseData.colors.split(',').map(s => s.trim()).filter(Boolean) : []);
+        if (parsedColors.length > 0) setSelectedColor(parsedColors[0]);
+      }
+      return;
+    }
+
+    // Not cached — fetch from DB via store (will cache for next visit)
+    fetchProductDetails(productId).then(details => {
+      if (!details) return;
+      setProductImages(details.images || []);
+      const baseData = details.base;
+      setHasVariants(!!baseData?.has_variants);
+      if (baseData?.has_variants) {
+        const variantRows = details.variants || [];
+        setVariants(variantRows);
+        const sizes = [...new Set(variantRows.map(v => v.size).filter(Boolean))];
+        const firstVariant = variantRows[0];
+        setSize(sizes);
+        setSelectedSize(firstVariant?.size || '');
+        setSelectedColor(firstVariant?.color || '');
+      } else {
+        setProductPrice(baseData);
+        if (baseData?.sizes?.length) {
+          setSize(baseData.sizes);
+          setSelectedSize(baseData.sizes[0] || '');
+        }
+        const parsedColors = Array.isArray(baseData?.colors)
+          ? baseData.colors
+          : (typeof baseData?.colors === 'string' ? baseData.colors.split(',').map(s => s.trim()).filter(Boolean) : []);
+        if (parsedColors.length > 0) setSelectedColor(parsedColors[0]);
+      }
+    });
+  }, [selectedProduct, cat, cachedEntry]);
 
   const showToast = (message, type = "success") => {
     setToastMsg("");

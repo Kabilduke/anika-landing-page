@@ -9,7 +9,9 @@
   --text-light: #888888;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -342,6 +344,7 @@ body {
     opacity: 0;
     transform: scale(0.95) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -438,6 +441,34 @@ body {
 }
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .acct-profile-title {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .acct-user-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .acct-user-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .acct-vip-badge {
+    margin: 4px auto 0;
+  }
+
+  .acct-tabs {
+    justify-content: center;
+  }
+}
+
 @media (max-width: 480px) {
   .acct-root {
     padding: 24px 16px 48px;
@@ -445,6 +476,7 @@ body {
 
   .acct-profile-title {
     font-size: 28px;
+    text-align: center;
   }
 
   .acct-card {
@@ -463,7 +495,7 @@ body {
   .acct-modal-actions {
     flex-direction: column-reverse;
   }
-  
+
   .acct-modal-cancel,
   .acct-modal-confirm {
     width: 100%;

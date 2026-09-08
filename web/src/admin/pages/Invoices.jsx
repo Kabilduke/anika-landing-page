@@ -249,6 +249,132 @@ const Invoices = ({ orders = [], loading = false }) => {
     return true;
   });
 
+  const renderMobileCards = () => {
+    if (loading) {
+      return (
+        <div className="inv__cards-list">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="inv__card inv__card--skeleton">
+              <div className="inv__card-header">
+                <div className="skeleton-shimmer" style={{ height: "16px", width: "90px", borderRadius: "4px" }} />
+                <div className="skeleton-shimmer" style={{ height: "22px", width: "70px", borderRadius: "20px" }} />
+              </div>
+              <div className="inv__card-body" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="skeleton-shimmer" style={{ height: "14px", width: "140px", borderRadius: "4px" }} />
+                <div className="skeleton-shimmer" style={{ height: "12px", width: "100px", borderRadius: "4px" }} />
+              </div>
+              <div className="inv__card-footer" style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between' }}>
+                <div className="skeleton-shimmer" style={{ height: "20px", width: "60px", borderRadius: "6px" }} />
+                <div className="skeleton-shimmer" style={{ height: "30px", width: "120px", borderRadius: "8px" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (filtered.length === 0) {
+      return (
+        <div className="inv__empty">
+          <span>🧾</span>
+          <p>No invoices found</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="inv__cards-list">
+        {filtered.map((order) => {
+          const statusCfg = STATUS_COLORS[order.status] || STATUS_COLORS.Pending;
+          const orderShortId = order.id
+            ? "#" + String(order.id).slice(-8).toUpperCase()
+            : "#UNKNOWN";
+          const orderDate = order.order_date
+            ? new Date(order.order_date).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A";
+
+          const isPrinted = Boolean(order.invoice_printed);
+
+          return (
+            <div
+              key={order.id}
+              className={`inv__card ${isPrinted ? "inv__card--printed" : ""}`}
+            >
+              <div className="inv__card-header">
+                <span
+                  className="inv__order-id inv__order-id--clickable"
+                  onClick={() => handleOpenPreview(order)}
+                  title="Click to preview invoice"
+                >
+                  {orderShortId}
+                </span>
+                <div className="inv__card-badges">
+                  <span
+                    className="inv__status-badge"
+                    style={{ background: statusCfg.bg, color: statusCfg.color }}
+                  >
+                    {order.status}
+                  </span>
+                  {isPrinted && (
+                    <span className="inv__printed-tag" title="This invoice has been printed">
+                      ✓ Printed
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="inv__card-body">
+                <div className="inv__card-customer">
+                  <span className="inv__customer-name">
+                    {order.customer?.name || "N/A"}
+                  </span>
+                  {order.customer?.phone && (
+                    <span className="inv__customer-phone">
+                      {order.customer?.phone}
+                    </span>
+                  )}
+                </div>
+                <div className="inv__card-date">
+                  <span className="inv__card-label">Date:</span> {orderDate}
+                </div>
+              </div>
+
+              <div className="inv__card-footer">
+                <div className="inv__card-footer-left">
+                  <span className="inv__payment-badge">{order.payment || "COD"}</span>
+                  <span className="inv__card-total">
+                    ₹{Number(order.total_price || 0).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="inv__action-group">
+                  <button
+                    className="inv__preview-btn"
+                    onClick={() => handleOpenPreview(order)}
+                    title="Preview invoice receipt"
+                  >
+                    <span>👁️</span>
+                  </button>
+                  <button
+                    className={`inv__print-btn ${isPrinted ? "inv__print-btn--reprint" : ""}`}
+                    onClick={() => triggerPrintBatch([order])}
+                    disabled={isPrinting}
+                    title={isPrinted ? "Print invoice again" : "Print invoice"}
+                  >
+                    <span>🖨️</span> {isPrinted ? "Reprint" : "Print"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="inv">
       {/* Toast Alert */}
@@ -385,8 +511,8 @@ const Invoices = ({ orders = [], loading = false }) => {
         />
       </div>
 
-      {/* Table */}
-      <div className="inv__table-wrap">
+      {/* ── Table (Desktop View >= 768px) ── */}
+      <div className="inv__table-wrap inv__desktop-view">
         {/* Table Header */}
         <div className="inv__table-head">
           <div className="inv__col inv__col--id">Order ID</div>
@@ -500,6 +626,11 @@ const Invoices = ({ orders = [], loading = false }) => {
             );
           })
         )}
+      </div>
+
+      {/* ── Cards (Mobile View < 768px) ── */}
+      <div className="inv__cards-wrap inv__mobile-view">
+        {renderMobileCards()}
       </div>
 
       {/* Invoice Preview Modal */}

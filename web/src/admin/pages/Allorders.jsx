@@ -352,6 +352,137 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
     });
   };
 
+  const renderMobileCards = () => {
+    if (loading) {
+      return (
+        <div className="ao__cards-list">
+          {Array.from({ length: PER_PAGE }).map((_, i) => (
+            <div key={i} className="ao__card ao__card--skeleton">
+              <div className="ao__card-header">
+                <div className="ao__skeleton" style={{ width: 90, height: 16 }} />
+                <div className="ao__skeleton" style={{ width: 70, height: 22, borderRadius: 20 }} />
+              </div>
+              <div className="ao__card-body">
+                <div className="ao__skeleton" style={{ width: 140, height: 14 }} />
+                <div className="ao__skeleton" style={{ width: 200, height: 12 }} />
+              </div>
+              <div className="ao__card-footer">
+                <div className="ao__skeleton" style={{ width: 50, height: 20, borderRadius: 20 }} />
+                <div className="ao__skeleton" style={{ width: 70, height: 28, borderRadius: 6 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="ao__empty-state">
+          <div className="ao__empty-icon ao__empty-icon--error">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <p className="ao__empty-title">Something went wrong</p>
+          <p className="ao__empty-desc">{error}</p>
+        </div>
+      );
+    }
+
+    if (orders.length === 0) {
+      return (
+        <div className="ao__empty-state">
+          <div className="ao__empty-icon">
+            <EmptyBoxIcon />
+          </div>
+          <p className="ao__empty-title">No orders yet</p>
+          <p className="ao__empty-desc">
+            Orders from your customers will appear here once they start coming in.
+          </p>
+        </div>
+      );
+    }
+
+    if (paginated.length === 0) {
+      return (
+        <div className="ao__empty-state ao__empty-state--sm">
+          <p className="ao__empty-title">No orders match your filters</p>
+          <p className="ao__empty-desc">Try adjusting your search or filter criteria.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="ao__mobile-select-bar">
+          <label className="ao__mobile-select-label">
+            <input
+              type="checkbox"
+              className="ao__checkbox"
+              checked={allChecked}
+              onChange={toggleAll}
+              disabled={loading || paginated.length === 0}
+            />
+            <span>Select Page ({paginated.length})</span>
+          </label>
+          {selected.length > 0 && (
+            <span className="ao__mobile-selected-badge">{selected.length} selected</span>
+          )}
+        </div>
+        <div className="ao__cards-list">
+          {paginated.map((order) => {
+            const ss  = STATUS_STYLE[order.status]   || { bg: "#FFF4E5", color: "#D97706" };
+            const ps  = PAYMENT_STYLE[order.payment] || { bg: "#FFF4E5", color: "#D97706" };
+            const sel = selected.includes(order.id);
+            return (
+              <div key={order.id} className={`ao__card${sel ? " ao__card--selected" : ""}`}>
+                <div className="ao__card-header">
+                  <div className="ao__card-header-left">
+                    <input
+                      type="checkbox"
+                      className="ao__checkbox"
+                      checked={sel}
+                      onChange={() => toggleRow(order.id)}
+                    />
+                    <span className="ao__card-id">#{order.id?.slice(-6) || order.id}</span>
+                  </div>
+                  <span className="ao__badge" style={{ background: ss.bg, color: ss.color }}>
+                    {order.status}
+                  </span>
+                </div>
+                <div className="ao__card-body">
+                  <div className="ao__card-customer">
+                    <span className="ao__card-customer-name">{order.customer?.name || "Unknown"}</span>
+                    {order.customer?.email && (
+                      <span className="ao__card-customer-email">{order.customer?.email}</span>
+                    )}
+                  </div>
+                  <div className="ao__card-items">
+                    <span className="ao__card-items-text">
+                      {order.item_name} {order.quantity > 1 ? `x${order.quantity}` : ''}
+                    </span>
+                  </div>
+                </div>
+                <div className="ao__card-footer">
+                  <div className="ao__card-footer-left">
+                    <span className="ao__badge" style={{ background: ps.bg, color: ps.color }}>
+                      {order.payment}
+                    </span>
+                    <span className="ao__card-total">₹{Number(order.total_price || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <button className="ao__view-btn" onClick={() => onViewDetail?.(order)}>
+                    View Details
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="ao">
 
@@ -590,8 +721,8 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
         </div>
       )}
 
-      {/* ── Table ── */}
-      <div className="ao__table-wrap">
+      {/* ── Table (Desktop View >= 768px) ── */}
+      <div className="ao__table-wrap ao__desktop-view">
         <table className="ao__table">
           <thead>
             <tr>
@@ -615,6 +746,11 @@ const AllOrders = ({ orders = [], products = [], loading, error = null, onViewDe
           </thead>
           <tbody>{renderBody()}</tbody>
         </table>
+      </div>
+
+      {/* ── Cards (Mobile View < 768px) ── */}
+      <div className="ao__cards-wrap ao__mobile-view">
+        {renderMobileCards()}
       </div>
 
       {/* ── Footer ── */}

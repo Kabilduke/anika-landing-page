@@ -11,7 +11,9 @@
   --vip-text: #7a5a00;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -373,6 +375,34 @@ body {
 }
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .aw-profile-title {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .aw-user-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .aw-user-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .aw-vip-badge {
+    margin: 4px auto 0;
+  }
+
+  .aw-tabs {
+    justify-content: center;
+  }
+}
+
 @media (max-width: 600px) {
   .aw-grid {
     grid-template-columns: repeat(2, 1fr);
