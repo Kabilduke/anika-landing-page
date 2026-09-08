@@ -548,50 +548,62 @@ export default function OrderTracking() {
                 <div className="track-card track-items-card">
                   <h2 className="track-section-title">Package Items ({orderItems.length})</h2>
                   <div className="track-items-list">
-                    {orderItems.map((item, i) => (
-                      <div key={i} className="track-product-row">
-                        <div className="track-product-img">
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.product_name}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                                const placeholder = e.currentTarget.parentElement?.querySelector(".track-img-placeholder");
-                                if (placeholder) placeholder.style.display = "flex";
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="track-img-placeholder"
-                            style={{ display: item.image_url ? "none" : "flex" }}
-                          >
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C42049" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M6 3h12l4 6-10 13L2 9z" />
-                              <path d="M11 3 8 9l4 13 4-13-3-6" />
-                              <path d="M2 9h20" />
-                            </svg>
+                    {orderItems.map((item, i) => {
+                      const qty = Number(item.quantity || item.qty || 1);
+                      const rawPrice = item.price;
+                      let unitPrice = 0;
+                      if (typeof rawPrice === "number") {
+                        unitPrice = rawPrice;
+                      } else if (typeof rawPrice === "string") {
+                        unitPrice = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
+                      }
+                      const lineTotal = unitPrice * qty;
+
+                      return (
+                        <div key={i} className="track-product-row">
+                          <div className="track-product-img">
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                alt={item.product_name}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const placeholder = e.currentTarget.parentElement?.querySelector(".track-img-placeholder");
+                                  if (placeholder) placeholder.style.display = "flex";
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className="track-img-placeholder"
+                              style={{ display: item.image_url ? "none" : "flex" }}
+                            >
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C42049" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6 3h12l4 6-10 13L2 9z" />
+                                <path d="M11 3 8 9l4 13 4-13-3-6" />
+                                <path d="M2 9h20" />
+                              </svg>
+                            </div>
+                          </div>
+                          <div className="track-product-details">
+                            <div className="track-product-name">{item.product_name}</div>
+                            <div className="track-product-meta">
+                              <span>Qty: {qty}</span>
+                              {(item.size || item.color) && (
+                                <span>
+                                  {item.size && ` · Size: ${item.size}`}
+                                  {item.color && ` · Color: ${item.color}`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="track-product-price">
+                            {qty > 1
+                              ? `${qty} × ₹${unitPrice.toLocaleString("en-IN")}`
+                              : `₹${unitPrice.toLocaleString("en-IN")}`}
                           </div>
                         </div>
-                        <div className="track-product-details">
-                          <div className="track-product-name">{item.product_name}</div>
-                          <div className="track-product-meta">
-                            <span>Qty: {item.quantity}</span>
-                            {(item.size || item.color) && (
-                              <span>
-                                {item.size && ` · Size: ${item.size}`}
-                                {item.color && ` · Color: ${item.color}`}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="track-product-price">
-                          {typeof item.price === "number"
-                            ? `₹${item.price.toLocaleString("en-IN")}`
-                            : item.price}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -664,7 +676,7 @@ export default function OrderTracking() {
                     </div>
                     <div className="track-sum-row">
                       <span>Shipping / Delivery</span>
-                      <span className="track-free-text">FREE</span>
+                      <span className="track-free-text">₹70</span>
                     </div>
                     <div className="track-sum-divider"></div>
                     <div className="track-sum-row track-sum-total">

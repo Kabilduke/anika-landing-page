@@ -255,7 +255,7 @@ export default function CartPage() {
                 </div>
                 <div className="summary-row">
                   <span>Delivery Fee</span>
-                  <span className="free-label">FREE</span>
+                  <span className="free-label">70</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="summary-row summary-grand">

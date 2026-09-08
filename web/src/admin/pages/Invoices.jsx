@@ -338,7 +338,21 @@ const Invoices = ({ orders = [], loading = false }) => {
                     </span>
                   )}
                 </div>
-                <div className="inv__card-date">
+              {/* Product names under customer info */}
+              {(() => {
+                const items = order.order_items || [];
+                const names = items.map(i => i.product_name || i.name || 'Product').filter(Boolean);
+                if (names.length === 0) return null;
+                const display = names.length > 2
+                  ? names.slice(0, 2).join(', ') + ` +${names.length - 2} more`
+                  : names.join(', ');
+                return (
+                  <div className="inv__card-products" title={names.join('\n')}>
+                    🛍️ {display}
+                  </div>
+                );
+              })()}
+              <div className="inv__card-date">
                   <span className="inv__card-label">Date:</span> {orderDate}
                 </div>
               </div>
@@ -517,6 +531,7 @@ const Invoices = ({ orders = [], loading = false }) => {
         <div className="inv__table-head">
           <div className="inv__col inv__col--id">Order ID</div>
           <div className="inv__col inv__col--customer">Customer</div>
+          <div className="inv__col inv__col--products">Products</div>
           <div className="inv__col inv__col--date">Date</div>
           <div className="inv__col inv__col--total">Amount</div>
           <div className="inv__col inv__col--payment">Payment</div>
@@ -577,6 +592,22 @@ const Invoices = ({ orders = [], loading = false }) => {
                   <span className="inv__customer-phone">
                     {order.customer?.phone || ""}
                   </span>
+                </div>
+
+                <div className="inv__col inv__col--products">
+                  {(() => {
+                    const items = order.order_items || [];
+                    const names = items.map(i => i.product_name || i.name || 'Product').filter(Boolean);
+                    if (names.length === 0) return <span className="inv__product-name-empty">—</span>;
+                    const display = names.length > 2
+                      ? names.slice(0, 2).join(', ') + ` +${names.length - 2} more`
+                      : names.join(', ');
+                    return (
+                      <span className="inv__product-names" title={names.join('\n')}>
+                        {display}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <div className="inv__col inv__col--date">{orderDate}</div>

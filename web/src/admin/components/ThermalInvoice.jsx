@@ -10,7 +10,7 @@ const ThermalInvoice = React.forwardRef(({ order, address, isPreview = false }, 
       : [{
           product_name: o.item_name || "Item",
           quantity: o.quantity || 1,
-          price: o.total_price || 0,
+          price: o.unit_price || (o.quantity && Number(o.quantity) > 0 ? Number(o.total_price || 0) / Number(o.quantity) : Number(o.total_price || 0)) || 0,
           size: o.size || null,
           color: o.color || null,
           variant: o.variant || null,
@@ -71,18 +71,23 @@ const ThermalInvoice = React.forwardRef(({ order, address, isPreview = false }, 
           const showVariant = variantStr && (!sizeStr || variantStr.toLowerCase() !== sizeStr.toLowerCase());
           const showColor = colorStr && rawVariant && colorStr.toLowerCase() !== variantStr.toLowerCase();
 
+          const qty = Number(item.quantity || item.qty || 1);
+          const unitPrice = Number(item.price || item.unit_price || 0);
+          const lineTotal = unitPrice * qty;
+          const productName = item.product_name || item.name || item.item_name || "Item";
+
           return (
             <div key={idx} className="ti__item">
-              <div className="ti__item-name">{item.product_name}</div>
+              <div className="ti__item-name">{productName}</div>
               <div className="ti__item-price-row">
                 <span className="ti__item-qty-meta">
-                  Qty: {item.quantity || 1}
+                  {qty > 1 ? `${qty} × ₹ ${unitPrice.toLocaleString("en-IN")}` : `Qty: ${qty}`}
                   {sizeStr && ` · Size: ${sizeStr}`}
                   {showVariant && ` · Variant: ${variantStr}`}
                   {showColor && ` · Color: ${colorStr}`}
                 </span>
                 <span className="ti__item-price">
-                  Rs.{Number(item.price || 0).toLocaleString("en-IN")}
+                  ₹{lineTotal.toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -92,7 +97,7 @@ const ThermalInvoice = React.forwardRef(({ order, address, isPreview = false }, 
       <div className="ti__divider">================================</div>
       <div className="ti__total-row">
         <span className="ti__total-label">TOTAL</span>
-        <span className="ti__total-amount">Rs.{total.toLocaleString("en-IN")}</span>
+        <span className="ti__total-amount">₹{total.toLocaleString("en-IN")}</span>
       </div>
       <div className="ti__divider">================================</div>
       <div className="ti__footer">

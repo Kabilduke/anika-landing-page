@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom";
 import { orderService } from "../services/orderService";
 import { productService } from "../services/productService";
 import { useStore } from "../hooks/useStore";
@@ -33,7 +33,7 @@ export default function AnikaOrders() {
   useEffect(() => {
     if (!rawOrders || rawOrders.length === 0) return;
     const productIds = new Set();
-    rawOrders.forEach(o => (o.order_items || []) .forEach(i => {
+    rawOrders.forEach(o => (o.order_items || []).forEach(i => {
       if (i.product_id) productIds.add(i.product_id);
     }));
     if (productIds.size === 0) return;
@@ -41,7 +41,7 @@ export default function AnikaOrders() {
     productService.getProductsByIds([...productIds]).then((data) => {
       const map = {};
       (data || []).forEach((p) => { map[p.name] = p; });
-      setProductsMap(map);  
+      setProductsMap(map);
     }).catch((err) => console.error("Error fetching Product:", err));
   }, [rawOrders]);
 
@@ -102,7 +102,7 @@ export default function AnikaOrders() {
       navigate("/account/login");
       return
     }
-    fetchOrders(user.id); 
+    fetchOrders(user.id);
   }, [user, sessionLoading]);
 
 
@@ -125,10 +125,10 @@ export default function AnikaOrders() {
       deliveryStatus: item.delivery_status,
       estimatedDeliveryDate: item.estimated_delivery_date
         ? new Date(item.estimated_delivery_date).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
-          })
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+        })
         : null
     }));
   }, [rawOrders]);
@@ -141,7 +141,7 @@ export default function AnikaOrders() {
       setCancellingOrderId(orderId);
       await orderService.cancelOrder(orderId);
       if (user) {
-        await fetchOrders(user.id, {force: true});
+        await fetchOrders(user.id, { force: true });
       }
     } catch (err) {
       alert("Failed to cancel order: " + err.message);
@@ -226,38 +226,90 @@ export default function AnikaOrders() {
               const orderItems = order.order_items && order.order_items.length > 0
                 ? order.order_items
                 : [{
-                    product_name: order.item,
-                    quantity: order.qty || 1,
-                    price: order.price,
-                    size: null,
-                    color: null,
-                    image_url: null
-                  }];
+                  product_name: order.item,
+                  quantity: order.qty || 1,
+                  price: order.price,
+                  size: null,
+                  color: null,
+                  image_url: null
+                }];
+
+              const totalItemCount = orderItems.reduce((acc, i) => acc + Number(i.quantity || i.qty || 1), 0);
+              const itemsSummary = orderItems.map(i => {
+                const q = Number(i.quantity || i.qty || 1);
+                return `${i.product_name}${q > 1 ? ` (×${q})` : ''}`;
+              }).join(', ');
 
               return (
-                <div 
-                  key={idx} 
-                  className="ao-order-block" 
-                  style={{ 
-                    borderBottom: idx < visibleOrders.length - 1 ? '1px solid #ebebeb' : 'none', 
+                <div
+                  key={idx}
+                  className="ao-order-block"
+                  onClick={() => handleTrackOrder(order, orderItems[0])}
+                  style={{
+                    borderBottom: idx < visibleOrders.length - 1 ? '1px solid #ebebeb' : 'none',
                     padding: '16px 20px',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease',
+                    flexWrap: 'wrap'
                   }}
                 >
-                  {/* Order header details */}
-                  <div className="ao-order-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span className="ao-order-id" style={{ fontWeight: '600', color: '#111', fontSize: '13px' }}>Order: #{order.id?.slice(-8) || order.id}</span>
-                      <span style={{ color: '#aaa' }}>·</span>
-                      <span className="ao-order-meta" style={{ fontSize: '12.5px', color: '#666' }}>{order.date}</span>
+                  {/* Left: Product Thumbnails & Order Summary */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '260px' }}>
+                    {/* Overlapping Product Thumbnails */}
+                    <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative' }}>
+                      {orderItems.slice(0, 3).map((item, imgIdx) => {
+                        const product = productsMap[item.product_name];
+                        const image = item.image_url || product?.image_url || (product?.images && product.images[0]) || '/src/assets/cart/bangle1.webp';
+                        return (
+                          <div 
+                            key={imgIdx} 
+                            style={{ 
+                              width: '46px', 
+                              height: '46px', 
+                              borderRadius: '8px', 
+                              overflow: 'hidden', 
+                              border: '2px solid #fff', 
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                              background: '#f4f4f5',
+                              marginLeft: imgIdx > 0 ? '-14px' : '0',
+                              zIndex: 3 - imgIdx,
+                              flexShrink: 0
+                            }}
+                          >
+                            <img src={image} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className="ao-order-price" style={{ fontWeight: '700', color: '#111', fontSize: '13.5px', marginRight: '4px' }}>{order.price}</span>
-                      <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 9px', borderRadius: '12px', fontWeight: '500' }}>
-                        {order.status}
-                      </span>
+
+                    {/* Order Meta & Product Titles */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
+                        <span style={{ fontWeight: '700', color: '#111', fontSize: '13.5px' }}>Order: #{order.id?.slice(-8) || order.id}</span>
+                        <span style={{ color: '#aaa' }}>·</span>
+                        <span style={{ fontSize: '12px', color: '#666' }}>{order.date}</span>
+                        <span style={{ color: '#aaa' }}>·</span>
+                        <span style={{ fontSize: '12px', color: '#666' }}>{totalItemCount} item{totalItemCount > 1 ? 's' : ''}</span>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {itemsSummary}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Price, Status, & Actions */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: '700', color: '#111', fontSize: '14px' }}>{order.price}</span>
+                    
+                    <span className={`ao-order-status ao-status--${order.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 9px', borderRadius: '12px', fontWeight: '500' }}>
+                      {order.status}
+                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleViewInvoice(order)}
                         title="View and print invoice"
@@ -279,87 +331,35 @@ export default function AnikaOrders() {
                       >
                         <span>🧾</span> Invoice
                       </button>
-                    </div>
-                  </div>
 
-                  {/* List of order items */}
-                  <div className="ao-order-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {orderItems.map((item, itemIdx) => {
-                      const product = productsMap[item.product_name];
-                      const image = item.image_url || product?.image_url || (product?.images && product.images[0]) || '/src/assets/cart/bangle1.webp';
-
-                      return (
-                        <div 
-                          key={itemIdx} 
-                          className="ao-order-item-row"
-                          onClick={() => handleTrackOrder(order, item)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            background: '#fafafa',
-                            border: '1px solid #f0f0f0',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                          }}
-                          title="Click to track this order"
+                      {(order.status === "Pending" || order.status === "Confirmed") && (
+                        <button
+                          className="ao-cancel-order-btn"
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={cancellingOrderId === order.id}
+                          style={{ height: '28px', padding: '4px 10px', fontSize: '11.5px' }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                            <div className="ao-item-img" style={{ width: '46px', height: '46px', overflow: 'hidden', borderRadius: '6px', background: '#fff', border: '1px solid #ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {image ? (
-                                <img src={image} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                "✨"
-                              )}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '13px', fontWeight: '600', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {item.product_name}
-                              </div>
-                              <div style={{ fontSize: '11.5px', color: '#666', marginTop: '3px' }}>
-                                Qty: {item.quantity}
-                                {(item.size || item.color) && ` · Size: ${item.size || 'N/A'} · Color: ${item.color || 'N/A'}`}
-                              </div>
-                            </div>
-                          </div>
+                          {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      )}
 
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
-                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#111' }}>
-                              {typeof item.price === 'number' ? `₹${item.price.toLocaleString('en-IN')}` : item.price}
-                            </div>
-                            <span
-                              style={{
-                                fontSize: '11.5px',
-                                color: '#C42049',
-                                fontWeight: '600',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px'
-                              }}
-                            >
-                              Track Order →
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Cancel Order Button */}
-                  {(order.status === "Pending" || order.status === "Confirmed") && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                      <button
-                        className="ao-cancel-order-btn"
-                        onClick={() => handleCancelOrder(order.id)}
-                        disabled={cancellingOrderId === order.id}
+                      <span
+                        onClick={() => handleTrackOrder(order, orderItems[0])}
+                        style={{
+                          fontSize: '12px',
+                          color: '#C42049',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          marginLeft: '4px'
+                        }}
                       >
-                        {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel Order'}
-                      </button>
+                        Track →
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

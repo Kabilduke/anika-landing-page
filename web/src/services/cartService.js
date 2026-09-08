@@ -51,8 +51,8 @@ export const cartService = {
           originalPrice: 0,
           category: '',
           qty: item.qty || 1,
-          size: item.size || null,
-          color: item.color || null,
+          size: item.size || '',
+          color: item.color || '',
           image: '/src/assets/cart/bangle1.webp',
           deliveryDate: "2 - 3 days"
         };
@@ -95,8 +95,8 @@ export const cartService = {
         originalPrice: originalPrice,
         category: product.categories?.name || '',
         qty: item.qty || 1,
-        size: item.size || null,
-        color: item.color || null,
+        size: item.size || '',
+        color: item.color || '',
         image: getOriginalImageUrl(image),
         deliveryDate: "2 - 3 days"
       };
@@ -112,14 +112,16 @@ export const cartService = {
    * @param {string|null} color
    */
   async addCartItem(userId, productId, qty = 1, size = null, color = null) {
+    const normSize = size || '';
+    const normColor = color || '';
     const { data, error } = await supabase
       .from('cart_items')
       .upsert({
         user_id: userId,
         product_id: productId,
         qty,
-        size: size || '',
-        color: color || ''
+        size: normSize,
+        color: normColor
       }, { onConflict: 'user_id,product_id,size,color' })
       .select();
 

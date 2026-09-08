@@ -446,20 +446,23 @@ export const useStore = create((set, get) => ({
   // --- Cart Actions ---
   addToCart: async (product, qty = 1, size = null, color = null) => {
     const user = get().user;
+    // Normalize size/color: DB stores '' for null, so normalize here for consistent comparison
+    const normSize = size || '';
+    const normColor = color || '';
     if (user) {
       set({ loadingCart: true });
       try {
         const existingItem = get().cartItems.find(
           item => item.productId === (product.productId || product.id) &&
-            item.size === size &&
-            item.color === color
+            (item.size || '') === normSize &&
+            (item.color || '') === normColor
         );
 
         if (existingItem) {
           const newQty = existingItem.qty + qty;
           await cartService.updateCartItemQty(existingItem.id, newQty);
         } else {
-          await cartService.addCartItem(user.id, product.productId || product.id, qty, size, color);
+          await cartService.addCartItem(user.id, product.productId || product.id, qty, normSize, normColor);
         }
 
         const updatedItems = await cartService.getCartItems(user.id);
@@ -474,8 +477,8 @@ export const useStore = create((set, get) => ({
       const localCart = [...get().cartItems];
       const existingIdx = localCart.findIndex(
         item => item.productId === (product.productId || product.id) &&
-          item.size === size &&
-          item.color === color
+          (item.size || '') === normSize &&
+          (item.color || '') === normColor
       );
 
       if (existingIdx > -1) {
@@ -489,8 +492,8 @@ export const useStore = create((set, get) => ({
           originalPrice: parsePrice(product.originalPrice || product.original || product.compare_price || Math.round(parsePrice(product.price) * 1.3)),
           category: product.category,
           qty,
-          size,
-          color,
+          size: normSize,
+          color: normColor,
           image: product.img || product.image || (product.images && product.images[0]) || '/src/assets/cart/bangle1.webp',
           deliveryDate: 'Sep 12, 2025'
         });
@@ -696,8 +699,26 @@ export const useStore = create((set, get) => ({
         }
       });
 
-      if (mergedCart.length > 0) {
-        await cartService.syncCartItems(mergedCart);
+      // Deduplicate mergedCart by product_id+size+color before syncing
+      const dedupedCart = [];
+      mergedCart.forEach(item => {
+        const key = `${item.product_id}__${item.size || ''}__${item.color || ''}`;
+        const existingIdx = dedupedCart.findIndex(d =>
+          `${d.product_id}__${d.size || ''}__${d.color || ''}` === key
+        );
+        if (existingIdx > -1) {
+          dedupedCart[existingIdx].qty = Math.max(dedupedCart[existingIdx].qty, item.qty);
+        } else {
+          dedupedCart.push({ ...item, size: item.size || '', color: item.color || '' });
+        }
+      });
+
+      if (dedupedCart.length > 0) {
+        try {
+          await cartService.syncCartItems(dedupedCart);
+        } catch (syncErr) {
+          console.warn('Cart sync upsert failed (non-critical):', syncErr);
+        }
       }
       localStorage.removeItem('anika_guest_cart');
       const finalCart = await cartService.getCartItems(userId);
@@ -735,7 +756,13 @@ export const useStore = create((set, get) => ({
 
     } catch (err) {
       console.error('Failed to sync guest cart & wishlist to database:', err);
-      set({ loadingCart: false, loadingWishlist: false });
+      // Still try to load cart from DB so user doesn't see an empty cart
+      try {
+        const fallbackCart = await cartService.getCartItems(userId);
+        set({ cartItems: fallbackCart, loadingCart: false, loadingWishlist: false });
+      } catch {
+        set({ loadingCart: false, loadingWishlist: false });
+      }
     }
   },
   syncProfileFromMetadata: async (user) => {
