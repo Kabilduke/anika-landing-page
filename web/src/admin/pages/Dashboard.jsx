@@ -138,11 +138,11 @@ const sidebarIcons = {
   order: <img src={orderIcon} alt="order" className="db__menu-icon-img" />,
   invoice: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10 9 9 9 8 9"/>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
     </svg>
   ),
   customer: <img src={customerIcon} alt="customer" className="db__menu-icon-img" />,
@@ -734,16 +734,16 @@ const Dashboard = () => {
     const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
 
     const variantImages = variants.flatMap(v => v.images || []).filter(Boolean);
-    const images = Array.isArray(row.images) && row.images.length > 0 
-      ? row.images 
+    const images = Array.isArray(row.images) && row.images.length > 0
+      ? row.images
       : (row.image_url ? [row.image_url] : (variantImages.length > 0 ? variantImages : []));
 
     const priceDisplay = row.has_variants
       ? (prices.length
         ? (Math.min(...prices) === Math.max(...prices)
-        ? `₹${Math.min(...prices).toLocaleString('en-IN')}`
-        : `₹${Math.min(...prices).toLocaleString('en-IN')} – ₹${Math.max(...prices).toLocaleString('en-IN')}`)
-        : "No variants" )
+          ? `₹${Math.min(...prices).toLocaleString('en-IN')}`
+          : `₹${Math.min(...prices).toLocaleString('en-IN')} – ₹${Math.max(...prices).toLocaleString('en-IN')}`)
+        : "No variants")
       : `₹${Number(row.price || 0).toLocaleString('en-IN')}`;
 
     return {
@@ -818,11 +818,11 @@ const Dashboard = () => {
     );
   }
 
-  function EditMultipleProductWrapper({ categories, subcategoriesCache, fetchSubcategoriesForParent, onSave, navigate }){
+  function EditMultipleProductWrapper({ categories, subcategoriesCache, fetchSubcategoriesForParent, onSave, navigate }) {
     const location = useLocation();
     const editingProductId = location.state?.editingProductId;
 
-    if (!editingProductId){
+    if (!editingProductId) {
       return <Navigate to="/admin/products" replace />;
     }
     return (
@@ -854,7 +854,7 @@ const Dashboard = () => {
   };
 
   const handleEditProduct = (product) => {
-    if (product.has_variants){
+    if (product.has_variants) {
       navigate("/admin/products/edit-multiple", { state: { editingProductId: product.id } });
     } else {
       setEditingProduct(product);
@@ -937,7 +937,7 @@ const Dashboard = () => {
     const matchedCategory = categories.find(c => String(c.id || c.category_id) === String(product.category_id));
     const firstWithImages = variants?.find(v => v.images?.length > 0);
     const normalized = normalizeProductRow({
-      ...product, 
+      ...product,
       category: matchedCategory?.name || product.category || "",
       images: (product.images && product.images.length > 0) ? product.images : (firstWithImages?.images || []),
       image_url: product.image_url || firstWithImages?.images?.[0] || null,
@@ -974,7 +974,7 @@ const Dashboard = () => {
         setCategories((p) => p.filter((x) => x.id !== id));
       } catch (error) {
         console.error("Error deleting category:", error);
-        if (error.code === 'CATEGORY_HAS_SUBCATEGORIES'){
+        if (error.code === 'CATEGORY_HAS_SUBCATEGORIES') {
           alert("This category has subcategories inside it. Please delete or move the subcategories first.");
         } else {
           alert("Failed to delete category: " + error.message);
@@ -1024,22 +1024,17 @@ const Dashboard = () => {
 
   const goToAddBanner = () => {
     setEditingBanner(null);
-    navigate("/admin/banners/add");
+    navigate("/admin/banners/add", { state: { banner: null } });
   };
 
   const handleEditBanner = (banner) => {
     setEditingBanner(banner);
-    navigate("/admin/banners/add");
+    navigate("/admin/banners/add", { state: { banner } });
   };
 
   const handleDeleteBanner = (id) => setBanners((p) => p.filter((x) => x.id !== id));
 
   const handlePublishBanner = (data) => {
-    if (editingBanner) {
-      setBanners((p) => p.map((x) => x.id === editingBanner.id ? { ...data, id: editingBanner.id } : x));
-    } else {
-      setBanners((p) => [{ ...data, id: Date.now(), uploadedDate: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }), dimensions: "1200×400px", status: data.isActive ? "Active" : "Inactive" }, ...p]);
-    }
     setEditingBanner(null);
     navigate("/admin/banners");
   };
@@ -1226,19 +1221,19 @@ const Dashboard = () => {
           <div className="db__sidebar-socials">
             <a href="https://www.instagram.com/anikafashionstore.jewellery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="db__social-btn db__social-btn--ig">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
               </svg>
             </a>
             <a href="https://wa.me/919363631636" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="db__social-btn db__social-btn--wa">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.764.459 3.487 1.334 5.005l-1.416 5.174 5.297-1.389c1.464.798 3.118 1.218 4.772 1.219h.004c5.505 0 9.988-4.478 9.989-9.985 0-2.668-1.038-5.176-2.925-7.062a9.927 9.927 0 0 0-7.065-2.946zm5.642 14.341c-.244.688-1.417 1.315-1.96 1.369-.51.051-1.157.078-3.418-.853-2.888-1.19-4.747-4.135-4.891-4.327-.143-.191-1.171-1.558-1.171-2.97 0-1.412.738-2.106 1.002-2.394.263-.287.574-.359.765-.359.191 0 .383.002.55.011.177.009.414-.067.647.493.243.585.829 2.022.901 2.169.072.146.12.316.024.507-.096.191-.144.311-.287.478-.144.168-.302.375-.431.504-.144.143-.294.301-.126.589.168.287.747 1.233 1.603 1.996 1.101.98 2.031 1.285 2.318 1.428.287.143.454.12.622-.072.168-.191.718-.838.909-1.125.191-.287.383-.239.646-.144.263.096 1.674.79 1.961.933.287.143.479.215.55.335.072.12.072.694-.172 1.382z"/>
+                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.764.459 3.487 1.334 5.005l-1.416 5.174 5.297-1.389c1.464.798 3.118 1.218 4.772 1.219h.004c5.505 0 9.988-4.478 9.989-9.985 0-2.668-1.038-5.176-2.925-7.062a9.927 9.927 0 0 0-7.065-2.946zm5.642 14.341c-.244.688-1.417 1.315-1.96 1.369-.51.051-1.157.078-3.418-.853-2.888-1.19-4.747-4.135-4.891-4.327-.143-.191-1.171-1.558-1.171-2.97 0-1.412.738-2.106 1.002-2.394.263-.287.574-.359.765-.359.191 0 .383.002.55.011.177.009.414-.067.647.493.243.585.829 2.022.901 2.169.072.146.12.316.024.507-.096.191-.144.311-.287.478-.144.168-.302.375-.431.504-.144.143-.294.301-.126.589.168.287.747 1.233 1.603 1.996 1.101.98 2.031 1.285 2.318 1.428.287.143.454.12.622-.072.168-.191.718-.838.909-1.125.191-.287.383-.239.646-.144.263.096 1.674.79 1.961.933.287.143.479.215.55.335.072.12.072.694-.172 1.382z" />
               </svg>
             </a>
             <a href="https://www.facebook.com/people/anikafashionstore/100090910872220/?ref=1" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="db__social-btn db__social-btn--fb">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
+                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
               </svg>
             </a>
           </div>
@@ -1252,12 +1247,12 @@ const Dashboard = () => {
 
             {/* Products */}
             <Route path="/products" element={
-              <ProductList 
-                products={products} 
+              <ProductList
+                products={products}
                 categories={categories}
-                onAddProduct={goToAddProduct} 
-                onEditProduct={handleEditProduct} 
-                onDeleteProduct={handleDeleteProduct} 
+                onAddProduct={goToAddProduct}
+                onEditProduct={handleEditProduct}
+                onDeleteProduct={handleDeleteProduct}
               />} />
             <Route path="/products/add" element={
               <AddProduct

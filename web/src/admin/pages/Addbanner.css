@@ -223,6 +223,72 @@
   height: 160px;
   object-fit: cover;
   border-radius: 9px;
+  display: block;
+}
+
+/* ── Image Overlay & Edit Controls ──────────────────────────────────── */
+.ab__image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.ab__image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ab__image-container:hover .ab__image-overlay,
+.ab__upload-zone:hover .ab__image-overlay {
+  opacity: 1;
+}
+
+.ab__image-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.ab__image-btn:active {
+  transform: scale(0.97);
+}
+
+.ab__image-btn--change {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ab__image-btn--change:hover {
+  background: #f8fafc;
+}
+
+.ab__image-btn--remove {
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ab__image-btn--remove:hover {
+  background: #dc2626;
 }
 
 /* ── Card (validity / visibility) ────────────────────────────────────── */

@@ -8,13 +8,13 @@ const ThermalInvoice = React.forwardRef(({ order, address, isPreview = false }, 
     o.order_items && o.order_items.length > 0
       ? o.order_items
       : [{
-          product_name: o.item_name || "Item",
-          quantity: o.quantity || 1,
-          price: o.unit_price || (o.quantity && Number(o.quantity) > 0 ? Number(o.total_price || 0) / Number(o.quantity) : Number(o.total_price || 0)) || 0,
-          size: o.size || null,
-          color: o.color || null,
-          variant: o.variant || null,
-        }];
+        product_name: o.item_name || "Item",
+        quantity: o.quantity || 1,
+        price: o.unit_price || (o.quantity && Number(o.quantity) > 0 ? Number(o.total_price || 0) / Number(o.quantity) : Number(o.total_price || 0)) || 0,
+        size: o.size || null,
+        color: o.color || null,
+        variant: o.variant || null,
+      }];
 
   const total = Number(o.total_price || 0);
   const invoiceDate = o.order_date

@@ -406,13 +406,39 @@ body {
 @media (max-width: 600px) {
   .aw-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    padding: 14px;
+    gap: 10px;
+    padding: 10px;
+  }
+  .aw-item-info {
+    padding: 8px;
+    gap: 4px;
+  }
+  .aw-item-name {
+    font-size: 12px;
+  }
+  .aw-price {
+    font-size: 13px;
+  }
+  .aw-original-price {
+    font-size: 11px;
+  }
+  .aw-item-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .aw-cart-btn,
+  .aw-view-btn {
+    width: 100%;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 400px) {
   .aw-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 8px;
   }
 }

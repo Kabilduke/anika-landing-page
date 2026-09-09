@@ -5,6 +5,7 @@ export const COMPRESSION_PRESETS = {
   card: { maxWidthOrHeight: 600, maxSizeMB: 0.3 },
   detail: { maxWidthOrHeight: 1200, maxSizeMB: 0.6 },
   variant: { maxWidthOrHeight: 1000, maxSizeMB: 0.5 },
+  banner: { maxWidthOrHeight: 1920, maxSizeMB: 0.8 },
 };
 
 export async function compressImage(file, preset = 'detail') {

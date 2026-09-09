@@ -417,18 +417,7 @@ body {
     object-position: center top !important;
     border-radius: 20px !important;
     display: block !important;
-    transform-origin: center top !important;
-    animation: lightZoom 20s infinite alternate ease-in-out;
-  }
-
-  @keyframes lightZoom {
-    from {
-      transform: scale(1);
-    }
-
-    to {
-      transform: scale(1.1);
-    }
+    transform: none !important;
   }
 
   .hero-overlay {
@@ -447,7 +436,7 @@ body {
     height: 100% !important;
     width: 100% !important;
     padding: 20px 20px 30px !important;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 0%) !important;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.35) 50%, transparent 100%) !important;
     z-index: 5;
     transform: none !important;
     /* Reset desktop transform */
@@ -458,24 +447,23 @@ body {
 
   .hero-title {
     font-family: 'Agraham', serif;
-    font-size: 14.45px;
-    line-height: 1.2;
-    margin-bottom: 10px;
+    font-size: 18px;
+    line-height: 1.3;
+    margin-bottom: 8px;
     color: #fff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
     white-space: normal;
   }
 
   .hero-subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: 9.45px;
+    font-size: 12px;
     font-weight: 300;
-    /* Light weight */
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     opacity: 0.95;
-    max-width: 180px;
-    /* Reduced to force 2 lines */
-    line-height: 1.5;
+    max-width: 280px;
+    line-height: 1.4;
+    color: #fff;
   }
 
   .explore-btn {
@@ -487,4 +475,39 @@ body {
     font-size: 16px;
     font-weight: 600;
   }
+}
+
+/* ── Hero Carousel Dots ── */
+.hero-dots {
+  position: absolute;
+  bottom: 20px;
+  right: 40px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .hero-dots {
+    bottom: 12px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+}
+
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.hero-dot--active {
+  background: #fff;
+  width: 24px;
+  border-radius: 12px;
 }

@@ -1,6 +1,7 @@
 /* ===== THERMAL INVOICE — Screen Preview ===== */
 .thermal-invoice {
-  display: none; /* Hidden on screen by default when intended only for print */
+  display: none;
+  /* Hidden on screen by default when intended only for print */
 }
 
 /* When rendered in preview mode (modal or screen card) */
@@ -159,7 +160,8 @@
     margin: 4mm 0 0 0;
   }
 
-  html, body {
+  html,
+  body {
     width: 80mm !important;
     max-width: 80mm !important;
     margin: 0 !important;
@@ -209,7 +211,8 @@
     display: block !important;
     visibility: visible !important;
     position: relative !important;
-    width: 74mm !important; /* Expanded printable width */
+    width: 74mm !important;
+    /* Expanded printable width */
     max-width: 74mm !important;
     margin: 0 auto !important;
     font-family: 'Consolas', 'Courier New', Courier, Monaco, monospace !important;
@@ -395,5 +398,3 @@
     letter-spacing: 2px;
   }
 }
-
-
