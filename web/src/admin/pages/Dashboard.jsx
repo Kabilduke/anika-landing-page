@@ -118,7 +118,7 @@ const menuItems = [
   },
   { id: "analytics", label: "Analytics", path: "/admin/analytics" },
   {
-    id: "settings", label: "Settings", path: "/admin/store", children: [
+    id: "settings", label: "Settings", path: "/admin/account", children: [
       { label: "Store Info", path: "/admin/store" },
       { label: "Contact", path: "/admin/contact" },
       { label: "Shipping", path: "/admin/shipping" },
@@ -698,7 +698,7 @@ const Dashboard = () => {
   useEffect(() => {
     const expanded = {};
     menuItems.forEach(item => {
-      if (item.children && item.children.some(child => currentPath.startsWith(item.path))) {
+      if (item.children && (currentPath.startsWith(item.path) || item.children.some(child => currentPath === child.path || currentPath.startsWith(child.path)))) {
         expanded[item.id] = true;
       }
     });
@@ -1187,30 +1187,57 @@ const Dashboard = () => {
                     onClick={() => {
                       if (hasChildren) {
                         toggle(item.id);
-                        navigate(item.children[0].path);
+                        if (item.id !== "settings") {
+                          navigate(item.children[0].path);
+                        }
                       } else {
                         navigate(item.path);
                       }
                     }}
                   >
                     <span className="db__menu-icon">{sidebarIcons[item.id]}</span>
-                    <span className="db__menu-label">{item.label}</span>
+                    <span className="db__menu-label">
+                      {item.label}
+                      {item.id === "settings" && <span className="db__menu-pro-badge">PRO</span>}
+                    </span>
                     {hasChildren && <span className="db__chevron">{isOpen ? <ChevronUp /> : <ChevronDown />}</span>}
                   </button>
 
                   {hasChildren && isOpen && (
                     <div className="db__submenu">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          className={`db__sub-item${currentPath === child.path ? " db__sub-item--active" : ""}`}
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          <img src={dropdownIcon} alt="" className="db__sub-item-icon" />
-                          {child.label}
-                        </Link>
-                      ))}
+                      {item.id === "settings" && (
+                        <div className="db__pro-hint">
+                          <span className="db__pro-badge">PRO</span>
+                          <span>Pro to Enable Advance Settings</span>
+                        </div>
+                      )}
+                      {item.children.map((child) => {
+                        const isChildDisabled = item.id === "settings" && child.path !== "/admin/account";
+                        return isChildDisabled ? (
+                          <div
+                            key={child.path}
+                            className="db__sub-item db__sub-item--disabled"
+                            title="Pro to Enable Advance Settings"
+                          >
+                            <img src={dropdownIcon} alt="" className="db__sub-item-icon" />
+                            <span style={{ flex: 1 }}>{child.label}</span>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0 }}>
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            className={`db__sub-item${currentPath === child.path ? " db__sub-item--active" : ""}`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <img src={dropdownIcon} alt="" className="db__sub-item-icon" />
+                            {child.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
