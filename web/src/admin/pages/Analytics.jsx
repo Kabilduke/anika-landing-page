@@ -19,6 +19,13 @@ const CalendarIcon = () => (
   </svg>
 );
 
+// Helper to format currency accurately without rounding up to K/L
+const fmtVal = (val) => {
+  const num = Number(val);
+  if (isNaN(num)) return "₹0";
+  return `₹${Number.isInteger(num) ? num.toLocaleString("en-IN") : num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 // ── Donut Chart ────────────────────────────────────────────────────────────
 const DonutChart = ({ data }) => {
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -34,11 +41,7 @@ const DonutChart = ({ data }) => {
     return { ...d, offset, rotation };
   });
 
-  const centerTotal = total >= 100000
-    ? `₹${(total / 100000).toFixed(1)}L`
-    : total >= 1000
-      ? `₹${(total / 1000).toFixed(1)}K`
-      : `₹${total.toLocaleString('en-IN')}`;
+  const centerTotal = fmtVal(total);
 
   return (
     <svg width="160" height="160" viewBox="0 0 160 160">
@@ -55,7 +58,7 @@ const DonutChart = ({ data }) => {
       ))}
       <circle cx={cx} cy={cy} r={40} fill="white" />
       <text x={cx} y={cy - 8} textAnchor="middle" fontSize="9" fill="#888" fontFamily="Inter, sans-serif" fontWeight="500">Total Revenue</text>
-      <text x={cx} y={cy + 8} textAnchor="middle" fontSize="13" fill="#1c1c1e" fontFamily="Inter, sans-serif" fontWeight="700">{centerTotal}</text>
+      <text x={cx} y={cy + 8} textAnchor="middle" fontSize={centerTotal.length > 9 ? "11" : "13"} fill="#1c1c1e" fontFamily="Inter, sans-serif" fontWeight="700">{centerTotal}</text>
     </svg>
   );
 };
@@ -101,7 +104,7 @@ const OrdersBarChart = ({ data }) => {
 const StatCard = ({ label, value, change, changeType, subtext }) => (
   <div className="an__stat-card">
     <div className="an__stat-label">{label}</div>
-    <div className="an__stat-value">{value}</div>
+    <div className="an__stat-value">{typeof value === "number" ? value.toLocaleString("en-IN") : value}</div>
     <div className="an__stat-footer">
       {change && (
         <span className={`an__badge an__badge--${changeType}`}>
@@ -238,13 +241,6 @@ const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenu
 
 const TABS = ["Overview", "Orders", "Customers", "Products"];
 const PERIODS = ["Today", "7 Days", "This Month", "Last Month", "Custom"];
-
-// Helper to format currency
-const fmtVal = (val) => {
-  if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
-  if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
-  return `₹${Number(val || 0).toLocaleString('en-IN')}`;
-};
 
 // ── Main Analytics Component ───────────────────────────────────────────────
 const Analytics = ({ orders = [], customers = [], products = [], loading = false }) => {
@@ -719,21 +715,21 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
           <div className="an__stats-grid an__stats-grid--3">
             <div className="an__stat-card">
               <div className="an__stat-label">Total Customers</div>
-              <div className="an__stat-value">{customers.length || activeCustomerIds.size}</div>
+              <div className="an__stat-value">{(customers.length || activeCustomerIds.size).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__badge an__badge--up"><ArrowUp />{newCustomersCount} active in period</span>
               </div>
             </div>
             <div className="an__stat-card">
               <div className="an__stat-label">New Customers</div>
-              <div className="an__stat-value">{newCustomersCount}</div>
+              <div className="an__stat-value">{Number(newCustomersCount).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__badge an__badge--up">New registrations</span>
               </div>
             </div>
             <div className="an__stat-card">
               <div className="an__stat-label">VIP Customers</div>
-              <div className="an__stat-value">{customerSegments[0]?.value || 0}</div>
+              <div className="an__stat-value">{Number(customerSegments[0]?.value || 0).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__stat-subtext">5+ Orders Each</span>
               </div>
@@ -771,14 +767,14 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
           <div className="an__stats-grid">
             <div className="an__stat-card">
               <div className="an__stat-label">Total Products</div>
-              <div className="an__stat-value">{products.length}</div>
+              <div className="an__stat-value">{Number(products.length).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__stat-subtext">In store catalog</span>
               </div>
             </div>
             <div className="an__stat-card">
               <div className="an__stat-label">Products Sold</div>
-              <div className="an__stat-value">{productsSoldUnits}</div>
+              <div className="an__stat-value">{Number(productsSoldUnits).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__stat-subtext">Units sold in period</span>
               </div>
@@ -792,7 +788,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
             </div>
             <div className="an__stat-card">
               <div className="an__stat-label">Low / Out of Stock</div>
-              <div className="an__stat-value an__stat-value--red">{lowStockItems.length}</div>
+              <div className="an__stat-value an__stat-value--red">{Number(lowStockItems.length).toLocaleString("en-IN")}</div>
               <div className="an__stat-footer">
                 <span className="an__badge an__badge--action">Restock Needed</span>
               </div>
