@@ -4,18 +4,18 @@ import "./Analytics.css";
 // ── Icons ──────────────────────────────────────────────────────────────────
 const ArrowUp = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+    <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
   </svg>
 );
 const ArrowDown = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+    <line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" />
   </svg>
 );
 const CalendarIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
 
@@ -27,22 +27,22 @@ const DonutChart = ({ data }) => {
   const circumference = 2 * Math.PI * r;
 
   const slices = data.map((d) => {
-    const pct      = total > 0 ? d.value / total : 0;
-    const offset   = circumference * (1 - pct);
+    const pct = total > 0 ? d.value / total : 0;
+    const offset = circumference * (1 - pct);
     const rotation = cumulative * 360;
     cumulative += pct;
     return { ...d, offset, rotation };
   });
 
-  const centerTotal = total >= 100000 
-    ? `₹${(total / 100000).toFixed(1)}L` 
-    : total >= 1000 
-      ? `₹${(total / 1000).toFixed(1)}K` 
+  const centerTotal = total >= 100000
+    ? `₹${(total / 100000).toFixed(1)}L`
+    : total >= 1000
+      ? `₹${(total / 1000).toFixed(1)}K`
       : `₹${total.toLocaleString('en-IN')}`;
 
   return (
     <svg width="160" height="160" viewBox="0 0 160 160">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0f0f0" strokeWidth="22"/>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0f0f0" strokeWidth="22" />
       {slices.map((s, i) => (
         <circle
           key={i} cx={cx} cy={cy} r={r}
@@ -53,7 +53,7 @@ const DonutChart = ({ data }) => {
           style={{ transition: "stroke-dashoffset 0.5s ease" }}
         />
       ))}
-      <circle cx={cx} cy={cy} r={40} fill="white"/>
+      <circle cx={cx} cy={cy} r={40} fill="white" />
       <text x={cx} y={cy - 8} textAnchor="middle" fontSize="9" fill="#888" fontFamily="Inter, sans-serif" fontWeight="500">Total Revenue</text>
       <text x={cx} y={cy + 8} textAnchor="middle" fontSize="13" fill="#1c1c1e" fontFamily="Inter, sans-serif" fontWeight="700">{centerTotal}</text>
     </svg>
@@ -105,7 +105,7 @@ const StatCard = ({ label, value, change, changeType, subtext }) => (
     <div className="an__stat-footer">
       {change && (
         <span className={`an__badge an__badge--${changeType}`}>
-          {changeType === "up"   ? <ArrowUp />   : null}
+          {changeType === "up" ? <ArrowUp /> : null}
           {changeType === "down" ? <ArrowDown /> : null}
           {changeType === "warn" ? "↑" : null}
           {change}
@@ -157,7 +157,7 @@ const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenu
   const cusMax = Math.max(...customerData, 10);
   const cusMin = 0;
 
-  const xOf  = (i) => padL + (i / Math.max(labels.length - 1, 1)) * chartW;
+  const xOf = (i) => padL + (i / Math.max(labels.length - 1, 1)) * chartW;
   const yRev = (v) => padT + chartH - ((v - revMin) / (revMax - revMin)) * chartH;
   const yCus = (v) => padT + chartH - ((v - cusMin) / (cusMax - cusMin)) * chartH;
 
@@ -171,7 +171,7 @@ const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenu
     return d;
   };
 
-  const revPts = revenueData.map((v, i)  => [xOf(i), yRev(v)]);
+  const revPts = revenueData.map((v, i) => [xOf(i), yRev(v)]);
   const cusPts = customerData.map((v, i) => [xOf(i), yCus(v)]);
 
   const revLine = smoothPath(revPts);
@@ -188,7 +188,7 @@ const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenu
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ display: "block", overflow: "visible" }}>
         <defs>
           <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#06b6d4" stopOpacity="0.22" />
+            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.22" />
             <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.01" />
           </linearGradient>
           <clipPath id="chartClip">
@@ -236,22 +236,22 @@ const Sparkline = ({ labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], revenu
   );
 };
 
-const TABS    = ["Overview", "Orders", "Customers", "Products"];
+const TABS = ["Overview", "Orders", "Customers", "Products"];
 const PERIODS = ["Today", "7 Days", "This Month", "Last Month", "Custom"];
 
 // Helper to format currency
 const fmtVal = (val) => {
   if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
-  if (val >= 1000)   return `₹${(val / 1000).toFixed(1)}K`;
+  if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
   return `₹${Number(val || 0).toLocaleString('en-IN')}`;
 };
 
 // ── Main Analytics Component ───────────────────────────────────────────────
 const Analytics = ({ orders = [], customers = [], products = [], loading = false }) => {
-  const [activeTab, setActiveTab]       = useState("Overview");
+  const [activeTab, setActiveTab] = useState("Overview");
   const [activePeriod, setActivePeriod] = useState("This Month");
-  const [startDate, setStartDate]       = useState("");
-  const [endDate, setEndDate]           = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
 
@@ -291,7 +291,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       }
       if (activePeriod === "Last Month") {
         const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-        const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
         return d >= start && d <= end;
       }
       if (activePeriod === "Custom") {
@@ -382,9 +382,9 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     const countStatus = (st) => filteredOrders.filter((o) => o.status?.toLowerCase() === st.toLowerCase()).length;
     return [
       { label: "Delivered", value: countStatus("Delivered"), color: "#22c55e" },
-      { label: "Shipped",   value: countStatus("Shipped"),   color: "#3b82f6" },
+      { label: "Shipped", value: countStatus("Shipped"), color: "#3b82f6" },
       { label: "Confirmed", value: countStatus("Confirmed"), color: "#06b6d4" },
-      { label: "Pending",   value: countStatus("Pending"),   color: "#f59e0b" },
+      { label: "Pending", value: countStatus("Pending"), color: "#f59e0b" },
       { label: "Cancelled", value: cancelledCount + returnsCount, color: "#ef4444" },
     ];
   }, [filteredOrders, cancelledCount, returnsCount]);
@@ -395,7 +395,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     filteredOrders.forEach((o) => {
       if (["cancelled", "returned"].includes(o.status?.toLowerCase())) return;
       const baseItemName = o.item_name?.split(" + ")[0] || "";
-      const matchedProd  = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
+      const matchedProd = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
       const cat = matchedProd?.category || o.category || "General";
       catMap[cat] = (catMap[cat] || 0) + getOrderRevenue(o);
     });
@@ -511,9 +511,9 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
 
     return [
       { label: "VIP (5+ orders)", value: vip, color: "#22c55e" },
-      { label: "Regular (2–4)",   value: regular, color: "#06b6d4" },
-      { label: "One-time (1)",    value: oneTime, color: "#a855f7" },
-      { label: "No orders yet",   value: noOrders, color: "#eab308" },
+      { label: "Regular (2–4)", value: regular, color: "#06b6d4" },
+      { label: "One-time (1)", value: oneTime, color: "#a855f7" },
+      { label: "No orders yet", value: noOrders, color: "#eab308" },
     ];
   }, [filteredOrders, customers]);
 
@@ -544,6 +544,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
       .filter((p) => p.stock !== undefined && p.stock <= 5)
       .map((p) => ({
         name: p.name,
+        sku: p.sku || p.code || (p.id || p.product_id ? `SKU-${String(p.id || p.product_id).slice(-6).toUpperCase()}` : "N/A"),
         category: p.category || "Jewelry",
         stock: p.stock,
         status: p.stock === 0 ? "out" : "low",
@@ -554,7 +555,7 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
     const catMap = {};
     filteredOrders.forEach((o) => {
       const baseItemName = o.item_name?.split(" + ")[0] || "";
-      const matchedProd  = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
+      const matchedProd = products.find((p) => p.name?.toLowerCase() === baseItemName.toLowerCase());
       const cat = matchedProd?.category || o.category || "Jewelry";
       if (!catMap[cat]) catMap[cat] = { units: 0, revenue: 0 };
       catMap[cat].units += Number(o.quantity || 1);
@@ -602,22 +603,22 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
 
       <div className="an__date-row">
         <DateInput label="Start Date" value={startDate} onChange={handleStartDateChange} />
-        <DateInput label="End Date"   value={endDate}   onChange={handleEndDateChange}   />
+        <DateInput label="End Date" value={endDate} onChange={handleEndDateChange} />
       </div>
 
       {activeTab === "Overview" && (
         <>
           <div className="an__stats-container">
             <div className="an__stats-grid">
-              <StatCard label="Total Revenue"         value={fmtVal(totalRevenue)} change={`${totalOrdersCount} orders`} changeType="up" subtext={`(${fmtVal(grossRevenue)} incl. shipping)`} />
-              <StatCard label="Total Order"           value={totalOrdersCount}     change={`${completedCount} delivered`} changeType="up" subtext="in period" />
+              <StatCard label="Total Revenue" value={fmtVal(totalRevenue)} change={`${totalOrdersCount} orders`} changeType="up" subtext={`(${fmtVal(grossRevenue)} incl. shipping)`} />
+              <StatCard label="Total Order" value={totalOrdersCount} change={`${completedCount} delivered`} changeType="up" subtext="in period" />
               <StatCard label="Total Inventory Value" value={fmtVal(totalInventoryValue)} change={`${products.length} products`} changeType="up" subtext="catalog worth" />
-              <StatCard label="New Customers"         value={newCustomersCount}    change="Live" changeType="up" subtext="in period" />
+              <StatCard label="New Customers" value={newCustomersCount} change="Live" changeType="up" subtext="in period" />
             </div>
             <div className="an__stats-divider" />
             <div className="an__stats-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-              <StatCard label="Cancelled Orders"    value={cancelledCount}      changeType="warn" subtext="cancelled" />
-              <StatCard label="Returns"             value={returnsCount}        subtext={`${returnRate}% return rate`} />
+              <StatCard label="Cancelled Orders" value={cancelledCount} changeType="warn" subtext="cancelled" />
+              <StatCard label="Returns" value={returnsCount} subtext={`${returnRate}% return rate`} />
             </div>
           </div>
 
@@ -833,7 +834,11 @@ const Analytics = ({ orders = [], customers = [], products = [], loading = false
                   <div key={i} className="an__products-stock-row">
                     <div className="an__products-stock-info">
                       <div className="an__products-stock-name">{item.name}</div>
-                      <div className="an__products-stock-category">{item.category}</div>
+                      <div className="an__products-stock-sub">
+                        <span className="an__products-stock-sku">SKU: {item.sku}</span>
+                        <span className="an__products-stock-sep">•</span>
+                        <span className="an__products-stock-category">{item.category}</span>
+                      </div>
                     </div>
                     {item.status === "out" ? (
                       <span className="an__products-stock-badge an__products-stock-badge--out">Out Of Stock</span>

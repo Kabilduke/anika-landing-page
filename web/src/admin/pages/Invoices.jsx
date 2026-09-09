@@ -7,11 +7,11 @@ import "./Invoices.css";
 const STATUS_COLORS = {
   "Order Placed": { bg: "#e0f2fe", color: "#0369a1" },
   Delivered: { bg: "#dcfce7", color: "#16a34a" },
-  Shipped:   { bg: "#fef9c3", color: "#a16207" },
-  Pending:   { bg: "#dbeafe", color: "#1d4ed8" },
+  Shipped: { bg: "#fef9c3", color: "#a16207" },
+  Pending: { bg: "#dbeafe", color: "#1d4ed8" },
   Cancelled: { bg: "#fee2e2", color: "#dc2626" },
   Confirmed: { bg: "#f3e8ff", color: "#7c3aed" },
-  Returned:  { bg: "#fee2e2", color: "#dc2626" },
+  Returned: { bg: "#fee2e2", color: "#dc2626" },
 };
 
 // Play a crisp, gentle synthesizer chime on new order
@@ -51,6 +51,8 @@ const Invoices = ({ orders = [], loading = false }) => {
   const [previewAddress, setPreviewAddress] = useState(null);
   const [previewLoadingAddress, setPreviewLoadingAddress] = useState(false);
   const [printAddresses, setPrintAddresses] = useState({});
+  const [pendingConfirmBatch, setPendingConfirmBatch] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const toastTimerRef = useRef(null);
 
@@ -100,6 +102,70 @@ const Invoices = ({ orders = [], loading = false }) => {
     });
   };
 
+  // User confirmed that print succeeded in physical printer
+  const handleConfirmPrinted = async () => {
+    if (!pendingConfirmBatch) return;
+    try {
+      setIsUpdatingStatus(true);
+      const ids = pendingConfirmBatch.ids;
+
+      // Mark as printed in Supabase
+      await orderService.markInvoicesBulkPrinted(ids);
+
+      // Optimistically update local state so rows turn green / counted as printed
+      setLocalOrders((prev) =>
+        prev.map((o) => (ids.includes(o.id) ? { ...o, invoice_printed: true } : o))
+      );
+
+      // Update preview order state if currently open
+      setPreviewOrder((prev) =>
+        prev && ids.includes(prev.id) ? { ...prev, invoice_printed: true } : prev
+      );
+
+      showToast(
+        `✅ Marked ${ids.length} invoice${ids.length > 1 ? "s" : ""} as printed!`,
+        "success"
+      );
+    } catch (err) {
+      console.error("Error marking as printed:", err);
+      showToast("Error updating invoice status: " + err.message, "error");
+    } finally {
+      setIsUpdatingStatus(false);
+      setPendingConfirmBatch(null);
+    }
+  };
+
+  // User cancelled print or printing failed on printer
+  const handleCancelPrinted = () => {
+    showToast("ℹ️ Print cancelled — invoice status left as unprinted.", "info");
+    setPendingConfirmBatch(null);
+  };
+
+  // Manually toggle an invoice's printed status (Printed <-> Unprinted)
+  const handleTogglePrintedStatus = async (order) => {
+    if (!order || !order.id) return;
+    const newStatus = !order.invoice_printed;
+    const orderShortId = String(order.id).slice(-8).toUpperCase();
+    try {
+      await orderService.updateInvoicePrintedStatus(order.id, newStatus);
+      setLocalOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, invoice_printed: newStatus } : o))
+      );
+      setPreviewOrder((prev) =>
+        prev && prev.id === order.id ? { ...prev, invoice_printed: newStatus } : prev
+      );
+      showToast(
+        newStatus
+          ? `✅ Order #${orderShortId} manually marked as Printed!`
+          : `↩️ Order #${orderShortId} manually marked as Unprinted!`,
+        "success"
+      );
+    } catch (e) {
+      console.error("Failed to update printed status:", e);
+      showToast("Error updating printed status: " + e.message, "error");
+    }
+  };
+
   // Reusable batch print trigger
   const triggerPrintBatch = async (ordersToPrint) => {
     if (!ordersToPrint || ordersToPrint.length === 0 || isPrinting) return;
@@ -130,24 +196,12 @@ const Invoices = ({ orders = [], loading = false }) => {
       // Trigger browser print dialog
       window.print();
 
-      // Mark all printed in Supabase
+      // Show confirmation prompt to verify print success before marking in database
       const ids = ordersToPrint.map((o) => o.id);
-      await orderService.markInvoicesBulkPrinted(ids);
-
-      // Optimistically update local state so rows turn green / counted as printed
-      setLocalOrders((prev) =>
-        prev.map((o) => (ids.includes(o.id) ? { ...o, invoice_printed: true } : o))
-      );
-
-      // Update preview order state if currently open
-      setPreviewOrder((prev) =>
-        prev && ids.includes(prev.id) ? { ...prev, invoice_printed: true } : prev
-      );
-
-      showToast(
-        `✅ Successfully printed ${ids.length} invoice${ids.length > 1 ? "s" : ""}!`,
-        "success"
-      );
+      setPendingConfirmBatch({
+        orders: ordersToPrint,
+        ids: ids,
+      });
     } catch (err) {
       console.error("Print batch error:", err);
       showToast("Print error: " + err.message, "error");
@@ -238,15 +292,23 @@ const Invoices = ({ orders = [], loading = false }) => {
   const printedCount = localOrders.filter((o) => o.invoice_printed).length;
 
   const filtered = localOrders.filter((order) => {
-    if (filter === "unprinted" && order.invoice_printed) return false;
-    if (filter === "printed" && !order.invoice_printed) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const id = String(order.id || "").toLowerCase();
-      const name = String(order.customer?.name || "").toLowerCase();
-      const phone = String(order.customer?.phone || "").toLowerCase();
-      if (!id.includes(q) && !name.includes(q) && !phone.includes(q)) return false;
-    }
+    const s = search.toLowerCase().trim();
+    const orderIdStr = order.id ? String(order.id).toLowerCase() : "";
+    const custName = order.customer?.name ? String(order.customer.name).toLowerCase() : "";
+    const custPhone = order.customer?.phone ? String(order.customer.phone).toLowerCase() : "";
+    const directPhone = order.phone ? String(order.phone).toLowerCase() : "";
+
+    const matchesSearch =
+      !s ||
+      orderIdStr.includes(s) ||
+      custName.includes(s) ||
+      custPhone.includes(s) ||
+      directPhone.includes(s);
+
+    if (!matchesSearch) return false;
+
+    if (filter === "unprinted") return !order.invoice_printed;
+    if (filter === "printed") return Boolean(order.invoice_printed);
     return true;
   });
 
@@ -292,10 +354,10 @@ const Invoices = ({ orders = [], loading = false }) => {
             : "#UNKNOWN";
           const orderDate = order.order_date
             ? new Date(order.order_date).toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
             : "N/A";
 
           const isPrinted = Boolean(order.invoice_printed);
@@ -320,10 +382,28 @@ const Invoices = ({ orders = [], loading = false }) => {
                   >
                     {order.status}
                   </span>
-                  {isPrinted && (
-                    <span className="inv__printed-tag" title="This invoice has been printed">
-                      ✓ Printed
-                    </span>
+                  {isPrinted ? (
+                    <button
+                      className="inv__printed-tag inv__printed-tag--toggle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePrintedStatus(order);
+                      }}
+                      title="Click to manually mark as Unprinted"
+                    >
+                      ✓ Printed ↩
+                    </button>
+                  ) : (
+                    <button
+                      className="inv__unprinted-tag"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePrintedStatus(order);
+                      }}
+                      title="Click to manually mark as Printed"
+                    >
+                      ○ Mark Printed
+                    </button>
                   )}
                 </div>
               </div>
@@ -339,21 +419,21 @@ const Invoices = ({ orders = [], loading = false }) => {
                     </span>
                   )}
                 </div>
-              {/* Product names under customer info */}
-              {(() => {
-                const items = order.order_items || [];
-                const names = items.map(i => i.product_name || i.name || 'Product').filter(Boolean);
-                if (names.length === 0) return null;
-                const display = names.length > 2
-                  ? names.slice(0, 2).join(', ') + ` +${names.length - 2} more`
-                  : names.join(', ');
-                return (
-                  <div className="inv__card-products" title={names.join('\n')}>
-                    🛍️ {display}
-                  </div>
-                );
-              })()}
-              <div className="inv__card-date">
+                {/* Product names under customer info */}
+                {(() => {
+                  const items = order.order_items || [];
+                  const names = items.map(i => i.product_name || i.name || 'Product').filter(Boolean);
+                  if (names.length === 0) return null;
+                  const display = names.length > 2
+                    ? names.slice(0, 2).join(', ') + ` +${names.length - 2} more`
+                    : names.join(', ');
+                  return (
+                    <div className="inv__card-products" title={names.join('\n')}>
+                      🛍️ {display}
+                    </div>
+                  );
+                })()}
+                <div className="inv__card-date">
                   <span className="inv__card-label">Date:</span> {orderDate}
                 </div>
               </div>
@@ -563,10 +643,10 @@ const Invoices = ({ orders = [], loading = false }) => {
               : "#UNKNOWN";
             const orderDate = order.order_date
               ? new Date(order.order_date).toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
               : "N/A";
 
             const isPrinted = Boolean(order.invoice_printed);
@@ -628,10 +708,28 @@ const Invoices = ({ orders = [], loading = false }) => {
                   >
                     {order.status}
                   </span>
-                  {isPrinted && (
-                    <span className="inv__printed-tag" title="This invoice has been printed">
-                      ✓ Printed
-                    </span>
+                  {isPrinted ? (
+                    <button
+                      className="inv__printed-tag inv__printed-tag--toggle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePrintedStatus(order);
+                      }}
+                      title="Click to manually mark as Unprinted"
+                    >
+                      ✓ Printed ↩
+                    </button>
+                  ) : (
+                    <button
+                      className="inv__unprinted-tag"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePrintedStatus(order);
+                      }}
+                      title="Click to manually mark as Printed"
+                    >
+                      ○ Mark Printed
+                    </button>
                   )}
                 </div>
 
@@ -706,6 +804,13 @@ const Invoices = ({ orders = [], loading = false }) => {
                 Close
               </button>
               <button
+                className={`inv__modal-status-btn ${previewOrder.invoice_printed ? "inv__modal-status-btn--unmark" : "inv__modal-status-btn--mark"}`}
+                onClick={() => handleTogglePrintedStatus(previewOrder)}
+                title="Manually change printed status"
+              >
+                {previewOrder.invoice_printed ? "↩️ Mark Unprinted" : "✓ Mark Printed"}
+              </button>
+              <button
                 className="inv__modal-print-btn"
                 onClick={() => triggerPrintBatch([previewOrder])}
                 disabled={isPrinting}
@@ -720,6 +825,40 @@ const Invoices = ({ orders = [], loading = false }) => {
                     {previewOrder.invoice_printed ? "Print Again" : "Print Invoice"}
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal: Ask user if printing was successful */}
+      {pendingConfirmBatch && (
+        <div className="inv__confirm-overlay">
+          <div className="inv__confirm-modal">
+            <div className="inv__confirm-icon">🖨️</div>
+            <h3 className="inv__confirm-title">Did the invoice print successfully?</h3>
+            <p className="inv__confirm-desc">
+              {pendingConfirmBatch.ids.length === 1
+                ? `Order #${String(pendingConfirmBatch.orders[0]?.id).slice(-8).toUpperCase()} was sent to your printer.`
+                : `${pendingConfirmBatch.ids.length} invoices were sent to your printer.`}
+            </p>
+            <p className="inv__confirm-subtext">
+              If you cancelled or the printer ran out of paper, click <strong>"No / Cancelled"</strong> so it remains in your pending list.
+            </p>
+            <div className="inv__confirm-actions">
+              <button
+                className="inv__confirm-btn inv__confirm-btn--yes"
+                onClick={handleConfirmPrinted}
+                disabled={isUpdatingStatus}
+              >
+                {isUpdatingStatus ? "Updating..." : "✓ Yes, Mark as Printed"}
+              </button>
+              <button
+                className="inv__confirm-btn inv__confirm-btn--no"
+                onClick={handleCancelPrinted}
+                disabled={isUpdatingStatus}
+              >
+                ✕ No / Cancelled
               </button>
             </div>
           </div>

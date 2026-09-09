@@ -259,6 +259,22 @@ export const orderService = {
   },
 
   /**
+   * Updates the printed status of an order manually (Printed vs Unprinted).
+   * @param {string} orderId
+   * @param {boolean} printedStatus
+   * @returns {Promise<any>}
+   */
+  async updateInvoicePrintedStatus(orderId, printedStatus) {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ invoice_printed: Boolean(printedStatus) })
+      .eq('id', orderId)
+      .select();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Retrieves a single order by ID with details.
    * @param {string} orderId 
    * @returns {Promise<any>}
